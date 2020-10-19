@@ -44,7 +44,13 @@ python setup.py install
 Usage
 ========================
 
-More details coming. We are working to provide example code in the coming weeks. 
+The files in the deepinterpolation folder contains the core classes for training, inferrence, loss calculation and network generations. Those are called 'Collection'. Each collection is essentially a local list of functions that are used to create different type of objects and can be extended on one another. 
+For instance, the network_collection.py contains a list of networks that can be generated for training. This allow for quick iteration and modification of an architecture while keeping the code organized. 
+
+To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from a core class called 'DeepGenerator'. The 'CollectorGenerator' class allow to group generators if your datasets is distributed across many files/folder/sources. 
+This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
+
+More details coming...
 
 License
 ========================
