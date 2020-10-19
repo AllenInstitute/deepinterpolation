@@ -17,17 +17,28 @@ Installation
 
 The following outline how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environmemnt (institution cluster, AWS EC2 instance, ...)
 
-1/ Clone the repository locally on a directory 'local_dir'
+1. Clone the repository locally on a directory 'local_dir'
+
 git clone https://github.com/AllenInstitute/deepinterpolation.git
-2/ Go to that directory
+
+2. Go to that directory\n
+
 cd 'local_dir'
-3/ Create new conda environment called 'local_env'
+
+3. Create new conda environment called 'local_env'
+
 conda create -n local_env python=3.8
-4/ activate environment
+
+4. activate environment
+
 conda activate local_env
-5/ install necessary packages
+
+5. install necessary packages
+
 make init
-6/ install deepinterpolation package
+
+6. install deepinterpolation package
+
 python setup.py install
 
 Usage
