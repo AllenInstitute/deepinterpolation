@@ -15,31 +15,43 @@ For more information, consult the associated bioRxiv publication : https://www.b
 Installation
 ========================
 
-The following outlines how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environmemnt (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixel data provided. 
+The following outlines how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environmemnt (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
 
 1. Clone the repository locally on a directory 'local_dir'
 
-git clone https://github.com/AllenInstitute/deepinterpolation.git
+.. code-block:: bash
+
+	git clone https://github.com/AllenInstitute/deepinterpolation.git
 
 2. Go to that directory
 
-cd 'local_dir'
+.. code-block:: bash
+
+	cd 'local_dir'
 
 3. Create new conda environment called 'local_env'
 
-conda create -n local_env python=3.8
+.. code-block:: bash
+
+	conda create -n local_env python=3.8
 
 4. activate environment
 
-conda activate local_env
+.. code-block:: bash
+
+	conda activate local_env
 
 5. install necessary packages
 
-make init
+.. code-block:: bash
+
+	make init
 
 6. install deepinterpolation package
 
-python setup.py install
+.. code-block:: bash
+
+	python setup.py install
 
 General code description
 ========================
