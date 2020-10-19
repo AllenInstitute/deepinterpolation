@@ -34,7 +34,12 @@ class core_trainer:
     # This is the generic trainer class
     # auto_compile can be set to False when doing an hyperparameter search to allow modification of the model
     def __init__(
-        self, generator_obj, test_generator_obj, network_obj, trainer_json_path, auto_compile=True
+        self,
+        generator_obj,
+        test_generator_obj,
+        network_obj,
+        trainer_json_path,
+        auto_compile=True,
     ):
 
         self.network_obj = network_obj
@@ -109,7 +114,8 @@ class core_trainer:
 
     def compile(self):
         self.local_model.compile(
-            loss=self.loss, optimizer=self.optimizer)#, metrics=['mae'])
+            loss=self.loss, optimizer=self.optimizer
+        )  # , metrics=['mae'])
 
     def initialize_optimizer(self):
         self.optimizer = RMSprop(lr=self.learning_rate)
@@ -120,8 +126,7 @@ class core_trainer:
     def initialize_callbacks(self):
         checkpoint_path = os.path.join(
             self.output_dir,
-            self.run_uid + "_" + self.model_string +
-            "-{epoch:04d}-{val_loss:.4f}.h5",
+            self.run_uid + "_" + self.model_string + "-{epoch:04d}-{val_loss:.4f}.h5",
         )
         checkpoint = ModelCheckpoint(
             checkpoint_path,
@@ -153,7 +158,7 @@ class core_trainer:
             )
             callbacks_list.append(board_callback)
 
-        if not(tensorflow.__version__ == '2.3.0'):
+        if not (tensorflow.__version__ == "2.3.0"):
             callbacks_list.append(epo_end)
 
         self.callbacks_list = callbacks_list
@@ -185,16 +190,15 @@ class core_trainer:
         output_shape[0] = output_shape[0] * nb_object
 
         cache_input = np.zeros(shape=input_shape, dtype=input_example[0].dtype)
-        cache_output = np.zeros(
-            shape=output_shape, dtype=input_example[1].dtype)
+        cache_output = np.zeros(shape=output_shape, dtype=input_example[1].dtype)
 
         for local_index in range(len(self.local_test_generator)):
             local_data = self.local_test_generator.__getitem__(local_index)
             cache_input[
-                local_index * nb_samples: (local_index + 1) * nb_samples, :
+                local_index * nb_samples : (local_index + 1) * nb_samples, :
             ] = local_data[0]
             cache_output[
-                local_index * nb_samples: (local_index + 1) * nb_samples, :
+                local_index * nb_samples : (local_index + 1) * nb_samples, :
             ] = local_data[1]
 
         self.local_test_generator = (cache_input, cache_output)
@@ -208,7 +212,7 @@ class core_trainer:
             validation_data=self.local_test_generator,
             steps_per_epoch=self.steps_per_epoch,
             epochs=self.epochs,
-            max_queue_size= 32,
+            max_queue_size=32,
             workers=self.workers,
             shuffle=False,
             use_multiprocessing=True,
