@@ -15,7 +15,7 @@ For more information, consult the associated bioRxiv publication : https://www.b
 Installation
 ========================
 
-The following outline how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environmemnt (institution cluster, AWS EC2 instance, ...). The following should work given the recent progress of tensorflow in installing GPU dependencies. You might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). 
+The following outlines how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environmemnt (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). 
 
 1. Clone the repository locally on a directory 'local_dir'
 
