@@ -34,7 +34,6 @@ numba==0.45.1
 numexpr==2.7.0
 numpy==1.17.0
 opencv-python==4.1.0.25
-ophysextractor==1.0.0
 pandas==0.25.0
 pbstools==0.1.0
 Pillow==6.1.0
@@ -62,6 +61,5 @@ tensorflow-estimator==1.14.0
 tensorflow-tensorboard==0.4.0
 termcolor==1.1.0
 tifffile==2019.7.26
-visual-behavior==0.6.0.dev0
 Werkzeug==0.15.5
 zipfile36==0.1.3
