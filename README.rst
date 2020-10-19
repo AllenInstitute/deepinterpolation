@@ -44,7 +44,7 @@ python setup.py install
 General code description
 ========================
 The files in the deepinterpolation folder contains the core classes for training, inferrence, loss calculation and network generations. Those are called 'Collection'. Each collection is essentially a local list of functions that are used to create different type of objects and can be extended on one another. 
-For instance, the network_collection.py contains a list of networks that can be generated for training. This allow for quick iteration and modification of an architecture while keeping the code organized. 
+For instance, the network_collection.py contains a list of networks that can be generated for training. This allows for quick iteration and modification of an architecture while keeping the code organized. 
 
 Training
 ========================
