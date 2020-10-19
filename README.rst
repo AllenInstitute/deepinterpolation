@@ -15,12 +15,12 @@ For more information, consult the associated bioRxiv publication : https://www.b
 Installation
 ========================
 
-Coming...
+More details coming. We are currrently cleaning up the required package list. 
 
 Usage
 ========================
 
-Coming... 
+More details coming. We are working to provide example code in the coming weeks. 
 
 License
 ========================
