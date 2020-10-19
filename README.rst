@@ -21,7 +21,7 @@ The following outline how to install on your local machine. This was tested on a
 
 git clone https://github.com/AllenInstitute/deepinterpolation.git
 
-2. Go to that directory\n
+2. Go to that directory
 
 cd 'local_dir'
 
