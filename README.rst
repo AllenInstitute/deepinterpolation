@@ -63,7 +63,7 @@ Training
 To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from a core class called 'DeepGenerator'. The 'CollectorGenerator' class allows to group generators if your dataset is distributed across many files/folder/sources. 
 This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
 
-To try out training your own DeepInterpolation network, I recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_training.py
+To try out training your own DeepInterpolation network, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_training.py
 
 In this file, you will need to edit the jobdir variable, in particular change "/Users/jeromel/test" to a local folder appropriate to save your models. 
 
@@ -107,7 +107,77 @@ All parameters are commented in the file. To adjust to a larger dataset, change 
 Inference
 ========================
 
-More details coming...
+Raw pre-trained models are available either as part of Tensorflow ModelServer in an AWS docker environment or as a separate h5 file on Dropbox. 
+
+The following models are currently available : 
+# Two-photon Ai93 excitatory line DeepInterpolation network:
+Key recording parameters: 
+- 30Hz sampling rate, 400x400 μm2 field of view, 512x512 pixels.
+- 0.8 NA objective.
+- 910 nm excitation wavelength.
+- Gcamp6f calcium indicator.
+- Ai93 reporter line expressed in excitatory neurons.
+- Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai93
+- Dropbox link : https://www.dropbox.com/sh/vwxf1uq2j60uj9o/AAC9BQI1bdfmAL3OFO0lmVb1a?dl=0
+
+# Two-photon Ai148 excitatory line DeepInterpolation network:
+- Key recording parameters: 
+- 30 Hz sampling rate, 400x400 μm2 field of view, 512x512 pixels.
+- 0.8 NA objective.
+- 910 nm excitation wavelength.
+- Gcamp6f calcium indicator.
+- Ai93 reporter line expressed in excitatory neurons.
+- Pre-processing: Individual movies were motion corrected. Each movie recording was mean-centered and normalized with a single pair of value for all pixels 
+- Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai148
+- Dropxbox link : https://www.dropbox.com/sh/u9h9mhppkmku5bs/AAD9UoomhB3D4JfLV7zT9Y_Ca?dl=0
+
+# Neuropixel DeepInterpolation network:
+Key recording parameters: 
+- Neuropixels Phase 3a probes
+- 374 simultaneous recording sites across 3.84 mm, 10 reference channels
+- Four-column checkerboard site layout with 20 µm spacing between rows
+- 30 kHz sampling rate
+- 500x hardware gain setting
+- 500 Hz high pass filter in hardware, 150 Hz high-pass filter applied offline. 
+- Pre-processing: Median subtraction was applied to individual probes to remove signals that were common across all recording sites. Each probe recording was mean-centered and normalized with a single pair of value for all nodes on the probe. 
+- Docker hub id : 245412653747/deep_interpolation:allen_neuropixel
+- Dropxbox link : https://www.dropbox.com/sh/tm3epzil44ybalq/AACyKxfvvA2T_Lq_rnpHnhFma?dl=0
+
+# fMRI DeepInterpolation network:
+- Key recording parameters: 
+- TR, 3000 ms; TE, 30 ms; flip angle, 80°; voxel size, 3 × 3 × 3 mm; FOV, 192 × 192 mm; number of slices, 50, slice gap, 0 mm
+- Pre-processing: N/A
+- Docker hub id : 245412653747/deep_interpolation:allen_3_3_3_tr_3000_fmri
+- Dropxbox link : https://www.dropbox.com/sh/ngx5plndmd4jsca/AAAkR-_4_E7VyL8WzEC7twuza?dl=0
+
+To start inference, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_inference.py
+
+In this file, you will need to edit the train_path, model_path and output_file variable to fit your local paths. 
+
+Then, activate your conda env called 'local_env'
+
+.. code-block:: bash
+
+	conda activate local_env
+	
+then run 
+
+.. code-block:: bash
+
+	python example_tiny_ephys_inference.py
+
+If everything runs correctly, you should see the following : 
+
+.. code-block:: bash
+
+	2020-10-20 14:10:37.549061: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+	To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+	sh: sysctl: command not found
+	2020-10-20 14:10:37.564133: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x7f82ada8a520 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+	2020-10-20 14:10:37.564156: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+
+This is a toy example but you can increase the start_frame and end_frame variable for larger data. 
+It is important to keep in mind that this process is easily parallelizable. In practice, we wrapped this code with additional routines to leverage 20 to 100 cluster CPU nodes to accelerate this process. You could also use GPU nodes, we just had access to a much larger number of CPU machines quickly.  
 
 License
 ========================
