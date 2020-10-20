@@ -74,6 +74,7 @@ First, activate your conda env called 'local_env'
 then run 
 
 If everything runs correctly, you should see the following : 
+
 .. code-block:: bash
 
 	2020-10-19 18:01:03.735098: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2 FMA
