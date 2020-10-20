@@ -203,7 +203,7 @@ class core_trainer:
             max_queue_size=32,
             workers=self.workers,
             shuffle=False,
-            use_multiprocessing=False,
+            use_multiprocessing=True,
             callbacks=self.callbacks_list,
             initial_epoch=0,
         )

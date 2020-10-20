@@ -629,7 +629,6 @@ class EphysGenerator(DeepGenerator):
         data_img_input = np.swapaxes(data_img_input, 0, 2)
 
         img_in_shape = data_img_input.shape
-        # img_out_shape = data_img_output.shape
 
         data_img_input = (
             data_img_input.astype("float32") - self.local_mean
