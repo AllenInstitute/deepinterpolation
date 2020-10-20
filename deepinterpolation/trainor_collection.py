@@ -76,11 +76,6 @@ class core_trainer:
             self.initial_learning_rate = json_data["initial_learning_rate"]
             self.epochs_drop = json_data["epochs_drop"]
 
-        if "tensorboard_path" in json_data.keys():
-            self.tensorboard_path = json_data["tensorboard_path"]
-        else:
-            self.tensorboard_path = ""
-
         self.nb_times_through_data = json_data["nb_times_through_data"]
 
         # Generator has to be initialized first to provide
@@ -150,13 +145,6 @@ class core_trainer:
             callbacks_list = [checkpoint, lrate]
         else:
             callbacks_list = [checkpoint]
-
-        if not (self.tensorboard_path == ""):
-            board_callback = tensorflow.keras.callbacks.TensorBoard(
-                log_dir=os.path.join(self.tensorboard_path, self.model_string),
-                histogram_freq=1,
-            )
-            callbacks_list.append(board_callback)
 
         if not (tensorflow.__version__ == "2.3.0"):
             callbacks_list.append(epo_end)
