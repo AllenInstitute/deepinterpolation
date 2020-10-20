@@ -159,6 +159,8 @@ Key recording parameters:
 - Docker hub id : 245412653747/deep_interpolation:allen_3_3_3_tr_3000_fmri
 - Dropxbox link : https://www.dropbox.com/sh/ngx5plndmd4jsca/AAAkR-_4_E7VyL8WzEC7twuza?dl=0
 
+
+
 To start inference, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_inference.py
 
 In this file, you will need to edit the train_path, model_path and output_file variable to fit your local paths. 
