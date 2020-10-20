@@ -73,6 +73,10 @@ First, activate your conda env called 'local_env'
 	
 then run 
 
+.. code-block:: bash
+
+	python example_tiny_ephys_training.py
+
 If everything runs correctly, you should see the following : 
 
 .. code-block:: bash
