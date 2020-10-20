@@ -65,7 +65,9 @@ This system was designed to allow to train very large DeepInterpolation models f
 
 To try out training your own DeepInterpolation network, I recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_training.py
 
-First, activate your conda env called 'local_env'
+In this file, you will need to edit the jobdir variable, in particular change "/Users/jeromel/test" to a local folder appropriate to save your models. 
+
+Then, activate your conda env called 'local_env'
 
 .. code-block:: bash
 
