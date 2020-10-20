@@ -15,7 +15,7 @@ For more information, consult the associated bioRxiv publication : https://www.b
 Installation
 ========================
 
-The following outlines how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environmemnt (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
+The following outlines how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environment (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
 
 1. Clone the repository locally on a directory 'local_dir'
 
@@ -63,7 +63,46 @@ Training
 To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from a core class called 'DeepGenerator'. The 'CollectorGenerator' class allows to group generators if your dataset is distributed across many files/folder/sources. 
 This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
 
-More details coming...
+To try out training your own DeepInterpolation network, I recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_training.py
+
+In this file, you will need to edit the jobdir variable, in particular change "/Users/jeromel/test" to a local folder appropriate to save your models. 
+
+Then, activate your conda env called 'local_env'
+
+.. code-block:: bash
+
+	conda activate local_env
+	
+then run 
+
+.. code-block:: bash
+
+	python example_tiny_ephys_training.py
+
+If everything runs correctly, you should see the following : 
+
+.. code-block:: bash
+
+	2020-10-19 18:01:03.735098: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+	To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+	sh: sysctl: command not found
+	2020-10-19 18:01:03.749184: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x7f9b1f115860 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+	2020-10-19 18:01:03.749202: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+	WARNING:tensorflow:`period` argument is deprecated. Please use `save_freq` to specify the frequency in number of batches seen.
+	Epoch 1/5
+	10/10 [==============================] - 19s 2s/step - loss: 0.4597 - val_loss: 0.3987
+	Epoch 2/5
+	10/10 [==============================] - 20s 2s/step - loss: 0.3796 - val_loss: 0.3785
+	Epoch 3/5
+	10/10 [==============================] - 22s 2s/step - loss: 0.3646 - val_loss: 0.3709
+	Epoch 4/5
+	10/10 [==============================] - 21s 2s/step - loss: 0.3797 - val_loss: 0.3698
+	Epoch 5/5
+	10/10 [==============================] - 21s 2s/step - loss: 0.3835 - val_loss: 0.3675
+	Saved model to disk
+
+This is a toy example but you can increase the number of training frames to increase the quality of the model. 
+All parameters are commented in the file. To adjust to a larger dataset, change the train_path parameters, the start_frame and end_frame parameters. 
 
 Inference
 ========================
