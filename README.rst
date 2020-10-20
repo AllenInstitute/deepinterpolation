@@ -112,6 +112,7 @@ Raw pre-trained models are available either as part of Tensorflow ModelServer in
 The following models are currently available : 
 # Two-photon Ai93 excitatory line DeepInterpolation network:
 Key recording parameters: 
+
 - 30Hz sampling rate, 400x400 μm2 field of view, 512x512 pixels.
 - 0.8 NA objective.
 - 910 nm excitation wavelength.
@@ -121,7 +122,8 @@ Key recording parameters:
 - Dropbox link : https://www.dropbox.com/sh/vwxf1uq2j60uj9o/AAC9BQI1bdfmAL3OFO0lmVb1a?dl=0
 
 # Two-photon Ai148 excitatory line DeepInterpolation network:
-- Key recording parameters: 
+Key recording parameters: 
+
 - 30 Hz sampling rate, 400x400 μm2 field of view, 512x512 pixels.
 - 0.8 NA objective.
 - 910 nm excitation wavelength.
@@ -132,7 +134,9 @@ Key recording parameters:
 - Dropxbox link : https://www.dropbox.com/sh/u9h9mhppkmku5bs/AAD9UoomhB3D4JfLV7zT9Y_Ca?dl=0
 
 # Neuropixel DeepInterpolation network:
+
 Key recording parameters: 
+
 - Neuropixels Phase 3a probes
 - 374 simultaneous recording sites across 3.84 mm, 10 reference channels
 - Four-column checkerboard site layout with 20 µm spacing between rows
@@ -144,7 +148,9 @@ Key recording parameters:
 - Dropxbox link : https://www.dropbox.com/sh/tm3epzil44ybalq/AACyKxfvvA2T_Lq_rnpHnhFma?dl=0
 
 # fMRI DeepInterpolation network:
-- Key recording parameters: 
+
+Key recording parameters: 
+
 - TR, 3000 ms; TE, 30 ms; flip angle, 80°; voxel size, 3 × 3 × 3 mm; FOV, 192 × 192 mm; number of slices, 50, slice gap, 0 mm
 - Pre-processing: N/A
 - Docker hub id : 245412653747/deep_interpolation:allen_3_3_3_tr_3000_fmri
@@ -177,7 +183,7 @@ If everything runs correctly, you should see the following :
 	2020-10-20 14:10:37.564156: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
 
 This is a toy example but you can increase the start_frame and end_frame variable for larger data. 
-It is important to keep in mind that this process is easily parallelizable. In practice, we wrapped this code with additional routines to leverage 20 to 100 cluster CPU nodes to accelerate this process. You could also use GPU nodes, we just had access to a much larger number of CPU machines quickly.  
+It is important to keep in mind that this process is easily parallelizable. In practice, we wrapped this code with additional routines to leverage 20 to 100 cluster CPU nodes to accelerate this process. You could also use GPU nodes as well, we just had access to a much larger number of CPU machines quickly.  
 
 License
 ========================
