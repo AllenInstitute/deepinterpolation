@@ -15,12 +15,60 @@ For more information, consult the associated bioRxiv publication : https://www.b
 Installation
 ========================
 
-More details coming. We are currrently cleaning up the required package list. 
+The following outlines how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environmemnt (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
 
-Usage
+1. Clone the repository locally on a directory 'local_dir'
+
+.. code-block:: bash
+
+	git clone https://github.com/AllenInstitute/deepinterpolation.git
+
+2. Go to that directory
+
+.. code-block:: bash
+
+	cd 'local_dir'
+
+3. Create new conda environment called 'local_env'
+
+.. code-block:: bash
+
+	conda create -n local_env python=3.8
+
+4. activate environment
+
+.. code-block:: bash
+
+	conda activate local_env
+
+5. install necessary packages
+
+.. code-block:: bash
+
+	make init
+
+6. install deepinterpolation package
+
+.. code-block:: bash
+
+	python setup.py install
+
+General code description
+========================
+The files in the deepinterpolation folder contains the core classes for training, inferrence, loss calculation and network generations. Those are called 'Collection'. Each collection is essentially a local list of functions that are used to create different type of objects and can be extended on one another. 
+For instance, the network_collection.py contains a list of networks that can be generated for training. This allows for quick iteration and modification of an architecture while keeping the code organized. 
+
+Training
+========================
+To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from a core class called 'DeepGenerator'. The 'CollectorGenerator' class allows to group generators if your dataset is distributed across many files/folder/sources. 
+This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
+
+More details coming...
+
+Inference
 ========================
 
-More details coming. We are working to provide example code in the coming weeks. 
+More details coming...
 
 License
 ========================
