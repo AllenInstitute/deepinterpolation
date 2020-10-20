@@ -5,6 +5,7 @@ import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
 from typing import Any, Dict
+import pathlib
 
 # This is used for record-keeping
 now = datetime.datetime.now()
@@ -16,7 +17,7 @@ generator_param = {}
 network_param = {}
 generator_test_param = {}
 
-# An epoch is defined as the number of batches pulled from the dataset. Because our dataset are VERY large. Often, we cannot
+# An epoch is defined as the number of batches pulled from the dataset. Because our datasets are VERY large. Often, we cannot
 # go through the entirity of the data so we define an epoch slightly differently than is usual.
 steps_per_epoch = 10
 
@@ -27,9 +28,12 @@ generator_test_param["name"] = "EphysGenerator"  # Name of object in the collect
 generator_test_param[
     "pre_post_frame"
 ] = 30  # Number of frame provided before and after the predicted frame
-generator_test_param[
-    "train_path"
-] = "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/examples/tiny_continuous.dat2"
+generator_test_param["train_path"] = os.path.join(
+    pathlib.Path(__file__).parent.absolute(),
+    "..",
+    "sample_data",
+    "ephys_tiny_continuous.dat2",
+)
 generator_test_param["batch_size"] = 100
 generator_test_param["start_frame"] = 0
 generator_test_param["end_frame"] = 1999
@@ -43,12 +47,15 @@ generator_param["type"] = "generator"
 generator_param["steps_per_epoch"] = steps_per_epoch
 generator_param["name"] = "EphysGenerator"
 generator_param["pre_post_frame"] = 30
-generator_param[
-    "train_path"
-] = "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/examples/tiny_continuous.dat2"
+generator_param["train_path"] = os.path.join(
+    pathlib.Path(__file__).parent.absolute(),
+    "..",
+    "sample_data",
+    "ephys_tiny_continuous.dat2",
+)
 generator_param["batch_size"] = 100
 generator_param["start_frame"] = 2000
-generator_param["end_frame"] = 20000
+generator_param["end_frame"] = 7099
 generator_param["pre_post_omission"] = 1
 
 # Those are parameters used for the network topology
@@ -74,7 +81,9 @@ training_param[
 training_param["learning_rate"] = 0.0001
 training_param["pre_post_frame"] = generator_test_param["pre_post_frame"]
 training_param["loss"] = "mean_absolute_error"
-training_param["nb_workers"] = 1
+training_param[
+    "nb_workers"
+] = 1  # this is to enable multiple threads for data generator loading. Useful when this is slower than training
 
 training_param["model_string"] = (
     network_param["name"]
@@ -85,11 +94,8 @@ training_param["model_string"] = (
 )
 
 # Where do you store ongoing training progress
-jobdir = (
-    "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/examples/trained_ephys_models/"
-    + training_param["model_string"]
-    + "_"
-    + run_uid
+jobdir = os.path.join(
+    "/Users/jeromel/test", training_param["model_string"] + "_" + run_uid,
 )
 training_param["output_dir"] = jobdir
 
