@@ -110,7 +110,9 @@ Inference
 Raw pre-trained models are available either as part of Tensorflow ModelServer in an AWS docker environment or as a separate h5 file on Dropbox. 
 
 The following models are currently available : 
-** Two-photon Ai93 excitatory line DeepInterpolation network: **
+
+**Two-photon Ai93 excitatory line DeepInterpolation network:**
+
 Key recording parameters: 
 
 - 30Hz sampling rate, 400x400 μm2 field of view, 512x512 pixels.
@@ -121,7 +123,8 @@ Key recording parameters:
 - Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai93
 - Dropbox link : https://www.dropbox.com/sh/vwxf1uq2j60uj9o/AAC9BQI1bdfmAL3OFO0lmVb1a?dl=0
 
-# Two-photon Ai148 excitatory line DeepInterpolation network:
+**Two-photon Ai148 excitatory line DeepInterpolation network:**
+
 Key recording parameters: 
 
 - 30 Hz sampling rate, 400x400 μm2 field of view, 512x512 pixels.
@@ -133,7 +136,7 @@ Key recording parameters:
 - Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai148
 - Dropxbox link : https://www.dropbox.com/sh/u9h9mhppkmku5bs/AAD9UoomhB3D4JfLV7zT9Y_Ca?dl=0
 
-# Neuropixel DeepInterpolation network:
+**Neuropixel DeepInterpolation network:**
 
 Key recording parameters: 
 
@@ -147,7 +150,7 @@ Key recording parameters:
 - Docker hub id : 245412653747/deep_interpolation:allen_neuropixel
 - Dropxbox link : https://www.dropbox.com/sh/tm3epzil44ybalq/AACyKxfvvA2T_Lq_rnpHnhFma?dl=0
 
-# fMRI DeepInterpolation network:
+**fMRI DeepInterpolation network:**
 
 Key recording parameters: 
 
