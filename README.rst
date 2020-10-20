@@ -110,7 +110,7 @@ Inference
 Raw pre-trained models are available either as part of Tensorflow ModelServer in an AWS docker environment or as a separate h5 file on Dropbox. 
 
 The following models are currently available : 
-# Two-photon Ai93 excitatory line DeepInterpolation network:
+** Two-photon Ai93 excitatory line DeepInterpolation network: **
 Key recording parameters: 
 
 - 30Hz sampling rate, 400x400 μm2 field of view, 512x512 pixels.
