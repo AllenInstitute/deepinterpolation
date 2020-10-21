@@ -190,6 +190,8 @@ If everything runs correctly, you should see the following :
 This is a toy example but you can increase the start_frame and end_frame variable for larger data. 
 It is important to keep in mind that this process is easily parallelizable. In practice, we wrapped this code with additional routines to leverage 20 to 100 cluster CPU nodes to accelerate this process. You could also use GPU nodes as well, we just had access to a much larger number of CPU machines quickly.  
 
+More on using the Tensorflow ModelServer soon. Those are usefull to deploy to AWS and/or avoid installing GPUs related packages. 
+
 License
 ========================
 
