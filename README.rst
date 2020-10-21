@@ -122,6 +122,7 @@ Key recording parameters:
 - Ai93 reporter line expressed in excitatory neurons.
 - Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai93
 - Dropbox link : https://www.dropbox.com/sh/vwxf1uq2j60uj9o/AAC9BQI1bdfmAL3OFO0lmVb1a?dl=0
+- Training data : https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/paper_generation_code/json_data/2019-09-05-train-very-large-single-plane-Ai93-norm.json
 
 **Two-photon Ai148 excitatory line DeepInterpolation network:**
 
@@ -135,6 +136,7 @@ Key recording parameters:
 - Pre-processing: Individual movies were motion corrected. Each movie recording was mean-centered and normalized with a single pair of value for all pixels 
 - Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai148
 - Dropxbox link : https://www.dropbox.com/sh/u9h9mhppkmku5bs/AAD9UoomhB3D4JfLV7zT9Y_Ca?dl=0
+- Training data : https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/paper_generation_code/json_data/2019-09-05-train-very-large-single-plane-Ai148-norm.json
 
 **Neuropixel DeepInterpolation network:**
 
