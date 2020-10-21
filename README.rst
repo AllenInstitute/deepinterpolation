@@ -131,7 +131,7 @@ Key recording parameters:
 - 0.8 NA objective.
 - 910 nm excitation wavelength.
 - Gcamp6f calcium indicator.
-- Ai93 reporter line expressed in excitatory neurons.
+- Ai148 reporter line expressed in excitatory neurons.
 - Pre-processing: Individual movies were motion corrected. Each movie recording was mean-centered and normalized with a single pair of value for all pixels 
 - Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai148
 - Dropxbox link : https://www.dropbox.com/sh/u9h9mhppkmku5bs/AAD9UoomhB3D4JfLV7zT9Y_Ca?dl=0
