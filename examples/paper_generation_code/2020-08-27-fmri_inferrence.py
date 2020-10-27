@@ -15,7 +15,7 @@ generator_param["pre_post_x"] = 3
 generator_param["pre_post_y"] = 3
 generator_param["pre_post_z"] = 3
 generator_param["pre_post_t"] = 2
-generator_param['center_omission_size'] = 4
+generator_param["center_omission_size"] = 4
 
 generator_param[
     "train_path"
@@ -29,7 +29,9 @@ generator_param["steps_per_epoch"] = steps_per_epoch
 
 inferrence_param["type"] = "inferrence"
 inferrence_param["name"] = "fmri_inferrence"
-inferrence_param["single_voxel_output_single"] = True
+inferrence_param[
+    "single_voxel_output_single"
+] = True  # this parameter will allow in the future to change scanning mode for inference
 
 inferrence_param[
     "model_path"
