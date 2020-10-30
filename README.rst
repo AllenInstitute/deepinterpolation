@@ -15,7 +15,7 @@ For more information, consult the associated bioRxiv publication : https://www.b
 Installation
 ========================
 
-The following outlines how to install on your local machine. This was tested on a macOS Catalina but should be adapted depending on your final environment (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
+The following outlines how to install on your local machine. This should take no more than a few minutes. This was tested on a macOS Catalina but should be adapted depending on your final environment (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
 
 1. Clone the repository locally on a directory 'local_dir'
 
@@ -79,7 +79,7 @@ then run
 
 	python example_tiny_ephys_training.py
 
-If everything runs correctly, you should see the following : 
+If everything runs correctly, you should see the following in just a few minutes : 
 
 .. code-block:: bash
 
@@ -179,7 +179,7 @@ then run
 
 	python example_tiny_ephys_inference.py
 
-If everything runs correctly, you should see the following : 
+If everything runs correctly, you should see the following in just a few minutes : 
 
 .. code-block:: bash
 
