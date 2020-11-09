@@ -663,6 +663,11 @@ class SingleTifGenerator(DeepGenerator):
         self.pre_post_omission = self.json_data["pre_post_omission"]
         self.start_frame = self.json_data["start_frame"]
 
+        if "randomize" in self.json_data.keys():
+            self.randomize = self.json_data["randomize"]
+        else:
+            self.randomize = 1
+
         # This is compatible with negative frames
         self.end_frame = self.json_data["end_frame"]
 
@@ -695,7 +700,8 @@ class SingleTifGenerator(DeepGenerator):
             - self.pre_post_omission,
         )
 
-        np.random.shuffle(self.list_samples)
+        if self.randomize:
+            np.random.shuffle(self.list_samples)
 
     def __len__(self):
         "Denotes the total number of batches"
