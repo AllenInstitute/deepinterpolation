@@ -2,7 +2,7 @@ tensorflow==2.3.0
 tensorflow-estimator
 nibabel
 timeout_decorator
-h5py
+h5py==2.10.0
 matplotlib
 numpy==1.16.0
 python-dateutil
