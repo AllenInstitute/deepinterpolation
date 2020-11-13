@@ -58,15 +58,9 @@ generator_param["start_frame"] = 2000
 generator_param["end_frame"] = 7099
 generator_param["pre_post_omission"] = 1
 
-# Those are parameters used for the network topology
-network_param["type"] = "network"
-network_param[
-    "name"
-] = "unet_single_ephys_1024"  # Name of network topology in the collection
-
 # Those are parameters used for the training process
 training_param["type"] = "trainer"
-training_param["name"] = "core_trainer"
+training_param["name"] = "transfer_trainer"
 training_param["run_uid"] = run_uid
 training_param["batch_size"] = generator_test_param["batch_size"]
 training_param["steps_per_epoch"] = steps_per_epoch
@@ -86,7 +80,7 @@ training_param[
 ] = 16  # this is to enable multiple threads for data generator loading. Useful when this is slower than training
 
 training_param["model_string"] = (
-    network_param["name"]
+    'transfer'
     + "_"
     + training_param["loss"]
     + "_"
@@ -118,16 +112,9 @@ path_test_generator = os.path.join(jobdir, "test_generator.json")
 json_obj = JsonSaver(generator_test_param)
 json_obj.save_json(path_test_generator)
 
-path_network = os.path.join(jobdir, "network.json")
-json_obj = JsonSaver(network_param)
-json_obj.save_json(path_network)
-
 # We find the generator obj in the collection using the json file
 generator_obj = ClassLoader(path_generator)
 generator_test_obj = ClassLoader(path_test_generator)
-
-# We find the network obj in the collection using the json file
-network_obj = ClassLoader(path_network)
 
 # We find the training obj in the collection using the json file
 trainer_obj = ClassLoader(path_training)
@@ -136,12 +123,11 @@ trainer_obj = ClassLoader(path_training)
 train_generator = generator_obj.find_and_build()(path_generator)
 test_generator = generator_test_obj.find_and_build()(path_test_generator)
 
-# We build the network object. This will, among other things, calculate normalizing parameters.
-network_callback = network_obj.find_and_build()(path_network)
+path_to_original_model = r"/Users/jeromel/test/transfer_mean_absolute_error_2020_11_12_18_05_2020_11_12_18_05/2020_11_12_18_05_transfer_mean_absolute_error_2020_11_12_18_05_model.h5"
 
 # We build the training object.
 training_class = trainer_obj.find_and_build()(
-    train_generator, test_generator, network_callback, path_training
+    train_generator, test_generator, path_to_original_model, path_training
 )
 
 # Start training. This can take very long time.
