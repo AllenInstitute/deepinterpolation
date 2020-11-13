@@ -6,7 +6,6 @@ import os
 import tensorflow.keras as keras
 from deepinterpolation.generic import JsonLoader
 import tifffile
-import timeout_decorator
 import nibabel as nib
 from scipy.io import wavfile
 
