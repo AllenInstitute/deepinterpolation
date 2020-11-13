@@ -10,6 +10,7 @@ from tensorflow.keras.layers import Input
 from deepinterpolation.generic import JsonLoader
 import math
 import matplotlib.pylab as plt
+from tensorflow.keras.models import load_model
 
 
 def create_decay_callback(initial_learning_rate, epochs_drop):
@@ -257,3 +258,88 @@ class OnEpochEnd(tensorflow.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         for callback in self.callbacks:
             callback()
+
+
+class transfer_trainer(core_trainer):
+    # This class is used to fine-tune a pre-trained model with additional data
+    
+    def __init__(
+        self,
+        generator_obj,
+        test_generator_obj,
+        model_path,
+        trainer_json_path,
+        auto_compile=True,
+    ):
+
+        # self.network_obj = network_obj
+        self.model_path = model_path
+        self.local_generator = generator_obj
+        self.local_test_generator = test_generator_obj
+
+        json_obj = JsonLoader(trainer_json_path)
+
+        # the following line is to be backward compatible in case
+        # new parameter logics are added.
+        json_obj.set_default("apply_learning_decay", 0)
+
+        json_data = json_obj.json_data
+        self.output_dir = json_data["output_dir"]
+        self.run_uid = json_data["run_uid"]
+        self.model_string = json_data["model_string"]
+        self.batch_size = json_data["batch_size"]
+        self.steps_per_epoch = json_data["steps_per_epoch"]
+        self.loss_type = json_data["loss"]
+        self.nb_gpus = json_data["nb_gpus"]
+        self.period_save = json_data["period_save"]
+        self.learning_rate = json_data["learning_rate"]
+
+        if "nb_workers" in json_data.keys():
+            self.workers = json_data["nb_workers"]
+        else:
+            self.workers = 16
+
+        # These parameters are related to setting up the
+        # behavior of learning rates
+        self.apply_learning_decay = json_data["apply_learning_decay"]
+
+        if self.apply_learning_decay == 1:
+            self.initial_learning_rate = json_data["initial_learning_rate"]
+            self.epochs_drop = json_data["epochs_drop"]
+
+        self.nb_times_through_data = json_data["nb_times_through_data"]
+
+        # Generator has to be initialized first to provide
+        # input size of network
+        self.initialize_generator()
+
+        if self.nb_gpus > 1:
+            mirrored_strategy = tensorflow.distribute.MirroredStrategy()
+            with mirrored_strategy.scope():
+                self.initialize_network()
+
+                self.initialize_callbacks()
+
+                self.initialize_loss()
+
+                self.initialize_optimizer()
+                if auto_compile:
+                    self.compile()
+        else:
+            if auto_compile:
+                self.initialize_network()
+
+            self.initialize_callbacks()
+
+            self.initialize_loss()
+
+            self.initialize_optimizer()
+
+            if auto_compile:
+                self.compile()
+
+    def initialize_network(self):
+        self.local_model = load_model(
+            self.model_path,
+            custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
+        )
