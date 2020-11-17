@@ -8,7 +8,7 @@ from deepinterpolation.generic import JsonLoader
 import tifffile
 import nibabel as nib
 from scipy.io import wavfile
-
+import s3fs
 
 class MaxRetryException(Exception):
     # This is helper class for EmGenerator
@@ -784,7 +784,6 @@ class SingleTifGenerator(DeepGenerator):
 
         return input_full, output_full
 
-
 class OphysGenerator(DeepGenerator):
     "Generates data for Keras"
 
@@ -792,6 +791,11 @@ class OphysGenerator(DeepGenerator):
         "Initialization"
         super().__init__(json_path)
 
+        if "from_s3" in self.json_data.keys():
+            self.from_s3 = self.json_data["from_s3"]
+        else:
+            self.from_s3 = False
+            
         self.raw_data_file = self.json_data["movie_path"]
         self.batch_size = self.json_data["batch_size"]
         self.pre_frame = self.json_data["pre_frame"]
@@ -802,7 +806,12 @@ class OphysGenerator(DeepGenerator):
         # This is compatible with negative frames
         self.end_frame = self.json_data["end_frame"]
 
-        raw_data = h5py.File(self.raw_data_file, "r")["data"]
+        if self.from_s3:
+            s3_filesystem = s3fs.S3FileSystem()
+            raw_data = h5py.File(s3_filesystem.open(self.raw_data_file,'rb'),'r')
+        else:
+            raw_data = h5py.File(self.raw_data_file, "r")["data"]
+            
         self.total_frame_per_movie = int(raw_data.shape[0])
 
         if self.end_frame < 0:
@@ -872,7 +881,11 @@ class OphysGenerator(DeepGenerator):
     def __data_generation__(self, index_frame):
         "Generates data containing batch_size samples"
 
-        movie_obj = h5py.File(self.raw_data_file, "r")
+        if self.from_s3:
+            s3_filesystem = s3fs.S3FileSystem()
+            movie_obj = h5py.File(s3_filesystem.open(self.raw_data_file,'rb'),'r')
+        else:
+            movie_obj = h5py.File(self.raw_data_file, "r")
 
         input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
         output_full = np.zeros([1, 512, 512, 1])
@@ -902,7 +915,6 @@ class OphysGenerator(DeepGenerator):
         movie_obj.close()
 
         return input_full, output_full
-
 
 class MovieJSONGenerator(DeepGenerator):
     "Generates data for Keras"

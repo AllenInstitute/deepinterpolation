@@ -7,3 +7,4 @@ numpy==1.16.0
 python-dateutil
 scipy==1.4.1
 tifffile
+s3fs
