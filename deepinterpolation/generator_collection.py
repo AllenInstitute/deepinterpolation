@@ -813,7 +813,7 @@ class OphysGenerator(DeepGenerator):
                 - self.start_frame
                 - self.post_frame
             )
-        elif int(raw_data.size / self.nb_probes) < self.end_frame:
+        elif self.total_frame_per_movie < self.end_frame:
             self.img_per_movie = (
                 self.total_frame_per_movie - self.start_frame - self.post_frame
             )
