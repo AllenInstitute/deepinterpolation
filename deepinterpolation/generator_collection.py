@@ -831,7 +831,15 @@ class OphysGenerator(DeepGenerator):
         self.list_samples = np.arange(
             self.start_frame, self.start_frame + self.img_per_movie
         )
-
+        
+        if "randomize" in self.json_data.keys():
+            self.randomize = self.json_data["randomize"]
+        else:
+            self.randomize = 1
+            
+        if self.randomize:
+            np.random.shuffle(self.list_samples)
+            
     def __len__(self):
         "Denotes the total number of batches"
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
