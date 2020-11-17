@@ -808,7 +808,7 @@ class OphysGenerator(DeepGenerator):
 
         if self.from_s3:
             s3_filesystem = s3fs.S3FileSystem()
-            raw_data = h5py.File(s3_filesystem.open(self.raw_data_file,'rb'),'r')
+            raw_data = h5py.File(s3_filesystem.open(self.raw_data_file,'rb'),'r')['data']
         else:
             raw_data = h5py.File(self.raw_data_file, "r")["data"]
             
