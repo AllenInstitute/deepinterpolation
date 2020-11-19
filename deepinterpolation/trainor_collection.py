@@ -334,7 +334,7 @@ class transfer_trainer(core_trainer):
             self.initialize_loss()
 
             self.initialize_optimizer()
-
+            
             if auto_compile:
                 self.compile()
 
@@ -343,3 +343,15 @@ class transfer_trainer(core_trainer):
             self.model_path,
             custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
         )
+    
+    def initialize_loss(self):
+        self.loss = lc.loss_selector(self.loss_type)
+        
+        # For transfer learning, knowing the baseline validation loss is important
+        baseline_val_loss = self.local_model.evaluate(self.local_test_generator)
+        
+        # save init losses
+        save_loss_path = os.path.join(
+            self.output_dir, self.run_uid + "_" + self.model_string + "init_val_loss.npy"
+        )
+        np.save(save_loss_path, baseline_val_loss)
