@@ -67,7 +67,7 @@ def main(argv):
         for f in files:
             os.remove(f)
 
-    python_file = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/cluster_lib/single_ophys_section_inferrence.py"
+    python_file = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/paper_generation_code/cluster_lib/single_ophys_section_inferrence.py"
 
     list_files_check = []
     for index, local_start_frame in enumerate(
