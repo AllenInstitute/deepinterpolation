@@ -1,8 +1,28 @@
 ## This is a FAQ for DeepInterpolation
 
 ## FAQ
-**Question:** I am getting error related to GPU memory allocation, for instance : "ResourceExhaustedError: OOM when allocating tensor with shape...".
-how should I deal with these?
+
+**Question:What kind of hardware/platform do you recommend to get started?**
+
+**Answer:** This will depend on many different factors. The example notebook provided in this folder (https://github.com/AllenInstitute/deepinterpolation/tree/master/examples) were tested on a 2015 MacBook Pro with 16GB of RAM but such a machine will be insufficient for any serious work. There were provided to facilitate the first few experimentations and familiarity with the code. We recommend a machine with at least 30 to 50GB of RAM and a dedicated GPU such as one listed in the method section of the publication. The fMRI and Electrophysiological DeepInterpolation models requires less memory than the two-photon imaging DeepInterpolation models. We trained our Two-photon models on a machine with 100+ GB of RAM and a single dedicated GPU. For training, it helps to have a CPU that can support 16 threads or more as data fetching from files is multi-threaded allowing to increase the bandwidth onto the GPU. Training and inference have very different requirements. We implemented inference on CPU only as we had access to many machines (100+) to parallelize the process and process sub-parts of files in parallel. You will for sure need a dedicated GPU for Training. Training speed depends on a lot of factors but with our hardware, it would take one day or more to train our DeepInterpolation models from a large collection of files.   
+
+##
+
+**Question:Can I train in the cloud?**
+
+**Answer:** We are currently experimenting with this and will report our experience. We recently had good success using Google Colab to train electrophysiological models, even with the free models. For two photon models, you will likely need to upgrade to have access to more RAM. All fMRI work was done on AWS with P2 or P3 instances (like a p2.xlarge, see https://aws.amazon.com/ec2/instance-types/p2/) depending on avaibility in your AWS area).
+
+##
+
+**Question:Do you have more example training and inference code?**
+
+**Answer:** A large number of scripts are provided here : https://github.com/AllenInstitute/deepinterpolation/tree/master/examples/paper_generation_code
+Those are the scripts we used to train and do inference for the publication, using the DeepInterpolation classes. Some of the code in this folder is related to how our cluster operates. The files in this folder : https://github.com/AllenInstitute/deepinterpolation/tree/master/examples/paper_generation_code/cluster_lib
+show how we parallelized the submission of jobs on our cluster infrastructure. You could reuse this code within your own institution but it will require adjustements as it is using pbstools, an internal library designed to work with our cluster. 
+
+##
+**Question: I am getting error related to GPU memory allocation, for instance : "ResourceExhaustedError: OOM when allocating tensor with shape...".
+how should I deal with these?**
 
 **Answer:** For Deep learning, there are 2 types of memory that are critical, the RAM memory associated with your CPU and the GPU RAM associated with your GPU unit. Filling either will yield different kind of issues. The GPU RAM is used to store the model being learned as well as input and output data in a given batch of data. The model size is driven by the computational complexity of the task while the batch size guides how well you will measure the loss gradient at each iteration. Two-photon imaging models are typically larger than Electrophysiological models as we simultaneously record from more samples, expect therefore to need both more RAM and GPU RAM for Two-photon models. 
 
