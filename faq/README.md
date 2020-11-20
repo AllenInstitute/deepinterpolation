@@ -10,7 +10,7 @@
 
 **Question: Can I train in the cloud?**
 
-**Answer:** We are currently experimenting with this and will report our experience. We recently had good success using Google Colab to train electrophysiological models, even with the free models. For two photon models, you will likely need to upgrade to have access to more RAM. All fMRI work was done on AWS with P2 or P3 instances (like a p2.xlarge, see https://aws.amazon.com/ec2/instance-types/p2/). Whether this is practical depends on avaibility in your AWS area, P2 and P3 instances have been in very high demand lately. 
+**Answer:** We are currently experimenting with this and will report our experience. We recently had good success using Google Colab to train electrophysiological models, even with the free instances with GPU. For two photon models, you will likely need to upgrade to have access to more RAM. All fMRI work was done on AWS with P2 or P3 instances (like a p2.xlarge, see https://aws.amazon.com/ec2/instance-types/p2/). Whether this is practical depends on avaibility in your AWS area, P2 and P3 instances have been in very high demand lately. 
 
 ##
 
