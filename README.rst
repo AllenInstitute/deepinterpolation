@@ -62,6 +62,7 @@ FAQ
 ========================
 See here : https://github.com/AllenInstitute/deepinterpolation/tree/master/faq
 
+Training
 ========================
 To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from a core class called 'DeepGenerator'. The 'CollectorGenerator' class allows to group generators if your dataset is distributed across many files/folder/sources. 
 This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
