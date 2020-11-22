@@ -33,7 +33,7 @@ In addition, the larger the batch size, the more GPU RAM you will need. You will
 
 **Answer:** Yes! We are working to release more quantification and help on this front. There is an example script on how to do this using DeepInterpolation classes: 
 https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_transfer_training.py
-Feel free to reach out if you are interested in working on this and have data you can share: We are looking for more diverse data to evaluate performance!
+Feel free to reach out if you are interested in working on this and have data you can share: We are looking for more diverse data to evaluate performance during the transfer!
 
 ##
 
