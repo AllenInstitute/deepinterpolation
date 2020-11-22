@@ -267,13 +267,11 @@ class transfer_trainer(core_trainer):
         self,
         generator_obj,
         test_generator_obj,
-        model_path,
         trainer_json_path,
         auto_compile=True,
     ):
 
         # self.network_obj = network_obj
-        self.model_path = model_path
         self.local_generator = generator_obj
         self.local_test_generator = test_generator_obj
 
@@ -284,6 +282,7 @@ class transfer_trainer(core_trainer):
         json_obj.set_default("apply_learning_decay", 0)
 
         json_data = json_obj.json_data
+        self.model_path = json_data["model_path"]
         self.output_dir = json_data["output_dir"]
         self.run_uid = json_data["run_uid"]
         self.model_string = json_data["model_string"]

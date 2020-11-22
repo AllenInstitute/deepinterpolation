@@ -62,6 +62,9 @@ generator_param["pre_post_omission"] = 1
 training_param["type"] = "trainer"
 training_param["name"] = "transfer_trainer"
 training_param["run_uid"] = run_uid
+
+# Change this path to any model you wish to improve
+training_param["model_path"] = r"/Users/jeromel/test/transfer_mean_absolute_error_2020_11_12_18_05_2020_11_12_18_05/2020_11_12_18_05_transfer_mean_absolute_error_2020_11_12_18_05_model.h5"
 training_param["batch_size"] = generator_test_param["batch_size"]
 training_param["steps_per_epoch"] = steps_per_epoch
 training_param[
@@ -123,11 +126,9 @@ trainer_obj = ClassLoader(path_training)
 train_generator = generator_obj.find_and_build()(path_generator)
 test_generator = generator_test_obj.find_and_build()(path_test_generator)
 
-path_to_original_model = r"/Users/jeromel/test/transfer_mean_absolute_error_2020_11_12_18_05_2020_11_12_18_05/2020_11_12_18_05_transfer_mean_absolute_error_2020_11_12_18_05_model.h5"
-
 # We build the training object.
 training_class = trainer_obj.find_and_build()(
-    train_generator, test_generator, path_to_original_model, path_training
+    train_generator, test_generator, path_training
 )
 
 # Start training. This can take very long time.
