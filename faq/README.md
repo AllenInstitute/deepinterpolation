@@ -37,6 +37,10 @@ Feel free to reach out if you are interested in working on this and have data yo
 
 ##
 
+**Question: Will the models from the Allen Institute works directly on my data?**
+
+**Answer:** Yes and No. We have heard some success directly applying our models with external data. Some other laboratories reported issues in the quality of the reconstruction. It will depend how close your recording conditions are to ours. Obviously taking our models directly and applying them is the easiest approach at the moment. We are currently doing more in depth characterization of transfer performance. It is likely the final solution we will adopt as a field is to have pre-trained reconstruction models broadly available that we fine-tune on individual consistent datasets with a minimal amount of training. 
+
 Template:
 **Q:**
 **A:**
