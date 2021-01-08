@@ -11,6 +11,7 @@ from deepinterpolation.generic import JsonLoader
 import math
 import matplotlib.pylab as plt
 from tensorflow.keras.models import load_model
+from packaging import version
 
 
 def create_decay_callback(initial_learning_rate, epochs_drop):
@@ -147,7 +148,7 @@ class core_trainer:
         else:
             callbacks_list = [checkpoint]
 
-        if not (tensorflow.__version__ == "2.3.0"):
+        if version.parse(tensorflow.__version__) <= version.parse("2.1.0"):
             callbacks_list.append(epo_end)
 
         self.callbacks_list = callbacks_list
@@ -262,13 +263,9 @@ class OnEpochEnd(tensorflow.keras.callbacks.Callback):
 
 class transfer_trainer(core_trainer):
     # This class is used to fine-tune a pre-trained model with additional data
-    
+
     def __init__(
-        self,
-        generator_obj,
-        test_generator_obj,
-        trainer_json_path,
-        auto_compile=True,
+        self, generator_obj, test_generator_obj, trainer_json_path, auto_compile=True,
     ):
 
         # self.network_obj = network_obj
@@ -333,7 +330,7 @@ class transfer_trainer(core_trainer):
             self.initialize_loss()
 
             self.initialize_optimizer()
-            
+
             if auto_compile:
                 self.compile()
 
@@ -342,15 +339,16 @@ class transfer_trainer(core_trainer):
             self.model_path,
             custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
         )
-    
+
     def initialize_loss(self):
         self.loss = lc.loss_selector(self.loss_type)
-        
+
         # For transfer learning, knowing the baseline validation loss is important
         baseline_val_loss = self.local_model.evaluate(self.local_test_generator)
-        
+
         # save init losses
         save_loss_path = os.path.join(
-            self.output_dir, self.run_uid + "_" + self.model_string + "init_val_loss.npy"
+            self.output_dir,
+            self.run_uid + "_" + self.model_string + "init_val_loss.npy",
         )
         np.save(save_loss_path, baseline_val_loss)

@@ -800,8 +800,9 @@ class OphysGenerator(DeepGenerator):
         self.batch_size = self.json_data["batch_size"]
         self.pre_frame = self.json_data["pre_frame"]
         self.post_frame = self.json_data["post_frame"]
-
+        self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.start_frame = self.json_data["start_frame"]
+        self.epoch_index = 0
 
         # This is compatible with negative frames
         self.end_frame = self.json_data["end_frame"]
@@ -864,7 +865,11 @@ class OphysGenerator(DeepGenerator):
         "Denotes the total number of batches"
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
+    def on_epoch_end(self):
+        self.epoch_index = self.epoch_index + 1
+
     def __getitem__(self, index):
+        index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
         if (index + 1) * self.batch_size > self.total_frame_per_movie:
