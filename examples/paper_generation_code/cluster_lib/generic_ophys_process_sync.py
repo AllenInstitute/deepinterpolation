@@ -155,7 +155,7 @@ def main(argv):
         dset_out = file_handle.create_dataset(
             "data",
             shape=final_shape,
-            chunks=(1, final_shape[1], final_shape[2]),
+            chunks=(1, final_shape[1], final_shape[2], 1),
             dtype="float16",
         )
 
