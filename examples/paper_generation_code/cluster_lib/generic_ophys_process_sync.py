@@ -154,8 +154,8 @@ def main(argv):
     with h5py.File(output_merged, "w") as file_handle:
         dset_out = file_handle.create_dataset(
             "data",
-            shape=final_shape,
-            chunks=(1, final_shape[1], final_shape[2], 1),
+            shape=final_shape[0:3],
+            chunks=(1, final_shape[1], final_shape[2]),
             dtype="float16",
         )
 
@@ -163,8 +163,8 @@ def main(argv):
             with h5py.File(each_file, "r") as file_handle:
                 local_shape = file_handle["data"].shape
                 dset_out[
-                    global_index_frame : global_index_frame + local_shape[0], :, :, :
-                ] = file_handle["data"][:, :, :, :]
+                    global_index_frame : global_index_frame + local_shape[0], :, :,
+                ] = file_handle["data"][:, :, :, 0]
                 global_index_frame += local_shape[0]
 
     shutil.rmtree(jobdir)
