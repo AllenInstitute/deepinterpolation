@@ -49,6 +49,9 @@ def main(argv):
     generator_param["pre_frame"] = pre_frame
     generator_param["post_frame"] = post_frame
 
+    # This is meant to allow compatibility with a generator also used in training
+    generator_param["steps_per_epoch"] = 100
+
     generator_param["batch_size"] = batch_size
     generator_param["start_frame"] = input_frames_start
     generator_param["end_frame"] = input_frames_end
