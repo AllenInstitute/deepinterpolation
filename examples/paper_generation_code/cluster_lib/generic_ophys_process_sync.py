@@ -165,7 +165,7 @@ def main(argv):
         dset_out = file_handle.create_dataset(
             "data",
             shape=final_shape,
-            chunks=(1, final_shape[1], final_shape[2]),
+            chunks=(1, final_shape[1], final_shape[2], 1),
             dtype=output_type,
         )
 
@@ -181,13 +181,13 @@ def main(argv):
             raw_out = file_handle.create_dataset(
                 "raw",
                 shape=final_shape,
-                chunks=(1, final_shape[1], final_shape[2]),
+                chunks=(1, final_shape[1], final_shape[2], 1),
                 dtype=output_type,
             )
 
             with h5py.File(h5_file, "r") as file_handle_raw:
                 for index in np.arange(start_frame, end_frame):
-                    raw_out[index, :, :, :] = file_handle_raw["data"][index, :, :, :].astype(output_type)
+                    raw_out[index, :, :, 0] = file_handle_raw["data"][index, :, :].astype(output_type)
 
     shutil.rmtree(jobdir)
 
