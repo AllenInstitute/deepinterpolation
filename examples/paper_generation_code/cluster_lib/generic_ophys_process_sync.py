@@ -23,8 +23,14 @@ def main(argv):
             "post_frame=",
             "nb_jobs=",
             "h5_file=",
+            "save_raw=",
+            "output_type=",
         ],
     )
+
+    # Default
+    save_raw = False
+    output_type = 'float16'
 
     for opt, arg in opts:
         if opt == "--output_folder":
@@ -43,6 +49,10 @@ def main(argv):
             nb_jobs = int(arg)
         if opt == "--h5_file":
             h5_file = arg
+        if opt == "--save_raw":
+            save_raw == bool(arg)
+        if opt == "--output_type":
+            output_type == arg
     try:
         os.mkdir(output_folder)
     except:
@@ -67,7 +77,7 @@ def main(argv):
         for f in files:
             os.remove(f)
 
-    python_file = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/paper_generation_code/cluster_lib/single_ophys_section_inferrence.py"
+    python_file = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/cluster_lib/single_ophys_section_inferrence.py"
 
     list_files_check = []
     for index, local_start_frame in enumerate(
@@ -154,18 +164,30 @@ def main(argv):
     with h5py.File(output_merged, "w") as file_handle:
         dset_out = file_handle.create_dataset(
             "data",
-            shape=final_shape[0:3],
+            shape=final_shape,
             chunks=(1, final_shape[1], final_shape[2]),
-            dtype="float16",
+            dtype=output_type,
         )
 
         for each_file in list_files:
             with h5py.File(each_file, "r") as file_handle:
                 local_shape = file_handle["data"].shape
                 dset_out[
-                    global_index_frame : global_index_frame + local_shape[0], :, :,
-                ] = file_handle["data"][:, :, :, 0]
+                    global_index_frame : global_index_frame + local_shape[0], :, :, :
+                ] = file_handle["data"][:, :, :, :].astype(output_type)
                 global_index_frame += local_shape[0]
+
+        if save_raw:
+            raw_out = file_handle.create_dataset(
+                "raw",
+                shape=final_shape,
+                chunks=(1, final_shape[1], final_shape[2]),
+                dtype=output_type,
+            )
+
+            with h5py.File(h5_file, "r") as file_handle_raw:
+                for index in np.arange(start_frame, end_frame):
+                    raw_out[index, :, :, :] = file_handle_raw["data"][index, :, :, :].astype(output_type)
 
     shutil.rmtree(jobdir)
 
