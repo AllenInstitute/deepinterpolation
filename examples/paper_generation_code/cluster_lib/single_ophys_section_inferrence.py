@@ -17,9 +17,13 @@ def main(argv):
             "batch_size=",
             "pre_frame=",
             "post_frame=",
-            "model_norm=",
+            "model_norm=",            
+            "save_raw=",
         ],
     )
+
+    # default 
+    save_raw = False
 
     for opt, arg in opts:
         if opt == "--movie_path":
@@ -38,6 +42,8 @@ def main(argv):
             pre_frame = int(arg)
         if opt == "--post_frame":
             post_frame = int(arg)
+        if opt == "--save_raw":
+            save_raw = bool(arg)
 
     NotDone = True
 
@@ -62,6 +68,7 @@ def main(argv):
     inferrence_param["name"] = "core_inferrence"
     inferrence_param["model_path"] = model_path
     inferrence_param["output_file"] = output_file
+    inferrence_param["save_raw"] = save_raw
 
     while NotDone:
         path_generator = output_file + ".generator.json"
