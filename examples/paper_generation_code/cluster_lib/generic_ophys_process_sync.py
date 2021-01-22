@@ -186,8 +186,7 @@ def main(argv):
             )
 
             with h5py.File(h5_file, "r") as file_handle_raw:
-                for index in np.arange(start_frame, end_frame):
-                    raw_out[index, :, :, 0] = file_handle_raw["data"][index, :, :].astype(output_type)
+                    raw_out[start_frame:end_frame, :, :, 0] = file_handle_raw["data"][start_frame:end_frame, :, :].astype(output_type)
 
     shutil.rmtree(jobdir)
 
