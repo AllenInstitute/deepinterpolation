@@ -10,6 +10,7 @@ import nibabel as nib
 from scipy.io import wavfile
 import s3fs
 
+
 class MaxRetryException(Exception):
     # This is helper class for EmGenerator
     pass
@@ -573,11 +574,15 @@ class EphysGenerator(DeepGenerator):
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
     def on_epoch_end(self):
-        self.epoch_index = self.epoch_index + 1
+        # We only increase index if steps_per_epoch is set to positive value. -1 will force the generator
+        # to not iterate at the end of each epoch
+        if self.steps_per_epoch > 0:
+            self.epoch_index = self.epoch_index + 1
 
     def __getitem__(self, index):
         # This is to ensure we are going through the entire data when steps_per_epoch<self.__len__
-        index = index + self.steps_per_epoch * self.epoch_index
+        if self.steps_per_epoch > 0:
+            index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
         if (index + 1) * self.batch_size > self.total_frame_per_movie:
@@ -784,6 +789,7 @@ class SingleTifGenerator(DeepGenerator):
 
         return input_full, output_full
 
+
 class OphysGenerator(DeepGenerator):
     "Generates data for Keras"
 
@@ -795,7 +801,7 @@ class OphysGenerator(DeepGenerator):
             self.from_s3 = self.json_data["from_s3"]
         else:
             self.from_s3 = False
-            
+
         self.raw_data_file = self.json_data["movie_path"]
         self.batch_size = self.json_data["batch_size"]
         self.pre_frame = self.json_data["pre_frame"]
@@ -813,13 +819,15 @@ class OphysGenerator(DeepGenerator):
             self.total_samples = self.json_data["total_samples"]
         else:
             self.total_samples = -1
-            
+
         if self.from_s3:
             s3_filesystem = s3fs.S3FileSystem()
-            raw_data = h5py.File(s3_filesystem.open(self.raw_data_file,'rb'),'r')['data']
+            raw_data = h5py.File(s3_filesystem.open(self.raw_data_file, "rb"), "r")[
+                "data"
+            ]
         else:
             raw_data = h5py.File(self.raw_data_file, "r")["data"]
-            
+
         self.total_frame_per_movie = int(raw_data.shape[0])
 
         if self.end_frame < 0:
@@ -848,28 +856,32 @@ class OphysGenerator(DeepGenerator):
         self.list_samples = np.arange(
             self.start_frame, self.start_frame + self.img_per_movie
         )
-        
+
         if "randomize" in self.json_data.keys():
             self.randomize = self.json_data["randomize"]
         else:
             self.randomize = 1
-            
+
         if self.randomize:
             np.random.shuffle(self.list_samples)
-        
+
         # We cut the number of samples if asked to
-        if self.total_samples>0 and self.total_samples<len(self.list_samples):
-            self.list_samples = self.list_samples[0:self.total_samples]
-            
+        if self.total_samples > 0 and self.total_samples < len(self.list_samples):
+            self.list_samples = self.list_samples[0 : self.total_samples]
+
     def __len__(self):
         "Denotes the total number of batches"
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
     def on_epoch_end(self):
-        self.epoch_index = self.epoch_index + 1
+        # We only increase index if steps_per_epoch is set to positive value. -1 will force the generator
+        # to not iterate at the end of each epoch
+        if self.steps_per_epoch > 0:
+            self.epoch_index = self.epoch_index + 1
 
     def __getitem__(self, index):
-        index = index + self.steps_per_epoch * self.epoch_index
+        if self.steps_per_epoch > 0:
+            index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
         if (index + 1) * self.batch_size > self.total_frame_per_movie:
@@ -899,7 +911,7 @@ class OphysGenerator(DeepGenerator):
 
         if self.from_s3:
             s3_filesystem = s3fs.S3FileSystem()
-            movie_obj = h5py.File(s3_filesystem.open(self.raw_data_file,'rb'),'r')
+            movie_obj = h5py.File(s3_filesystem.open(self.raw_data_file, "rb"), "r")
         else:
             movie_obj = h5py.File(self.raw_data_file, "r")
 
@@ -931,6 +943,7 @@ class OphysGenerator(DeepGenerator):
         movie_obj.close()
 
         return input_full, output_full
+
 
 class MovieJSONGenerator(DeepGenerator):
     "Generates data for Keras"
@@ -967,11 +980,16 @@ class MovieJSONGenerator(DeepGenerator):
         return int(np.ceil(float(self.nb_lims * self.img_per_movie) / self.batch_size))
 
     def on_epoch_end(self):
-        self.epoch_index = self.epoch_index + 1
+        # We only increase index if steps_per_epoch is set to positive value. -1 will force the generator
+        # to not iterate at the end of each epoch
+        if self.steps_per_epoch > 0:
+            self.epoch_index = self.epoch_index + 1
 
     def __getitem__(self, index):
         # This is to ensure we are going through the entire data when steps_per_epoch<self.__len__
-        index = index + self.steps_per_epoch * self.epoch_index
+        if self.steps_per_epoch > 0:
+            index = index + self.steps_per_epoch * self.epoch_index
+
         # Generate indexes of the batch
         if (index + 1) * self.batch_size > self.nb_lims * self.img_per_movie:
             indexes = np.arange(

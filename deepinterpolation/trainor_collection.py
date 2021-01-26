@@ -154,9 +154,13 @@ class core_trainer:
         self.callbacks_list = callbacks_list
 
     def initialize_generator(self):
-        self.epochs = self.nb_times_through_data * int(
-            np.floor(len(self.local_generator) / self.steps_per_epoch)
-        )
+        # If feeeding a stepped generator, we need to calculate the number of epochs accordingly
+        if self.steps_per_epoch > 0:
+            self.epochs = self.nb_times_through_data * int(
+                np.floor(len(self.local_generator) / self.steps_per_epoch)
+            )
+        else:
+            self.epochs = self.nb_times_through_data * int(len(self.local_generator))
 
     def initialize_network(self):
         local_size = self.local_generator.get_input_size()
@@ -196,19 +200,31 @@ class core_trainer:
     def run(self):
         # we first cache the validation data
         self.cache_validation()
-
-        self.model_train = self.local_model.fit(
-            self.local_generator,
-            validation_data=self.local_test_generator,
-            steps_per_epoch=self.steps_per_epoch,
-            epochs=self.epochs,
-            max_queue_size=32,
-            workers=self.workers,
-            shuffle=False,
-            use_multiprocessing=True,
-            callbacks=self.callbacks_list,
-            initial_epoch=0,
-        )
+        if self.steps_per_epoch > 0:
+            self.model_train = self.local_model.fit(
+                self.local_generator,
+                validation_data=self.local_test_generator,
+                steps_per_epoch=self.steps_per_epoch,
+                epochs=self.epochs,
+                max_queue_size=32,
+                workers=self.workers,
+                shuffle=False,
+                use_multiprocessing=False,
+                callbacks=self.callbacks_list,
+                initial_epoch=0,
+            )
+        else:
+            self.model_train = self.local_model.fit(
+                self.local_generator,
+                validation_data=self.local_test_generator,
+                epochs=self.epochs,
+                max_queue_size=32,
+                workers=self.workers,
+                shuffle=False,
+                use_multiprocessing=False,
+                callbacks=self.callbacks_list,
+                initial_epoch=0,
+            )
 
     def finalize(self):
         loss = self.model_train.history["loss"]
@@ -236,11 +252,19 @@ class core_trainer:
         plt.plot(loss, label="loss " + self.run_uid)
         plt.plot(val_loss, label="val_loss " + self.run_uid)
 
-        plt.xlabel(
-            "number of epochs ("
-            + str(self.batch_size * self.steps_per_epoch)
-            + " samples/epochs)"
-        )
+        if self.steps_per_epoch > 0:
+            plt.xlabel(
+                "number of epochs ("
+                + str(self.batch_size * self.steps_per_epoch)
+                + " samples/epochs)"
+            )
+        else:
+            plt.xlabel(
+                "number of epochs ("
+                + str(self.batch_size * len(self.local_generator))
+                + " samples/epochs)"
+            )
+
         plt.ylabel("training loss")
         plt.legend()
         save_hist_path = os.path.join(

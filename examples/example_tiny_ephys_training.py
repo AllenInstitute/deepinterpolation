@@ -40,7 +40,9 @@ generator_test_param["end_frame"] = 1999
 generator_test_param[
     "pre_post_omission"
 ] = 1  # Number of frame omitted before and after the predicted frame
-generator_test_param["steps_per_epoch"] = steps_per_epoch
+generator_test_param[
+    "steps_per_epoch"
+] = -1  # No step necessary for testing as epochs are not relevant. -1 deactivate it.
 
 # Those are parameters used for the main data generator
 generator_param["type"] = "generator"

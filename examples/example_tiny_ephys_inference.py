@@ -10,7 +10,9 @@ generator_param["type"] = "generator"
 generator_param["name"] = "EphysGenerator"
 generator_param["pre_post_frame"] = 30
 generator_param["pre_post_omission"] = 1
-generator_param["steps_per_epoch"] = 10
+generator_param[
+    "steps_per_epoch"
+] = -1  # No steps necessary for inference as epochs are not relevant. -1 deactivate it.
 
 generator_param["train_path"] = os.path.join(
     pathlib.Path(__file__).parent.absolute(),

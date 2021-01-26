@@ -40,7 +40,9 @@ generator_test_param["end_frame"] = 1999
 generator_test_param[
     "pre_post_omission"
 ] = 1  # Number of frame omitted before and after the predicted frame
-generator_test_param["steps_per_epoch"] = steps_per_epoch
+generator_test_param[
+    "steps_per_epoch"
+] = -1  # No step necessary for testing as epochs are not relevant. -1 deactivate it.
 
 # Those are parameters used for the main data generator
 generator_param["type"] = "generator"
@@ -64,7 +66,9 @@ training_param["name"] = "transfer_trainer"
 training_param["run_uid"] = run_uid
 
 # Change this path to any model you wish to improve
-training_param["model_path"] = r"/Users/jeromel/test/transfer_mean_absolute_error_2020_11_12_18_05_2020_11_12_18_05/2020_11_12_18_05_transfer_mean_absolute_error_2020_11_12_18_05_model.h5"
+training_param[
+    "model_path"
+] = r"/Users/jeromel/test/transfer_mean_absolute_error_2020_11_12_18_05_2020_11_12_18_05/2020_11_12_18_05_transfer_mean_absolute_error_2020_11_12_18_05_model.h5"
 training_param["batch_size"] = generator_test_param["batch_size"]
 training_param["steps_per_epoch"] = steps_per_epoch
 training_param[
@@ -83,11 +87,7 @@ training_param[
 ] = 16  # this is to enable multiple threads for data generator loading. Useful when this is slower than training
 
 training_param["model_string"] = (
-    'transfer'
-    + "_"
-    + training_param["loss"]
-    + "_"
-    + training_param["run_uid"]
+    "transfer" + "_" + training_param["loss"] + "_" + training_param["run_uid"]
 )
 
 # Where do you store ongoing training progress

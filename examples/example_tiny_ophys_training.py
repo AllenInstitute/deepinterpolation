@@ -40,7 +40,9 @@ generator_test_param["end_frame"] = 99
 generator_test_param[
     "pre_post_omission"
 ] = 1  # Number of frame omitted before and after the predicted frame
-generator_test_param["steps_per_epoch"] = steps_per_epoch
+generator_test_param[
+    "steps_per_epoch"
+] = -1  # No step necessary for testing as epochs are not relevant. -1 deactivate it.
 
 # Those are parameters used for the main data generator
 generator_param["type"] = "generator"
@@ -60,9 +62,7 @@ generator_param["pre_post_omission"] = 0
 
 # Those are parameters used for the network topology
 network_param["type"] = "network"
-network_param[
-    "name"
-] = "unet_single_1024"  # Name of network topology in the collection
+network_param["name"] = "unet_single_1024"  # Name of network topology in the collection
 
 # Those are parameters used for the training process
 training_param["type"] = "trainer"
