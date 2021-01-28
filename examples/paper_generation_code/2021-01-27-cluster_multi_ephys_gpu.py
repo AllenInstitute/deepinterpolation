@@ -4,7 +4,7 @@ from pbstools import PythonJob
 from shutil import copyfile
 import datetime
 
-python_file = r"/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/2021-01-27-multi_ephys_training.py"
+python_file = r"/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/paper_generation_code/2021-01-27-multi_ephys_training.py"
 
 now = datetime.datetime.now()
 run_uid = now.strftime("%Y_%m_%d_%H_%M")
