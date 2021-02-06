@@ -1,0 +1,51 @@
+version: 2.1
+orbs:
+  python: circleci/python@1.3.2
+
+executors:
+    py37_executor:
+        description: The official CircleCI CIMG Python Docker image.
+        docker:
+            - image: cimg/python:<< parameters.tag >>
+        parameters:
+            tag:
+                default: "3.7"
+                description: The `cimg/python` Docker image version tag.
+                type: string
+
+jobs:
+  lint:
+    executor: py37_executor
+    steps:
+      - checkout
+      - run:
+          command: |
+            pip install flake8
+            # `|| true` to force exit code 0 even if no files found
+            CHANGED_PYFILES=$(git diff --diff-filter AMR --name-only origin/master | grep '\.py' || true)
+            echo "List of changed files:"
+            echo ${CHANGED_PYFILES}
+            echo ${CHANGED_PYFILES} | xargs -r flake8 --count
+          name: Lint
+
+  py37_test:
+    executor: py37_executor
+    steps:
+      - checkout
+      - run:
+          command: |
+            pip install .
+            pip install -r test_requirements.txt
+          name: Install
+
+      - run:
+          command: |
+            python -m pytest --cov deepinterpolation --cov-report xml
+            bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
+          name: Test
+
+workflows:
+  main:
+    jobs:
+      - lint
+      - py37_test

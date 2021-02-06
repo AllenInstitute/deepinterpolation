@@ -1,3 +1,6 @@
+.. image:: https://circleci.com/gh/AllenInstitute/deepinterpolation.svg?style=svg
+    :target: https://circleci.com/gh/AllenInstitute/deepinterpolation
+
 Deep Interpolation
 ========================
 
