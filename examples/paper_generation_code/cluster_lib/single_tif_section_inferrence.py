@@ -72,24 +72,21 @@ def main(argv):
     inferrence_param["output_file"] = output_file
     inferrence_param["save_raw"] = save_raw
 
-    while NotDone:
-        path_generator = output_file + ".generator.json"
-        json_obj = JsonSaver(generator_param)
-        json_obj.save_json(path_generator)
+    path_generator = output_file + ".generator.json"
+    json_obj = JsonSaver(generator_param)
+    json_obj.save_json(path_generator)
 
-        path_infer = output_file + ".inferrence.json"
-        json_obj = JsonSaver(inferrence_param)
-        json_obj.save_json(path_infer)
+    path_infer = output_file + ".inferrence.json"
+    json_obj = JsonSaver(inferrence_param)
+    json_obj.save_json(path_infer)
 
-        generator_obj = ClassLoader(path_generator)
-        data_generator = generator_obj.find_and_build()(path_generator)
+    generator_obj = ClassLoader(path_generator)
+    data_generator = generator_obj.find_and_build()(path_generator)
 
-        inferrence_obj = ClassLoader(path_infer)
-        inferrence_class = inferrence_obj.find_and_build()(path_infer,
-                                                           data_generator)
-
-        inferrence_class.run()
-        NotDone = False
+    inferrence_obj = ClassLoader(path_infer)
+    inferrence_class = inferrence_obj.find_and_build()(path_infer,
+                                                       data_generator)
+    inferrence_class.run()
 
     # to notify process is finished
     finish_file = h5py.File(output_file + ".done", "w")
