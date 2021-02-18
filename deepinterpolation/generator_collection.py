@@ -1122,10 +1122,10 @@ class MovieJSONGenerator(DeepGenerator):
 
             movie_obj = h5py.File(motion_path, "r")
 
-            output_frame =
-            self.frame_data_location[local_lims]["frames"][local_img]
-            local_mean = self.frame_data_location[local_lims]["mean"]
-            local_std = self.frame_data_location[local_lims]["std"]
+            local_frame_data = self.frame_data_location[local_lims]
+            output_frame = local_frame_data["frames"][local_img]
+            local_mean = local_frame_data["mean"]
+            local_std = local_frame_data["std"]
 
             input_full = np.zeros(
                 [1, 512, 512, self.pre_frame + self.post_frame])
