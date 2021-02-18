@@ -36,13 +36,15 @@ class DeepGenerator(keras.utils.Sequence):
 
     def get_input_size(self):
         """
-        This function returns the input size of the generator, excluding the batching dimension
+        This function returns the input size of the 
+        generator, excluding the batching dimension
 
         Parameters:
         None
 
         Returns:
-        tuple: list of integer size of input array, excluding the batching dimension
+        tuple: list of integer size of input array,
+        excluding the batching dimension
         """
         local_obj = self.__getitem__(0)[0]
 
@@ -50,13 +52,15 @@ class DeepGenerator(keras.utils.Sequence):
 
     def get_output_size(self):
         """
-        This function returns the output size of the generator, excluding the batching dimension
+        This function returns the output size of 
+        the generator, excluding the batching dimension
 
         Parameters:
         None
 
         Returns:
-        tuple: list of integer size of output array, excluding the batching dimension
+        tuple: list of integer size of output array,
+        excluding the batching dimension
         """
         local_obj = self.__getitem__(0)[1]
 
@@ -70,7 +74,9 @@ class DeepGenerator(keras.utils.Sequence):
 
     def __get_norm_parameters__(self, idx):
         """
-        This function returns the normalization parameters of the generator. This can potentially be different for each data sample
+        This function returns the normalization parameters 
+        of the generator. This can potentially be different
+        for each data sample
 
         Parameters:
         idx index of the sample
@@ -210,8 +216,11 @@ class OnePGenerator(DeepGenerator):
 
 
 class CollectorGenerator(DeepGenerator):
-    "This class allows to create a generator of generators for the purpose of training across multiple files"
-    "All generators must have idendical batch size and input, output size but can be different length"
+    """This class allows to create a generator of generators 
+    for the purpose of training across multiple files
+    All generators must have idendical batch size and input,
+    output size but can be different length
+    """
 
     def __init__(self, generator_list):
         self.generator_list = generator_list
@@ -351,7 +360,8 @@ class FmriGenerator(DeepGenerator):
             self.epoch_index = 0
 
     def __getitem__(self, index):
-        # This is to ensure we are going through the entire data when steps_per_epoch<self.__len__
+        # This is to ensure we are going through the
+        # entire data when steps_per_epoch<self.__len__
         index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
