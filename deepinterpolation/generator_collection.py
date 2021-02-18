@@ -765,7 +765,7 @@ class SingleTifGenerator(DeepGenerator):
         # to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
-            path_tif = self.epoch_index + 1
+            self.epoch_index = self.epoch_index + 1
 
     def __getitem__(self, index):
         if self.steps_per_epoch > 0:
