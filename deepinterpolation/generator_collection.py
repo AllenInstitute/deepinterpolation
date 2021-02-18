@@ -751,8 +751,8 @@ class SingleTifGenerator(DeepGenerator):
             np.random.shuffle(self.list_samples)
 
         # We cut the number of samples if asked to
-        if self.total_samples > 0
-        and self.total_samples < len(self.list_samples):
+        if (self.total_samples > 0
+                and self.total_samples < len(self.list_samples)):
             self.list_samples = self.list_samples[0: self.total_samples]
 
     def __len__(self):
@@ -1156,5 +1156,5 @@ class MovieJSONGenerator(DeepGenerator):
             movie_obj.close()
 
             return input_full, output_full
-        except:
+        except Exception:
             print("Issues with " + str(self.lims_id))

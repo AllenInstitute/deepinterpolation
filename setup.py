@@ -12,7 +12,7 @@ with open("LICENSE") as f:
 setup(
     name="deepinterpolation",
     version="0.1.2",
-    description="""implemenent deep interpolation to 
+    description="""implemenent deep interpolation to
     denoise data by removing independent noise""",
     long_description=readme,
     author="Jerome Lecoq",
