@@ -33,12 +33,14 @@ jobs:
     steps:
       - checkout
       - run:
-          command |
+          command: |
             pip install .
             pip install -r test_requirements.txt
+          name: Install
+
       - run:
           command: |
-            python -m pytest --cov nway --cov-report xml
+            python -m pytest --cov deepinterpolation --cov-report xml
             bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
           name: Test
 

@@ -1,6 +1,10 @@
 from tensorflow.keras import backend as K
 
 
+def dummy_function(x):
+    return x * x
+
+
 def loss_selector(loss_type):
     if loss_type == "mean_squareroot_error":
         return mean_squareroot_error
