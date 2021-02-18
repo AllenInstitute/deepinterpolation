@@ -738,6 +738,7 @@ class SingleTifGenerator(DeepGenerator):
         local_data = local_data.astype("float32")
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
+        self.epoch_index = 0
 
         self.list_samples = np.arange(
             self.pre_post_frame + self.pre_post_omission + self.start_frame,
