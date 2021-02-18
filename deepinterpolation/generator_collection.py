@@ -184,12 +184,18 @@ class OnePGenerator(DeepGenerator):
         # local_raw_data = h5py.File(self.raw_data_file, 'r')['1']
 
         input_full = np.zeros(
-            [1, self.movie_size[1], self.movie_size[2], self.pre_post_frame * 2]
+            [1,
+             self.movie_size[1],
+             self.movie_size[2],
+             self.pre_post_frame * 2]
         )
-        output_full = np.zeros([1, self.movie_size[1], self.movie_size[2], 1])
+        output_full = np.zeros([1,
+                                self.movie_size[1],
+                                self.movie_size[2], 1])
 
         input_index = np.arange(
-            index_frame - self.pre_post_frame, index_frame + self.pre_post_frame + 1
+            index_frame - self.pre_post_frame,
+            index_frame + self.pre_post_frame + 1
         )
         input_index = input_index[input_index != index_frame]
 
@@ -492,14 +498,16 @@ class FmriGenerator(DeepGenerator):
         ]
         if self.single_voxel_output_single:
             output_full[0, 0, 0, 0, 0] = input_full[
-                0, self.pre_post_x, self.pre_post_y, self.pre_post_z, self.pre_post_t
+                0, self.pre_post_x, self.pre_post_y,
+                self.pre_post_z, self.pre_post_t
             ]
         else:
             output_full[0, :, :, :, 0] = input_full[0,
                                                     :, :, :, self.pre_post_t]
 
         input_full[
-            0, self.pre_post_x, self.pre_post_y, self.pre_post_z, self.pre_post_t
+            0, self.pre_post_x, self.pre_post_y,
+            self.pre_post_z, self.pre_post_t
         ] = 0
 
         if self.center_omission_size > 1:
@@ -781,7 +789,8 @@ class SingleTifGenerator(DeepGenerator):
             dtype="float32",
         )
         output_full = np.zeros(
-            [self.batch_size, self.raw_data.shape[1], self.raw_data.shape[2], 1],
+            [self.batch_size, self.raw_data.shape[1],
+             self.raw_data.shape[2], 1],
             dtype="float32",
         )
 
@@ -807,7 +816,8 @@ class SingleTifGenerator(DeepGenerator):
             dtype="float32",
         )
         output_full = np.zeros(
-            [1, self.raw_data.shape[1], self.raw_data.shape[2], 1], dtype="float32"
+            [1, self.raw_data.shape[1],
+             self.raw_data.shape[2], 1], dtype="float32"
         )
 
         input_index = np.arange(
@@ -876,9 +886,8 @@ class OphysGenerator(DeepGenerator):
 
         if self.from_s3:
             s3_filesystem = s3fs.S3FileSystem()
-            raw_data = h5py.File(s3_filesystem.open(self.raw_data_file, "rb"), "r")[
-                "data"
-            ]
+            raw_data = h5py.File(
+                s3_filesystem.open(self.raw_data_file, "rb"), "r")["data"]
         else:
             raw_data = h5py.File(self.raw_data_file, "r")["data"]
 
@@ -920,7 +929,8 @@ class OphysGenerator(DeepGenerator):
             np.random.shuffle(self.list_samples)
 
         # We cut the number of samples if asked to
-        if self.total_samples > 0 and self.total_samples < len(self.list_samples):
+        if (self.total_samples > 0
+                and self.total_samples < len(self.list_samples)):
             self.list_samples = self.list_samples[0: self.total_samples]
 
     def __len__(self):

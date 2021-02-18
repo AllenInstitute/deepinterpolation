@@ -12,7 +12,8 @@ with open("LICENSE") as f:
 setup(
     name="deepinterpolation",
     version="0.1.2",
-    description="implemenent deep interpolation to denoise data by removing independent noise",
+    description="""implemenent deep interpolation to 
+    denoise data by removing independent noise""",
     long_description=readme,
     author="Jerome Lecoq",
     author_email="jeromel@alleninstitute.org",
@@ -20,4 +21,3 @@ setup(
     license=license,
     packages=find_packages(exclude=("tests", "docs")),
 )
-
