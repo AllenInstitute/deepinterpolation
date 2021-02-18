@@ -17,7 +17,7 @@ class MaxRetryException(Exception):
 
 class DeepGenerator(keras.utils.Sequence):
     """
-    This class instantiante the basic Generator Sequence object 
+    This class instantiante the basic Generator Sequence object
     from which all Deep Interpolation generator should be generated.
 
     Parameters:
@@ -36,7 +36,7 @@ class DeepGenerator(keras.utils.Sequence):
 
     def get_input_size(self):
         """
-        This function returns the input size of the 
+        This function returns the input size of the
         generator, excluding the batching dimension
 
         Parameters:
@@ -52,7 +52,7 @@ class DeepGenerator(keras.utils.Sequence):
 
     def get_output_size(self):
         """
-        This function returns the output size of 
+        This function returns the output size of
         the generator, excluding the batching dimension
 
         Parameters:
@@ -74,7 +74,7 @@ class DeepGenerator(keras.utils.Sequence):
 
     def __get_norm_parameters__(self, idx):
         """
-        This function returns the normalization parameters 
+        This function returns the normalization parameters
         of the generator. This can potentially be different
         for each data sample
 
@@ -216,7 +216,7 @@ class OnePGenerator(DeepGenerator):
 
 
 class CollectorGenerator(DeepGenerator):
-    """This class allows to create a generator of generators 
+    """This class allows to create a generator of generators
     for the purpose of training across multiple files
     All generators must have idendical batch size and input,
     output size but can be different length
@@ -305,7 +305,8 @@ class FmriGenerator(DeepGenerator):
         middle_vol = np.round(np.array(self.data_shape) / 2).astype("int")
         range_middle = np.round(np.array(self.data_shape) / 4).astype("int")
 
-        # We take the middle of the volume and time for range estimation to avoid edge effects
+        # We take the middle of the volume
+        # and time for range estimation to avoid edge effects
         local_center_data = self.raw_data[
             middle_vol[0] - range_middle[0]: middle_vol[0] + range_middle[0],
             middle_vol[1] - range_middle[1]: middle_vol[1] + range_middle[1],
@@ -497,8 +498,6 @@ class FmriGenerator(DeepGenerator):
             output_full[0, :, :, :, 0] = input_full[0,
                                                     :, :, :, self.pre_post_t]
 
-        # input_full[0, self.pre_post_x, self.pre_post_y, self.pre_post_z, self.pre_post_t] = 0
-
         input_full[
             0, self.pre_post_x, self.pre_post_y, self.pre_post_z, self.pre_post_t
         ] = 0
@@ -572,8 +571,9 @@ class EphysGenerator(DeepGenerator):
 
         # Older reshape code, to remove when stable
         # Reshape in number of traces
-        # self.raw_data = np.reshape(self.raw_data, (self.total_frame_per_movie,
-        #                                           self.nb_probes))
+        # self.raw_data = np.reshape(self.raw_data
+        #   , (self.total_frame_per_movie,
+        #   self.nb_probes))
 
         # Reshape following probes location
         # self.raw_data = np.reshape(self.raw_data, (self.total_frame_per_movie
@@ -596,13 +596,15 @@ class EphysGenerator(DeepGenerator):
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
     def on_epoch_end(self):
-        # We only increase index if steps_per_epoch is set to positive value. -1 will force the generator
+        # We only increase index if steps_per_epoch
+        # is set to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
             self.epoch_index = self.epoch_index + 1
 
     def __getitem__(self, index):
-        # This is to ensure we are going through the entire data when steps_per_epoch<self.__len__
+        # This is to ensure we are going through
+        # the entire data when steps_per_epoch<self.__len__
         if self.steps_per_epoch > 0:
             index = index + self.steps_per_epoch * self.epoch_index
 
@@ -713,10 +715,12 @@ class SingleTifGenerator(DeepGenerator):
 
         if self.end_frame < 0:
             self.img_per_movie = (
-                self.total_frame_per_movie + 1 + self.end_frame - self.start_frame
+                self.total_frame_per_movie + 1
+                + self.end_frame - self.start_frame
             )
         elif self.total_frame_per_movie < self.end_frame:
-            self.img_per_movie = self.total_frame_per_movie + 1 - self.start_frame
+            self.img_per_movie = self.total_frame_per_movie
+            + 1 - self.start_frame
         else:
             self.img_per_movie = self.end_frame + 1 - self.start_frame
 
@@ -739,7 +743,8 @@ class SingleTifGenerator(DeepGenerator):
             np.random.shuffle(self.list_samples)
 
         # We cut the number of samples if asked to
-        if self.total_samples > 0 and self.total_samples < len(self.list_samples):
+        if self.total_samples > 0
+        and self.total_samples < len(self.list_samples):
             self.list_samples = self.list_samples[0: self.total_samples]
 
     def __len__(self):
@@ -747,7 +752,8 @@ class SingleTifGenerator(DeepGenerator):
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
     def on_epoch_end(self):
-        # We only increase index if steps_per_epoch is set to positive value. -1 will force the generator
+        # We only increase index if steps_per_epoch is set
+        # to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
             self.epoch_index = self.epoch_index + 1
@@ -922,7 +928,8 @@ class OphysGenerator(DeepGenerator):
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
     def on_epoch_end(self):
-        # We only increase index if steps_per_epoch is set to positive value. -1 will force the generator
+        # We only increase index if steps_per_epoch
+        # is set to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
             self.epoch_index = self.epoch_index + 1
@@ -1029,16 +1036,19 @@ class MovieJSONGenerator(DeepGenerator):
 
     def __len__(self):
         "Denotes the total number of batches"
-        return int(np.ceil(float(self.nb_lims * self.img_per_movie) / self.batch_size))
+        return int(np.ceil(float(self.nb_lims
+                                 * self.img_per_movie) / self.batch_size))
 
     def on_epoch_end(self):
-        # We only increase index if steps_per_epoch is set to positive value. -1 will force the generator
+        # We only increase index if steps_per_epoch
+        # is set to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
             self.epoch_index = self.epoch_index + 1
 
     def __getitem__(self, index):
-        # This is to ensure we are going through the entire data when steps_per_epoch<self.__len__
+        # This is to ensure we are going through
+        # the entire data when steps_per_epoch<self.__len__
         if self.steps_per_epoch > 0:
             index = index + self.steps_per_epoch * self.epoch_index
 
@@ -1102,7 +1112,8 @@ class MovieJSONGenerator(DeepGenerator):
 
             movie_obj = h5py.File(motion_path, "r")
 
-            output_frame = self.frame_data_location[local_lims]["frames"][local_img]
+            output_frame =
+            self.frame_data_location[local_lims]["frames"][local_img]
             local_mean = self.frame_data_location[local_lims]["mean"]
             local_std = self.frame_data_location[local_lims]["std"]
 
@@ -1110,7 +1121,8 @@ class MovieJSONGenerator(DeepGenerator):
                 [1, 512, 512, self.pre_frame + self.post_frame])
             output_full = np.zeros([1, 512, 512, 1])
             input_index = np.arange(
-                output_frame - self.pre_frame, output_frame + self.post_frame + 1,
+                output_frame - self.pre_frame, output_frame
+                + self.post_frame + 1,
             )
             input_index = input_index[input_index != output_frame]
 
