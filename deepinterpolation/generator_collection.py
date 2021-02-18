@@ -738,6 +738,7 @@ class SingleTifGenerator(DeepGenerator):
         local_data = local_data.astype("float32")
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
+        self.epoch_index = 0
 
         self.list_samples = np.arange(
             self.pre_post_frame + self.pre_post_omission + self.start_frame,
@@ -764,7 +765,7 @@ class SingleTifGenerator(DeepGenerator):
         # to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
-            self.epoch_index = self.epoch_index + 1
+            path_tif = self.epoch_index + 1
 
     def __getitem__(self, index):
         if self.steps_per_epoch > 0:
