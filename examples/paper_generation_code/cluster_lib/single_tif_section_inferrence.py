@@ -53,10 +53,11 @@ def main(argv):
 
     generator_param["type"] = "generator"
     generator_param["name"] = "SingleTifGenerator"
-    generator_param["pre_post_frame"] = pre_frame
+    generator_param["pre_post_frame"] = pre_post_frame
     generator_param["pre_post_omission"] = pre_post_omission
 
-    # This is meant to allow compatibility with a generator also used in training
+    # This is meant to allow compatibility with a generator
+    # also used in training
     generator_param["steps_per_epoch"] = 100
 
     generator_param["batch_size"] = batch_size
@@ -84,7 +85,8 @@ def main(argv):
         data_generator = generator_obj.find_and_build()(path_generator)
 
         inferrence_obj = ClassLoader(path_infer)
-        inferrence_class = inferrence_obj.find_and_build()(path_infer, data_generator)
+        inferrence_class = inferrence_obj.find_and_build()(path_infer,
+                                                           data_generator)
 
         inferrence_class.run()
         NotDone = False
