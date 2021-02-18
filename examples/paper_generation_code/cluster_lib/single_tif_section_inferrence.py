@@ -46,8 +46,6 @@ def main(argv):
         if opt == "--save_raw":
             save_raw = bool(arg)
 
-    NotDone = True
-
     generator_param = {}
     inferrence_param = {}
 
