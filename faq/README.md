@@ -41,6 +41,10 @@ Feel free to reach out if you are interested in working on this and have data yo
 
 **Answer:** Yes and No. We have heard about some successes directly applying our models with external data. Some other laboratories reported issues in the quality of the reconstruction. It will depend how close your recording conditions are to ours. Obviously taking our models directly and applying them is the easiest approach at the moment. We are currently doing more in depth characterization of transfer performance. It is likely the final solution we will adopt as a field is to have pre-trained reconstruction models broadly available that we fine-tune on individual consistent datasets with a minimal amount of training. 
 
+**Question:How can I contribute to the codebase?**
+
+**Answer:** Feel free to do so! Just make a PR request and we will review it shortly. We are building up a continuous integration system with a battery of tests to facilitate this effort.  
+
 Template:
 **Q:**
 **A:**
