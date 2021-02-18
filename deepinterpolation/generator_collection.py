@@ -7,7 +7,6 @@ import tensorflow.keras as keras
 from deepinterpolation.generic import JsonLoader
 import tifffile
 import nibabel as nib
-from scipy.io import wavfile
 import s3fs
 
 
@@ -18,7 +17,8 @@ class MaxRetryException(Exception):
 
 class DeepGenerator(keras.utils.Sequence):
     """
-    This class instantiante the basic Generator Sequence object from which all Deep Interpolation generator should be generated.
+    This class instantiante the basic Generator Sequence object 
+    from which all Deep Interpolation generator should be generated.
 
     Parameters:
     json_path: a path to the json file used to parametrize the generator
@@ -114,7 +114,8 @@ class OnePGenerator(DeepGenerator):
 
         if self.end_frame < 0:
             self.img_per_movie = (
-                int(self.raw_data.shape[0]) + 1 + self.end_frame - self.start_frame
+                int(self.raw_data.shape[0]) + 1 +
+                self.end_frame - self.start_frame
             )
         else:
             self.img_per_movie = self.end_frame + 1 - self.start_frame
@@ -148,7 +149,8 @@ class OnePGenerator(DeepGenerator):
         if (index + 1) * self.batch_size > self.img_per_movie:
             indexes = np.arange(index * self.batch_size, self.img_per_movie)
         else:
-            indexes = np.arange(index * self.batch_size, (index + 1) * self.batch_size)
+            indexes = np.arange(index * self.batch_size,
+                                (index + 1) * self.batch_size)
 
         shuffle_indexes = self.list_samples[indexes]
         input_full = np.zeros(
@@ -201,7 +203,8 @@ class OnePGenerator(DeepGenerator):
             data_img_output.astype("float") - self.local_mean
         ) / self.local_std
         input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0], : img_out_shape[1], 0] = data_img_output
+        output_full[0, : img_out_shape[0],
+                    : img_out_shape[1], 0] = data_img_output
 
         return input_full, output_full
 
@@ -232,7 +235,8 @@ class CollectorGenerator(DeepGenerator):
         for generator_index, local_generator in enumerate(self.generator_list):
             local_len = local_generator.__len__()
             for index in np.arange(0, local_len):
-                self.list_samples.append({"generator": generator_index, "index": index})
+                self.list_samples.append(
+                    {"generator": generator_index, "index": index})
                 current_count = current_count + 1
 
     def shuffle_indexes(self):
@@ -246,7 +250,8 @@ class CollectorGenerator(DeepGenerator):
         local_generator = self.generator_list[local_index["generator"]]
         local_generator_index = local_index["index"]
 
-        input_full, output_full = local_generator.__getitem__(local_generator_index)
+        input_full, output_full = local_generator.__getitem__(
+            local_generator_index)
 
         return input_full, output_full
 
@@ -293,10 +298,10 @@ class FmriGenerator(DeepGenerator):
 
         # We take the middle of the volume and time for range estimation to avoid edge effects
         local_center_data = self.raw_data[
-            middle_vol[0] - range_middle[0] : middle_vol[0] + range_middle[0],
-            middle_vol[1] - range_middle[1] : middle_vol[1] + range_middle[1],
-            middle_vol[2] - range_middle[2] : middle_vol[2] + range_middle[2],
-            middle_vol[3] - range_middle[3] : middle_vol[3] + range_middle[3],
+            middle_vol[0] - range_middle[0]: middle_vol[0] + range_middle[0],
+            middle_vol[1] - range_middle[1]: middle_vol[1] + range_middle[1],
+            middle_vol[2] - range_middle[2]: middle_vol[2] + range_middle[2],
+            middle_vol[3] - range_middle[3]: middle_vol[3] + range_middle[3],
         ]
         self.local_mean = np.mean(local_center_data.flatten())
         self.local_std = np.std(local_center_data.flatten())
@@ -350,7 +355,8 @@ class FmriGenerator(DeepGenerator):
         index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
-        indexes = np.arange(index * self.batch_size, (index + 1) * self.batch_size)
+        indexes = np.arange(index * self.batch_size,
+                            (index + 1) * self.batch_size)
 
         input_full = np.zeros(
             [
@@ -364,7 +370,8 @@ class FmriGenerator(DeepGenerator):
         )
 
         if self.single_voxel_output_single:
-            output_full = np.zeros([self.batch_size, 1, 1, 1, 1], dtype="float32")
+            output_full = np.zeros(
+                [self.batch_size, 1, 1, 1, 1], dtype="float32")
         else:
             output_full = np.zeros(
                 [
@@ -384,7 +391,8 @@ class FmriGenerator(DeepGenerator):
             local_z = self.z_list[sample_index]
             local_t = self.t_list[sample_index]
 
-            input, output = self.__data_generation__(local_x, local_y, local_z, local_t)
+            input, output = self.__data_generation__(
+                local_x, local_y, local_z, local_t)
 
             input_full[batch_index, :, :, :, :] = input
             output_full[batch_index, :, :, :, :] = output
@@ -461,22 +469,23 @@ class FmriGenerator(DeepGenerator):
 
         input_full[
             0,
-            (self.pre_post_x - pre_x) : (self.pre_post_x + post_x + 1),
-            (self.pre_post_y - pre_y) : (self.pre_post_y + post_y + 1),
-            (self.pre_post_z - pre_z) : (self.pre_post_z + post_z + 1),
-            (self.pre_post_t - pre_t) : (self.pre_post_t + post_t + 1),
+            (self.pre_post_x - pre_x): (self.pre_post_x + post_x + 1),
+            (self.pre_post_y - pre_y): (self.pre_post_y + post_y + 1),
+            (self.pre_post_z - pre_z): (self.pre_post_z + post_z + 1),
+            (self.pre_post_t - pre_t): (self.pre_post_t + post_t + 1),
         ] = self.raw_data[
-            (local_x - pre_x) : (local_x + post_x + 1),
-            (local_y - pre_y) : (local_y + post_y + 1),
-            (local_z - pre_z) : (local_z + post_z + 1),
-            (local_t - pre_t) : (local_t + post_t + 1),
+            (local_x - pre_x): (local_x + post_x + 1),
+            (local_y - pre_y): (local_y + post_y + 1),
+            (local_z - pre_z): (local_z + post_z + 1),
+            (local_t - pre_t): (local_t + post_t + 1),
         ]
         if self.single_voxel_output_single:
             output_full[0, 0, 0, 0, 0] = input_full[
                 0, self.pre_post_x, self.pre_post_y, self.pre_post_z, self.pre_post_t
             ]
         else:
-            output_full[0, :, :, :, 0] = input_full[0, :, :, :, self.pre_post_t]
+            output_full[0, :, :, :, 0] = input_full[0,
+                                                    :, :, :, self.pre_post_t]
 
         # input_full[0, self.pre_post_x, self.pre_post_y, self.pre_post_z, self.pre_post_t] = 0
 
@@ -488,14 +497,16 @@ class FmriGenerator(DeepGenerator):
             local_hole = self.center_omission_size - 1
             input_full[
                 0,
-                (self.pre_post_x - local_hole) : (self.pre_post_x + local_hole),
-                (self.pre_post_y - local_hole) : (self.pre_post_y + local_hole),
-                (self.pre_post_z - local_hole) : (self.pre_post_z + local_hole),
+                (self.pre_post_x - local_hole): (self.pre_post_x + local_hole),
+                (self.pre_post_y - local_hole): (self.pre_post_y + local_hole),
+                (self.pre_post_z - local_hole): (self.pre_post_z + local_hole),
                 self.pre_post_t,
             ] = 0
 
-        input_full = (input_full.astype("float32") - self.local_mean) / self.local_std
-        output_full = (output_full.astype("float32") - self.local_mean) / self.local_std
+        input_full = (input_full.astype("float32") -
+                      self.local_mean) / self.local_std
+        output_full = (output_full.astype("float32") -
+                       self.local_mean) / self.local_std
 
         return input_full, output_full
 
@@ -546,7 +557,8 @@ class EphysGenerator(DeepGenerator):
 
         shape = (self.total_frame_per_movie, int(self.nb_probes / 2), 2)
         # load it with the correct shape
-        self.raw_data = np.memmap(self.raw_data_file, dtype="int16", shape=shape)
+        self.raw_data = np.memmap(
+            self.raw_data_file, dtype="int16", shape=shape)
 
         # Older reshape code, to remove when stable
         # Reshape in number of traces
@@ -588,7 +600,8 @@ class EphysGenerator(DeepGenerator):
         if (index + 1) * self.batch_size > self.total_frame_per_movie:
             indexes = np.arange(index * self.batch_size, self.img_per_movie)
         else:
-            indexes = np.arange(index * self.batch_size, (index + 1) * self.batch_size)
+            indexes = np.arange(index * self.batch_size,
+                                (index + 1) * self.batch_size)
 
         shuffle_indexes = self.list_samples[indexes]
         input_full = np.zeros(
@@ -623,16 +636,16 @@ class EphysGenerator(DeepGenerator):
         input_index = input_index[input_index != index_frame]
 
         for index_padding in np.arange(self.pre_post_omission + 1):
-            input_index = input_index[input_index != index_frame - index_padding]
-            input_index = input_index[input_index != index_frame + index_padding]
+            input_index = input_index[input_index !=
+                                      index_frame - index_padding]
+            input_index = input_index[input_index !=
+                                      index_frame + index_padding]
 
         data_img_input = self.raw_data[input_index, :, :]
         data_img_output = self.raw_data[index_frame, :, :]
 
         data_img_input = np.swapaxes(data_img_input, 1, 2)
         data_img_input = np.swapaxes(data_img_input, 0, 2)
-
-        img_in_shape = data_img_input.shape
 
         data_img_input = (
             data_img_input.astype("float32") - self.local_mean
@@ -717,7 +730,7 @@ class SingleTifGenerator(DeepGenerator):
 
         # We cut the number of samples if asked to
         if self.total_samples > 0 and self.total_samples < len(self.list_samples):
-            self.list_samples = self.list_samples[0 : self.total_samples]
+            self.list_samples = self.list_samples[0: self.total_samples]
 
     def __len__(self):
         "Denotes the total number of batches"
@@ -737,7 +750,8 @@ class SingleTifGenerator(DeepGenerator):
         if (index + 1) * self.batch_size > self.total_frame_per_movie:
             indexes = np.arange(index * self.batch_size, self.img_per_movie)
         else:
-            indexes = np.arange(index * self.batch_size, (index + 1) * self.batch_size)
+            indexes = np.arange(index * self.batch_size,
+                                (index + 1) * self.batch_size)
 
         shuffle_indexes = self.list_samples[indexes]
 
@@ -787,8 +801,10 @@ class SingleTifGenerator(DeepGenerator):
         input_index = input_index[input_index != index_frame]
 
         for index_padding in np.arange(self.pre_post_omission + 1):
-            input_index = input_index[input_index != index_frame - index_padding]
-            input_index = input_index[input_index != index_frame + index_padding]
+            input_index = input_index[input_index !=
+                                      index_frame - index_padding]
+            input_index = input_index[input_index !=
+                                      index_frame + index_padding]
 
         data_img_input = self.raw_data[input_index, :, :]
         data_img_output = self.raw_data[index_frame, :, :]
@@ -806,7 +822,8 @@ class SingleTifGenerator(DeepGenerator):
             data_img_output.astype("float32") - self.local_mean
         ) / self.local_std
         input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0], : img_out_shape[1], 0] = data_img_output
+        output_full[0, : img_out_shape[0],
+                    : img_out_shape[1], 0] = data_img_output
 
         return input_full, output_full
 
@@ -888,7 +905,7 @@ class OphysGenerator(DeepGenerator):
 
         # We cut the number of samples if asked to
         if self.total_samples > 0 and self.total_samples < len(self.list_samples):
-            self.list_samples = self.list_samples[0 : self.total_samples]
+            self.list_samples = self.list_samples[0: self.total_samples]
 
     def __len__(self):
         "Denotes the total number of batches"
@@ -908,7 +925,8 @@ class OphysGenerator(DeepGenerator):
         if (index + 1) * self.batch_size > self.total_frame_per_movie:
             indexes = np.arange(index * self.batch_size, self.img_per_movie)
         else:
-            indexes = np.arange(index * self.batch_size, (index + 1) * self.batch_size)
+            indexes = np.arange(index * self.batch_size,
+                                (index + 1) * self.batch_size)
 
         shuffle_indexes = self.list_samples[indexes]
 
@@ -932,7 +950,8 @@ class OphysGenerator(DeepGenerator):
 
         if self.from_s3:
             s3_filesystem = s3fs.S3FileSystem()
-            movie_obj = h5py.File(s3_filesystem.open(self.raw_data_file, "rb"), "r")
+            movie_obj = h5py.File(s3_filesystem.open(
+                self.raw_data_file, "rb"), "r")
         else:
             movie_obj = h5py.File(self.raw_data_file, "r")
 
@@ -960,7 +979,8 @@ class OphysGenerator(DeepGenerator):
         ) / self.local_std
 
         input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0], : img_out_shape[1], 0] = data_img_output
+        output_full[0, : img_out_shape[0],
+                    : img_out_shape[1], 0] = data_img_output
         movie_obj.close()
 
         return input_full, output_full
@@ -994,7 +1014,8 @@ class MovieJSONGenerator(DeepGenerator):
 
         self.lims_id = list(self.frame_data_location.keys())
         self.nb_lims = len(self.lims_id)
-        self.img_per_movie = len(self.frame_data_location[self.lims_id[0]]["frames"])
+        self.img_per_movie = len(
+            self.frame_data_location[self.lims_id[0]]["frames"])
 
     def __len__(self):
         "Denotes the total number of batches"
@@ -1017,7 +1038,8 @@ class MovieJSONGenerator(DeepGenerator):
                 index * self.batch_size, self.nb_lims * self.img_per_movie
             )
         else:
-            indexes = np.arange(index * self.batch_size, (index + 1) * self.batch_size)
+            indexes = np.arange(index * self.batch_size,
+                                (index + 1) * self.batch_size)
 
         input_full = np.zeros(
             [self.batch_size, 512, 512, self.pre_frame + self.post_frame]
@@ -1052,7 +1074,8 @@ class MovieJSONGenerator(DeepGenerator):
         # X : (n_samples, *dim, n_channels)
         "Generates data containing batch_size samples"
         try:
-            local_lims, local_img = self.get_lims_id_sample_from_index(index_frame)
+            local_lims, local_img = self.get_lims_id_sample_from_index(
+                index_frame)
 
             # Initialization
             local_path = self.frame_data_location[local_lims]["path"]
@@ -1073,7 +1096,8 @@ class MovieJSONGenerator(DeepGenerator):
             local_mean = self.frame_data_location[local_lims]["mean"]
             local_std = self.frame_data_location[local_lims]["std"]
 
-            input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
+            input_full = np.zeros(
+                [1, 512, 512, self.pre_frame + self.post_frame])
             output_full = np.zeros([1, 512, 512, 1])
             input_index = np.arange(
                 output_frame - self.pre_frame, output_frame + self.post_frame + 1,
@@ -1089,13 +1113,16 @@ class MovieJSONGenerator(DeepGenerator):
             img_in_shape = data_img_input.shape
             img_out_shape = data_img_output.shape
 
-            data_img_input = (data_img_input.astype("float") - local_mean) / local_std
-            data_img_output = (data_img_output.astype("float") - local_mean) / local_std
-            input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-            output_full[0, : img_out_shape[0], : img_out_shape[1], 0] = data_img_output
+            data_img_input = (data_img_input.astype(
+                "float") - local_mean) / local_std
+            data_img_output = (data_img_output.astype(
+                "float") - local_mean) / local_std
+            input_full[0, : img_in_shape[0],
+                       : img_in_shape[1], :] = data_img_input
+            output_full[0, : img_out_shape[0],
+                        : img_out_shape[1], 0] = data_img_output
             movie_obj.close()
 
             return input_full, output_full
         except:
-            print("Issues with " + str(self.lims_id) + " at " + str(output_frame_index))
-
+            print("Issues with " + str(self.lims_id))
