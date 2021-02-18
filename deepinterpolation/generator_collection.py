@@ -608,7 +608,11 @@ class EphysGenerator(DeepGenerator):
         # is set to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
-            self.epoch_index = self.epoch_index + 1
+            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+                self.epoch_index = self.epoch_index + 1
+            else:
+                # if we reach the end of the data, we roll over
+                self.epoch_index = 0
 
     def __getitem__(self, index):
         # This is to ensure we are going through
@@ -765,18 +769,19 @@ class SingleTifGenerator(DeepGenerator):
         # to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
-            self.epoch_index = self.epoch_index + 1
+            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+                self.epoch_index = self.epoch_index + 1
+            else:
+                # if we reach the end of the data, we roll over
+                self.epoch_index = 0
 
     def __getitem__(self, index):
         if self.steps_per_epoch > 0:
             index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
-        if (index + 1) * self.batch_size > self.total_frame_per_movie:
-            indexes = np.arange(index * self.batch_size, self.img_per_movie)
-        else:
-            indexes = np.arange(index * self.batch_size,
-                                (index + 1) * self.batch_size)
+        indexes = np.arange(index * self.batch_size,
+                            (index + 1) * self.batch_size)
 
         shuffle_indexes = self.list_samples[indexes]
 
