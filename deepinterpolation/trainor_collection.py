@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import tensorflow
-import tensorflow.keras as keras
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
