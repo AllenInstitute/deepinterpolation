@@ -91,7 +91,8 @@ class core_trainer:
         if self.nb_gpus > 1:
             mirrored_strategy = tensorflow.distribute.MirroredStrategy()
             with mirrored_strategy.scope():
-                self.initialize_network()
+                if auto_compile:
+                    self.initialize_network()
 
                 self.initialize_callbacks()
 
