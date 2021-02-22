@@ -1,9 +1,9 @@
 tensorflow==2.2.2
 nibabel
-h5py
+h5py==2.10.0
 matplotlib
 numpy
 python-dateutil
-scipy
+scipy==1.4.1
 tifffile
 s3fs
