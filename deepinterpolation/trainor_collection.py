@@ -91,7 +91,8 @@ class core_trainer:
         if self.nb_gpus > 1:
             mirrored_strategy = tensorflow.distribute.MirroredStrategy()
             with mirrored_strategy.scope():
-                self.initialize_network()
+                if auto_compile:
+                    self.initialize_network()
 
                 self.initialize_callbacks()
 
@@ -364,7 +365,8 @@ class transfer_trainer(core_trainer):
         if self.nb_gpus > 1:
             mirrored_strategy = tensorflow.distribute.MirroredStrategy()
             with mirrored_strategy.scope():
-                self.initialize_network()
+                if auto_compile:
+                    self.initialize_network()
 
                 self.initialize_callbacks()
 
@@ -400,7 +402,5 @@ class transfer_trainer(core_trainer):
 
     def initialize_network(self):
         self.local_model = load_model(
-            self.model_path,
-            custom_objects={"annealed_loss":
-                            lc.loss_selector("annealed_loss")},
+            self.model_path
         )
