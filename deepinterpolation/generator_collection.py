@@ -898,8 +898,8 @@ class MultiContinuousTifGenerator(DeepGenerator):
             input_index = input_index[input_index !=
                                       index_frame + index_padding]
 
-        data_img_input = self.self.get_raw_frames_from_list(input_index)
-        data_img_output = self.self.get_raw_frames_from_list(index_frame)
+        data_img_input = self.get_raw_frames_from_list(input_index)
+        data_img_output = self.get_raw_frames_from_list(index_frame)
 
         data_img_input = np.swapaxes(data_img_input, 1, 2)
         data_img_input = np.swapaxes(data_img_input, 0, 2)
