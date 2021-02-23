@@ -75,6 +75,11 @@ class core_trainer:
         else:
             self.use_multiprocessing = True
 
+        if "caching_validation" in json_data.keys():
+            self.caching_validation = json_data["caching_validation"]
+        else:
+            self.caching_validation = True
+
         self.output_model_file_path = os.path.join(
             self.output_dir,
             self.run_uid + "_" + self.model_string + "_model.h5"
@@ -222,7 +227,9 @@ class core_trainer:
 
     def run(self):
         # we first cache the validation data
-        self.cache_validation()
+        if self.caching_validation:
+            self.cache_validation()
+
         if self.steps_per_epoch > 0:
             self.model_train = self.local_model.fit(
                 self.local_generator,
@@ -359,6 +366,11 @@ class transfer_trainer(core_trainer):
             self.workers = json_data["nb_workers"]
         else:
             self.workers = 16
+
+        if "caching_validation" in json_data.keys():
+            self.caching_validation = json_data["caching_validation"]
+        else:
+            self.caching_validation = True
 
         if "use_multiprocessing" in json_data.keys():
             self.use_multiprocessing = json_data["use_multiprocessing"]
