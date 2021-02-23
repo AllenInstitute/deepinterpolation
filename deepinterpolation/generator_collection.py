@@ -109,8 +109,15 @@ class OnePGenerator(DeepGenerator):
         super().__init__(json_path)
 
         self.raw_data_file = self.json_data["train_path"]
-        self.pre_post_frame = self.json_data["pre_post_frame"]
-
+        
+        # For backward compatibility
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+        
         self.start_frame = self.json_data["start_frame"]
 
         # This is compatible with negative frames
@@ -135,8 +142,8 @@ class OnePGenerator(DeepGenerator):
         average_nb_samples = 50
 
         self.list_samples = np.arange(
-            self.pre_post_frame + self.start_frame,
-            self.start_frame + self.img_per_movie - self.pre_post_frame,
+            self.pre_frame + self.start_frame,
+            self.start_frame + self.img_per_movie - self.post_frame,
         )
 
         np.random.shuffle(self.list_samples)
@@ -165,7 +172,7 @@ class OnePGenerator(DeepGenerator):
                 self.batch_size,
                 self.movie_size[1],
                 self.movie_size[2],
-                self.pre_post_frame * 2,
+                self.pre_frame + self.post_frame,
             ]
         )
         output_full = np.zeros(
@@ -188,15 +195,15 @@ class OnePGenerator(DeepGenerator):
             [1,
              self.movie_size[1],
              self.movie_size[2],
-             self.pre_post_frame * 2]
+             self.pre_frame + self.post_frame]
         )
         output_full = np.zeros([1,
                                 self.movie_size[1],
                                 self.movie_size[2], 1])
 
         input_index = np.arange(
-            index_frame - self.pre_post_frame,
-            index_frame + self.pre_post_frame + 1
+            index_frame - self.pre_frame,
+            index_frame + self.post_frame + 1
         )
         input_index = input_index[input_index != index_frame]
 
@@ -538,7 +545,14 @@ class EphysGenerator(DeepGenerator):
 
         self.raw_data_file = self.json_data["train_path"]
         self.batch_size = self.json_data["batch_size"]
-        self.pre_post_frame = self.json_data["pre_post_frame"]
+        
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+            
         self.pre_post_omission = self.json_data["pre_post_omission"]
         self.start_frame = self.json_data["start_frame"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
@@ -556,14 +570,14 @@ class EphysGenerator(DeepGenerator):
                 + 1
                 + self.end_frame
                 - self.start_frame
-                - self.pre_post_frame
+                - self.post_frame
                 - self.pre_post_omission
             )
         elif int(self.raw_data.size / self.nb_probes) < self.end_frame:
             self.img_per_movie = (
                 int(self.raw_data.size / self.nb_probes)
                 - self.start_frame
-                - self.pre_post_frame
+                - self.post_frame
                 - self.pre_post_omission
             )
         else:
@@ -630,7 +644,7 @@ class EphysGenerator(DeepGenerator):
 
         shuffle_indexes = self.list_samples[indexes]
         input_full = np.zeros(
-            [self.batch_size, int(self.nb_probes), 2, self.pre_post_frame * 2],
+            [self.batch_size, int(self.nb_probes), 2, self.pre_frame + self.post_frame],
             dtype="float32",
         )
         output_full = np.zeros(
@@ -650,13 +664,13 @@ class EphysGenerator(DeepGenerator):
 
         # We reorganize to follow true geometry of probe for convolution
         input_full = np.zeros(
-            [1, self.nb_probes, 2, self.pre_post_frame * 2], dtype="float32"
+            [1, self.nb_probes, 2, self.pre_frame + self.post_frame], dtype="float32"
         )
         output_full = np.zeros([1, self.nb_probes, 2, 1], dtype="float32")
 
         input_index = np.arange(
-            index_frame - self.pre_post_frame - self.pre_post_omission,
-            index_frame + self.pre_post_frame + self.pre_post_omission + 1,
+            index_frame - self.pre_frame - self.pre_post_omission,
+            index_frame + self.post_frame + self.pre_post_omission + 1,
         )
         input_index = input_index[input_index != index_frame]
 
@@ -702,10 +716,22 @@ class MultiContinuousTifGenerator(DeepGenerator):
         "Initialization"
         super().__init__(json_path)
 
-        self.raw_data_folder = self.json_data["multi_tif_folder"]
+        # For backward compatibility
+        if "train_path" in self.json_data.keys():
+            self.raw_data_file = self.json_data["train_path"]
+        else:
+            self.raw_data_file = self.json_data["movie_path"]
+        
         self.batch_size = self.json_data["batch_size"]
-        self.pre_post_frame = self.json_data["pre_post_frame"]
-        self.pre_post_omission = self.json_data["pre_post_omission"]
+        self.pre_frame = self.json_data["pre_frame"]
+        self.post_frame = self.json_data["post_frame"]
+        
+        # For backward compatibility
+        if "pre_post_omission" in self.json_data.keys():
+            self.pre_post_omission = self.json_data["pre_post_omission"]
+        else:
+            self.pre_post_omission = 0
+            
         self.start_frame = self.json_data["start_frame"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
 
@@ -763,10 +789,10 @@ class MultiContinuousTifGenerator(DeepGenerator):
         self.epoch_index = 0
 
         self.list_samples = np.arange(
-            self.pre_post_frame + self.pre_post_omission + self.start_frame,
+            self.pre_frame + self.pre_post_omission + self.start_frame,
             self.start_frame
             + self.img_per_movie
-            - self.pre_post_frame
+            - self.post_frame
             - self.pre_post_omission,
         )
 
@@ -822,7 +848,7 @@ class MultiContinuousTifGenerator(DeepGenerator):
                 self.batch_size,
                 self.list_raw_data[0].shape[1],
                 self.list_raw_data[0].shape[2],
-                self.pre_post_frame * 2,
+                self.pre_frame + self.post_frame,
             ],
             dtype="float32",
         )
@@ -849,7 +875,7 @@ class MultiContinuousTifGenerator(DeepGenerator):
                 1,
                 self.list_raw_data[0].shape[1],
                 self.list_raw_data[0].shape[2],
-                self.pre_post_frame * 2,
+                self.pre_frame + self.post_frame
             ],
             dtype="float32",
         )
@@ -859,8 +885,8 @@ class MultiContinuousTifGenerator(DeepGenerator):
         )
 
         input_index = np.arange(
-            index_frame - self.pre_post_frame - self.pre_post_omission,
-            index_frame + self.pre_post_frame + self.pre_post_omission + 1,
+            index_frame - self.pre_frame - self.pre_post_omission,
+            index_frame + self.post_frame + self.pre_post_omission + 1,
         )
         input_index = input_index[input_index != index_frame]
 
@@ -901,7 +927,14 @@ class SingleTifGenerator(DeepGenerator):
 
         self.raw_data_file = self.json_data["train_path"]
         self.batch_size = self.json_data["batch_size"]
-        self.pre_post_frame = self.json_data["pre_post_frame"]
+        
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+
         self.pre_post_omission = self.json_data["pre_post_omission"]
         self.start_frame = self.json_data["start_frame"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
@@ -946,10 +979,10 @@ class SingleTifGenerator(DeepGenerator):
         self.epoch_index = 0
 
         self.list_samples = np.arange(
-            self.pre_post_frame + self.pre_post_omission + self.start_frame,
+            self.pre_frame + self.pre_post_omission + self.start_frame,
             self.start_frame
             + self.img_per_movie
-            - self.pre_post_frame
+            - self.post_frame
             - self.pre_post_omission,
         )
 
@@ -991,7 +1024,7 @@ class SingleTifGenerator(DeepGenerator):
                 self.batch_size,
                 self.raw_data.shape[1],
                 self.raw_data.shape[2],
-                self.pre_post_frame * 2,
+                self.pre_frame + self.post_frame,
             ],
             dtype="float32",
         )
@@ -1018,7 +1051,7 @@ class SingleTifGenerator(DeepGenerator):
                 1,
                 self.raw_data.shape[1],
                 self.raw_data.shape[2],
-                self.pre_post_frame * 2,
+                self.pre_frame + self.post_frame,
             ],
             dtype="float32",
         )
@@ -1028,8 +1061,8 @@ class SingleTifGenerator(DeepGenerator):
         )
 
         input_index = np.arange(
-            index_frame - self.pre_post_frame - self.pre_post_omission,
-            index_frame + self.pre_post_frame + self.pre_post_omission + 1,
+            index_frame - self.pre_frame - self.pre_post_omission,
+            index_frame + self.post_frame + self.pre_post_omission + 1,
         )
         input_index = input_index[input_index != index_frame]
 
@@ -1072,11 +1105,23 @@ class OphysGenerator(DeepGenerator):
             self.from_s3 = self.json_data["from_s3"]
         else:
             self.from_s3 = False
-
-        self.raw_data_file = self.json_data["movie_path"]
+        
+        # For backward compatibility
+        if "train_path" in self.json_data.keys():
+            self.raw_data_file = self.json_data["train_path"]
+        else:
+            self.raw_data_file = self.json_data["movie_path"]
+            
         self.batch_size = self.json_data["batch_size"]
-        self.pre_frame = self.json_data["pre_frame"]
-        self.post_frame = self.json_data["post_frame"]
+
+        # For backward compatibility
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+            
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.start_frame = self.json_data["start_frame"]
         self.epoch_index = 0
@@ -1232,16 +1277,13 @@ class MovieJSONGenerator(DeepGenerator):
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.epoch_index = 0
 
-        # The following is to be backward compatible
-        if "pre_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_frame"]
-        else:
+        # For backward compatibility
+        if "pre_post_frame" in self.json_data.keys():
             self.pre_frame = self.json_data["pre_post_frame"]
-
-        if "post_frame" in self.json_data.keys():
-            self.post_frame = self.json_data["post_frame"]
-        else:
             self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
 
         with open(self.sample_data_path_json, "r") as json_handle:
             self.frame_data_location = json.load(json_handle)
