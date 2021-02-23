@@ -861,15 +861,15 @@ class MultiContinuousTifGenerator(DeepGenerator):
         input_full = np.zeros(
             [
                 self.batch_size,
-                self.list_raw_data[0].shape[1],
-                self.list_raw_data[0].shape[2],
+                512, #self.list_raw_data[0].shape[1],
+                512, #self.list_raw_data[0].shape[2],
                 self.pre_frame + self.post_frame,
             ],
             dtype="float32",
         )
         output_full = np.zeros(
-            [self.batch_size, self.list_raw_data[0].shape[1],
-             self.list_raw_data[0].shape[2], 1],
+            [self.batch_size, 512, #self.list_raw_data[0].shape[1],
+             512, 1], #self.list_raw_data[0].shape[2], 1],
             dtype="float32",
         )
 
@@ -888,15 +888,15 @@ class MultiContinuousTifGenerator(DeepGenerator):
         input_full = np.zeros(
             [
                 1,
-                self.list_raw_data[0].shape[1],
-                self.list_raw_data[0].shape[2],
+                512, #self.list_raw_data[0].shape[1],
+                512, #self.list_raw_data[0].shape[2],
                 self.pre_frame + self.post_frame
             ],
             dtype="float32",
         )
         output_full = np.zeros(
-            [1, self.list_raw_data[0].shape[1],
-             self.list_raw_data[0].shape[2], 1], dtype="float32"
+            [1, 512, #self.list_raw_data[0].shape[1],
+             512, 1], dtype="float32" #self.list_raw_data[0].shape[2]
         )
 
         input_index = np.arange(
