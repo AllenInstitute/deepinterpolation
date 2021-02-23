@@ -552,7 +552,7 @@ class EphysGenerator(DeepGenerator):
         else:
             self.pre_frame = self.json_data["pre_frame"]
             self.post_frame = self.json_data["post_frame"]
-            
+
         self.pre_post_omission = self.json_data["pre_post_omission"]
         self.start_frame = self.json_data["start_frame"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
