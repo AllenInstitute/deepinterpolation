@@ -229,7 +229,7 @@ class core_trainer:
         # we first cache the validation data
         if self.caching_validation:
             self.cache_validation()
-            
+
         if self.steps_per_epoch > 0:
             self.model_train = self.local_model.fit(
                 self.local_generator,
