@@ -64,6 +64,12 @@ class core_trainer:
         self.nb_gpus = json_data["nb_gpus"]
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
+
+        if "use_multiprocessing" in json_data.keys():
+            self.use_multiprocessing = json_data["use_multiprocessing"]
+        else:
+            self.use_multiprocessing = True
+
         self.output_model_file_path = os.path.join(
             self.output_dir,
             self.run_uid + "_" + self.model_string + "_model.h5"
@@ -220,7 +226,7 @@ class core_trainer:
                 max_queue_size=32,
                 workers=self.workers,
                 shuffle=False,
-                use_multiprocessing=True,
+                use_multiprocessing=self.use_multiprocessing,
                 callbacks=self.callbacks_list,
                 initial_epoch=0,
             )
@@ -347,6 +353,11 @@ class transfer_trainer(core_trainer):
             self.workers = json_data["nb_workers"]
         else:
             self.workers = 16
+
+        if "use_multiprocessing" in json_data.keys():
+            self.use_multiprocessing = json_data["use_multiprocessing"]
+        else:
+            self.use_multiprocessing = True
 
         # These parameters are related to setting up the
         # behavior of learning rates
