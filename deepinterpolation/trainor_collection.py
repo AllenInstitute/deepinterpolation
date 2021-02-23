@@ -401,17 +401,77 @@ class transfer_trainer(core_trainer):
 
         # For transfer learning, knowing the
         # baseline validation loss is important
-        baseline_val_loss = self.local_model.evaluate(
+        self.baseline_val_loss = self.local_model.evaluate(
             self.local_test_generator)
+
+    def initialize_network(self):
+        self.local_model = load_model(
+            self.model_path
+        )
+
+    def finalize(self):
+        draw_plot = True
 
         # save init losses
         save_loss_path = os.path.join(
             self.output_dir,
             self.run_uid + "_" + self.model_string + "init_val_loss.npy",
         )
-        np.save(save_loss_path, baseline_val_loss)
+        np.save(save_loss_path, self.baseline_val_loss)
 
-    def initialize_network(self):
-        self.local_model = load_model(
-            self.model_path
-        )
+        if "loss" in self.model_train.history.keys():
+            loss = self.model_train.history["loss"]
+            # save losses
+
+            save_loss_path = os.path.join(
+                self.output_dir,
+                self.run_uid + "_" + self.model_string + "_loss.npy"
+            )
+            np.save(save_loss_path, loss)
+        else:
+            print("Loss data was not present")
+            draw_plot = False
+
+        if "val_loss" in self.model_train.history.keys():
+            val_loss = self.model_train.history["val_loss"]
+
+            save_val_loss_path = os.path.join(
+                self.output_dir,
+                self.run_uid + "_" + self.model_string + "_val_loss.npy"
+            )
+            np.save(save_val_loss_path, val_loss)
+        else:
+            print("Val. loss data was not present")
+            draw_plot = False
+
+        # save model
+        self.local_model.save(self.output_model_file_path)
+
+        print("Saved model to disk")
+
+        if draw_plot:
+            h = plt.figure()
+            plt.plot(loss, label="loss " + self.run_uid)
+            plt.plot(val_loss, label="val_loss " + self.run_uid)
+
+            if self.steps_per_epoch > 0:
+                plt.xlabel(
+                    "number of epochs ("
+                    + str(self.batch_size * self.steps_per_epoch)
+                    + " samples/epochs)"
+                )
+            else:
+                plt.xlabel(
+                    "number of epochs ("
+                    + str(self.batch_size * len(self.local_generator))
+                    + " samples/epochs)"
+                )
+
+            plt.ylabel("training loss")
+            plt.legend()
+            save_hist_path = os.path.join(
+                self.output_dir,
+                self.run_uid + "_" + self.model_string + "_losses.png"
+            )
+            plt.savefig(save_hist_path)
+            plt.close(h)
