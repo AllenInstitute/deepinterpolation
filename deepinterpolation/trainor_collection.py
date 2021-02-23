@@ -64,12 +64,12 @@ class core_trainer:
         self.nb_gpus = json_data["nb_gpus"]
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
-        
-        if checkpoints_dir in json_data.keys():
+
+        if 'checkpoints_dir' in json_data.keys():
             self.checkpoints_dir = json_data["checkpoints_dir"]
         else:
             self.checkpoints_dir = self.output_dir
-            
+
         if "use_multiprocessing" in json_data.keys():
             self.use_multiprocessing = json_data["use_multiprocessing"]
         else:
@@ -137,7 +137,7 @@ class core_trainer:
         self.loss = lc.loss_selector(self.loss_type)
 
     def initialize_callbacks(self):
-        
+
         checkpoint_path = os.path.join(
             self.checkpoints_dir,
             self.run_uid + "_" + self.model_string +
@@ -364,12 +364,12 @@ class transfer_trainer(core_trainer):
             self.use_multiprocessing = json_data["use_multiprocessing"]
         else:
             self.use_multiprocessing = True
-        
-        if checkpoints_dir in json_data.keys():
+
+        if 'checkpoints_dir' in json_data.keys():
             self.checkpoints_dir = json_data["checkpoints_dir"]
         else:
             self.checkpoints_dir = self.output_dir
-            
+
         # These parameters are related to setting up the
         # behavior of learning rates
         self.apply_learning_decay = json_data["apply_learning_decay"]
