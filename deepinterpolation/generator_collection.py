@@ -10,6 +10,7 @@ import nibabel as nib
 import s3fs
 import glob
 
+
 class MaxRetryException(Exception):
     # This is helper class for EmGenerator
     pass
@@ -754,8 +755,9 @@ class MultiContinuousTifGenerator(DeepGenerator):
 
         average_nb_samples = 1000
 
-        local_data = self.get_raw_frames_from_list(np.arange(0,average_nb_samples)).flatten()
-        local_data = local_data.astype("float32")
+        local_data = self.get_raw_frames_from_list(
+            np.arange(0, average_nb_samples))
+        local_data = local_data.astype("float32").flatten()
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
         self.epoch_index = 0
