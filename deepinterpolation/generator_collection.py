@@ -861,8 +861,8 @@ class MultiContinuousTifGenerator(DeepGenerator):
         input_full = np.zeros(
             [
                 self.batch_size,
-                512, #self.list_raw_data[0].shape[1],
-                512, #self.list_raw_data[0].shape[2],
+                512,
+                512,
                 self.pre_frame + self.post_frame,
             ],
             dtype="float32",
