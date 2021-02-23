@@ -418,7 +418,7 @@ class transfer_trainer(core_trainer):
             self.run_uid + "_" + self.model_string + "init_val_loss.npy",
         )
         np.save(save_loss_path, self.baseline_val_loss)
-        
+
         if "loss" in self.model_train.history.keys():
             loss = self.model_train.history["loss"]
             # save losses
@@ -475,4 +475,3 @@ class transfer_trainer(core_trainer):
             )
             plt.savefig(save_hist_path)
             plt.close(h)
-
