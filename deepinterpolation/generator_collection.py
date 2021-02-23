@@ -753,7 +753,7 @@ class MultiContinuousTifGenerator(DeepGenerator):
         self.end_frame = self.json_data["end_frame"]
 
         self.list_tif_files = glob.glob(
-            os.path.join(self.raw_data_folder, '*.tif'))
+            os.path.join(self.raw_data_file, '*.tif'))
 
         # We sort the list to make sure we are alphabetical
         self.list_tif_files.sort()
