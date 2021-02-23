@@ -821,17 +821,30 @@ class MultiContinuousTifGenerator(DeepGenerator):
                 # if we reach the end of the data, we roll over
                 self.epoch_index = 0
 
-    def get_raw_frames_from_list(self, frame_indexes):
-        data_img_input = np.zeros([len(frame_indexes),
-                                   self.list_raw_data[0].shape[1],
-                                   self.list_raw_data[0].shape[2]])
+    def get_list_frame_and_index(self, frame_index):
+        list_index = np.where((self.list_bounds-frame_index) <= 0)[0][-1]
+        start_index = self.list_bounds[list_index]
+        index_in_movie = frame_index-start_index
 
-        for index, indiv_frame in enumerate(frame_indexes):
-            list_index = np.where((self.list_bounds-indiv_frame) <= 0)[0][-1]
-            start_index = self.list_bounds[list_index]
-            data_img_input[index, :,
-                           :] = self.list_raw_data[list_index][
-                               indiv_frame-start_index, :, :]
+        return list_index, index_in_movie
+
+    def get_raw_frames_from_list(self, frame_indexes):
+        if np.size(frame_indexes) == 1:
+            list_index, index_in_movie = self.get_list_frame_and_index(
+                frame_indexes)
+            data_img_input = self.list_raw_data[list_index][
+                index_in_movie, :, :]
+        else:
+            data_img_input = np.zeros([len(frame_indexes),
+                                       self.list_raw_data[0].shape[1],
+                                       self.list_raw_data[0].shape[2]])
+
+            for index, indiv_frame in enumerate(frame_indexes):
+                list_index, index_in_movie = self.get_list_frame_and_index(
+                    indiv_frame)
+
+                data_img_input[index, :, :] = self.list_raw_data[list_index][
+                    index_in_movie, :, :]
 
         return data_img_input
 
