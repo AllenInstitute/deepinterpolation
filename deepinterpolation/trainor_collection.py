@@ -475,3 +475,4 @@ class transfer_trainer(core_trainer):
             )
             plt.savefig(save_hist_path)
             plt.close(h)
+            
