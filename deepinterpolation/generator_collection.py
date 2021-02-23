@@ -117,7 +117,7 @@ class OnePGenerator(DeepGenerator):
         else:
             self.pre_frame = self.json_data["pre_frame"]
             self.post_frame = self.json_data["post_frame"]
-        
+            
         self.start_frame = self.json_data["start_frame"]
 
         # This is compatible with negative frames
@@ -644,7 +644,8 @@ class EphysGenerator(DeepGenerator):
 
         shuffle_indexes = self.list_samples[indexes]
         input_full = np.zeros(
-            [self.batch_size, int(self.nb_probes), 2, self.pre_frame + self.post_frame],
+            [self.batch_size, int(self.nb_probes), 2, 
+             self.pre_frame + self.post_frame],
             dtype="float32",
         )
         output_full = np.zeros(
@@ -664,7 +665,8 @@ class EphysGenerator(DeepGenerator):
 
         # We reorganize to follow true geometry of probe for convolution
         input_full = np.zeros(
-            [1, self.nb_probes, 2, self.pre_frame + self.post_frame], dtype="float32"
+            [1, self.nb_probes, 2, 
+             self.pre_frame + self.post_frame], dtype="float32"
         )
         output_full = np.zeros([1, self.nb_probes, 2, 1], dtype="float32")
 
@@ -721,7 +723,7 @@ class MultiContinuousTifGenerator(DeepGenerator):
             self.raw_data_file = self.json_data["train_path"]
         else:
             self.raw_data_file = self.json_data["movie_path"]
-        
+            
         self.batch_size = self.json_data["batch_size"]
         self.pre_frame = self.json_data["pre_frame"]
         self.post_frame = self.json_data["post_frame"]
@@ -934,11 +936,11 @@ class SingleTifGenerator(DeepGenerator):
         else:
             self.pre_frame = self.json_data["pre_frame"]
             self.post_frame = self.json_data["post_frame"]
-
+            
         self.pre_post_omission = self.json_data["pre_post_omission"]
         self.start_frame = self.json_data["start_frame"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
-
+        
         if "randomize" in self.json_data.keys():
             self.randomize = self.json_data["randomize"]
         else:
@@ -1105,13 +1107,13 @@ class OphysGenerator(DeepGenerator):
             self.from_s3 = self.json_data["from_s3"]
         else:
             self.from_s3 = False
-        
+            
         # For backward compatibility
         if "train_path" in self.json_data.keys():
             self.raw_data_file = self.json_data["train_path"]
         else:
             self.raw_data_file = self.json_data["movie_path"]
-            
+
         self.batch_size = self.json_data["batch_size"]
 
         # For backward compatibility
@@ -1121,7 +1123,7 @@ class OphysGenerator(DeepGenerator):
         else:
             self.pre_frame = self.json_data["pre_frame"]
             self.post_frame = self.json_data["post_frame"]
-            
+
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.start_frame = self.json_data["start_frame"]
         self.epoch_index = 0
