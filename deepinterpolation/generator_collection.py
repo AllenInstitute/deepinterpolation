@@ -835,9 +835,9 @@ class MultiContinuousTifGenerator(DeepGenerator):
             data_img_input = self.list_raw_data[list_index][
                 index_in_movie, :, :]
         else:
-            data_img_input = np.zeros([len(frame_indexes),
-                                            self.list_raw_data[0].shape[1],
-                                            self.list_raw_data[0].shape[2]])
+            data_img_input = np.zeros([len(frame_indexes), 
+                                       self.list_raw_data[0].shape[1], 
+                                       self.list_raw_data[0].shape[2]])
 
             for index, indiv_frame in enumerate(frame_indexes):
                 list_index, index_in_movie = self.get_list_frame_and_index(
@@ -845,7 +845,7 @@ class MultiContinuousTifGenerator(DeepGenerator):
 
                 data_img_input[index, :,
                             :] = self.list_raw_data[list_index][
-                                                    index_in_movie, :, :]
+                                index_in_movie, :, :]
 
         return data_img_input
 
