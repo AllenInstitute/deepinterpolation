@@ -65,6 +65,11 @@ class core_trainer:
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
 
+        if 'checkpoints_dir' in json_data.keys():
+            self.checkpoints_dir = json_data["checkpoints_dir"]
+        else:
+            self.checkpoints_dir = self.output_dir
+
         if "use_multiprocessing" in json_data.keys():
             self.use_multiprocessing = json_data["use_multiprocessing"]
         else:
@@ -132,8 +137,9 @@ class core_trainer:
         self.loss = lc.loss_selector(self.loss_type)
 
     def initialize_callbacks(self):
+
         checkpoint_path = os.path.join(
-            self.output_dir,
+            self.checkpoints_dir,
             self.run_uid + "_" + self.model_string +
             "-{epoch:04d}-{val_loss:.4f}.h5",
         )
@@ -251,7 +257,7 @@ class core_trainer:
             # save losses
 
             save_loss_path = os.path.join(
-                self.output_dir,
+                self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "_loss.npy"
             )
             np.save(save_loss_path, loss)
@@ -263,7 +269,7 @@ class core_trainer:
             val_loss = self.model_train.history["val_loss"]
 
             save_val_loss_path = os.path.join(
-                self.output_dir,
+                self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "_val_loss.npy"
             )
             np.save(save_val_loss_path, val_loss)
@@ -297,7 +303,7 @@ class core_trainer:
             plt.ylabel("training loss")
             plt.legend()
             save_hist_path = os.path.join(
-                self.output_dir,
+                self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "_losses.png"
             )
             plt.savefig(save_hist_path)
@@ -359,6 +365,11 @@ class transfer_trainer(core_trainer):
         else:
             self.use_multiprocessing = True
 
+        if 'checkpoints_dir' in json_data.keys():
+            self.checkpoints_dir = json_data["checkpoints_dir"]
+        else:
+            self.checkpoints_dir = self.output_dir
+
         # These parameters are related to setting up the
         # behavior of learning rates
         self.apply_learning_decay = json_data["apply_learning_decay"]
@@ -414,7 +425,7 @@ class transfer_trainer(core_trainer):
 
         # save init losses
         save_loss_path = os.path.join(
-            self.output_dir,
+            self.checkpoints_dir,
             self.run_uid + "_" + self.model_string + "init_val_loss.npy",
         )
         np.save(save_loss_path, self.baseline_val_loss)
@@ -424,7 +435,7 @@ class transfer_trainer(core_trainer):
             # save losses
 
             save_loss_path = os.path.join(
-                self.output_dir,
+                self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "_loss.npy"
             )
             np.save(save_loss_path, loss)
@@ -436,7 +447,7 @@ class transfer_trainer(core_trainer):
             val_loss = self.model_train.history["val_loss"]
 
             save_val_loss_path = os.path.join(
-                self.output_dir,
+                self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "_val_loss.npy"
             )
             np.save(save_val_loss_path, val_loss)
@@ -470,7 +481,7 @@ class transfer_trainer(core_trainer):
             plt.ylabel("training loss")
             plt.legend()
             save_hist_path = os.path.join(
-                self.output_dir,
+                self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "_losses.png"
             )
             plt.savefig(save_hist_path)
