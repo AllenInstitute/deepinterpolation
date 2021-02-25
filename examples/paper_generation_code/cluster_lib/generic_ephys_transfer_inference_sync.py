@@ -102,13 +102,13 @@ def main(argv):
     PythonJob(
         python_file,
         python_executable = (r"/allen/programs/braintv/workgroups/nc-ophys/" +
-                            r"Jeromel/conda/tf20-env/bin/python"),
-        conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" + 
+                             r"Jeromel/conda/tf20-env/bin/python"),
+        conda_env = (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" +
                     r"conda/tf20-env"),
         jobname= 'fine_tuning_ephys',
-        python_args= arg_to_pass[0] + ' > ' + output_terminal,
+        python_args = arg_to_pass[0] + ' > ' + output_terminal,
         **job_settings
-    ).run(dryrun=False)
+    ).run(dryrun = False)
 
     # We wait for the jobs to complete
     stay_in_loop = True
@@ -190,13 +190,13 @@ def main(argv):
         PythonJob(
             python_file,
             python_executable = (r"/home/jeromel/.conda/envs/" +
-                               r"deep_work2/bin/python"),
-            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/" +
+                                 r"deep_work2/bin/python"),
+            conda_env =(r"/allen/programs/braintv/workgroups/nc-ophys/" +
                        r"Jeromel/conda/tf20-env"),
-            jobname="ephys_inferrence",
-            python_args=arg_to_pass[0],
+            jobname = "ephys_inferrence",
+            python_args = arg_to_pass[0],
             **job_settings
-        ).run(dryrun=False)
+        ).run(dryrun = False)
 
     # We wait for the jobs to complete
     stay_in_loop = True
@@ -232,9 +232,9 @@ def main(argv):
     with h5py.File(output_merged, "w") as file_handle:
         dset_out = file_handle.create_dataset(
             "data",
-            shape=final_shape,
-            chunks=(1, final_shape[1], final_shape[2], final_shape[3]),
-            dtype="float16",
+            shape = final_shape,
+            chunks = (1, final_shape[1], final_shape[2], final_shape[3]),
+            dtype = "float16",
         )
 
         for each_file in list_files:
