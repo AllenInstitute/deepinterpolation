@@ -22,11 +22,11 @@ def main(argv):
             "batch_size=",
             "pre_post_frame=",
             "pre_post_omission=",
-            "loss=",      
+            "loss=",
         ],
     )
 
-    # default 
+    # default
     train_frame_start = 20000
     train_frame_end = -1
     train_total_samples = 10000000
@@ -82,7 +82,7 @@ def main(argv):
     generator_param["pre_post_frame"] = pre_post_frame
     generator_param["train_path"] = movie_path
     generator_param["batch_size"] = batch_size  # 100
-    generator_param["start_frame"] = train_frame_start # 20000
+    generator_param["start_frame"] = train_frame_start  # 20000
     generator_param["end_frame"] = train_frame_end  # -1
     generator_param["pre_post_omission"] = pre_post_omission  # 1
     generator_param["randomize"] = 1

@@ -1,6 +1,5 @@
 import h5py
 import os
-
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # model will be trained on GPU 1
 import keras
@@ -32,7 +31,6 @@ def main(argv):
             "model_file=",
             "batch_size=",
             "pre_post_frame=",
-            "model_norm=",
             "pre_post_omission=",
         ],
     )

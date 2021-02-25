@@ -30,6 +30,7 @@ def main(argv):
             model_file = arg
         if opt == "--dat_file":
             dat_file = arg
+
     try:
         os.mkdir(output_folder)
     except Exception:
@@ -249,4 +250,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
