@@ -121,7 +121,7 @@ def main(argv):
     training_param["initial_learning_rate"] = 0.0001
     training_param["epochs_drop"] = 1000
     training_param["loss"] = loss
-    training_param["model_string"] = network_param["name"] + \
+    training_param["model_string"] = 'transfer_train_' + \
         "_" + training_param["loss"]
 
     training_param["output_dir"] = output_path
