@@ -559,7 +559,7 @@ class EphysGenerator(DeepGenerator):
 
         # This is used to limit the total number of samples
         # -1 means to take all and is the default fall back
-        
+
         if "total_samples" in self.json_data.keys():
             self.total_samples = self.json_data["total_samples"]
         else:

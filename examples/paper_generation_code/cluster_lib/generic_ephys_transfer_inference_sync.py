@@ -1,7 +1,8 @@
 import os
 import sys
 from pbstools import PythonJob
-import sys, getopt
+import sys
+import getopt
 import numpy as np
 import glob
 import h5py
@@ -31,7 +32,7 @@ def main(argv):
             dat_file = arg
     try:
         os.mkdir(output_folder)
-    except:
+    except Exception:
         print("Folder already created")
 
     # We fist fine-tune the model
@@ -40,17 +41,16 @@ def main(argv):
 
     now = datetime.datetime.now()
     run_uid = now.strftime("%Y_%m_%d_%H_%M")
-    output_terminal = os.path.join(output_folder, 
-                                   run_uid+'_running_terminal.txt')
+    output_terminal = os.path.join(output_folder,
+                                    run_uid+'_running_terminal.txt')
 
-    
     nb_probes = 384
     raw_data = np.memmap(dat_file, dtype="int16")
     img_per_movie = int(raw_data.size / nb_probes)
     pre_post_frame = 30
     batch_size = 100
     nb_jobs = 100
-    training_samples = 100000 # 10000000
+    training_samples = 100000  # 10000000
     pre_post_omission = 1
     start_frame = pre_post_omission + pre_post_frame
     end_frame = img_per_movie - pre_post_frame - pre_post_omission - 1
@@ -68,7 +68,7 @@ def main(argv):
                     'email': 'jeromel@alleninstitute.org',
                     'email_options': 'a'
                     })
-            
+
     arg_to_pass = [
         "--movie_path "
         + dat_file
@@ -97,12 +97,12 @@ def main(argv):
         + " --loss "
         + 'mean_squared_error'
         ]
-]
+    ]
     PythonJob(
         python_file,
         python_executable= (r"/allen/programs/braintv/workgroups/nc-ophys/" +
                             r"Jeromel/conda/tf20-env/bin/python"),  
-        conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/"+
+        conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" +
                     r"conda/tf20-env"),  
         jobname= 'fine_tuning_ephys',
         python_args= arg_to_pass[0]+' > '+output_terminal,
@@ -138,9 +138,9 @@ def main(argv):
         for f in files:
             os.remove(f)
 
-    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/"+
-                   r"deepinterpolation/examples/cluster_lib/"+
-                   r"single_ephys_section_inferrence.py")
+    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
+                    r"deepinterpolation/examples/cluster_lib/" +
+                    r"single_ephys_section_inferrence.py")
 
     list_files_check = []
     for index, local_start_frame in enumerate(
@@ -148,7 +148,7 @@ def main(argv):
     ):
         local_path = os.path.join(jobdir, "movie_" + str(index) + ".hdf5")
         local_end_frame = np.min([end_frame, 
-                                  local_start_frame + block_size - 1])
+                                    local_start_frame + block_size - 1])
         job_settings = {
             "queue": "braintv",
             "mem": "180g",
@@ -210,7 +210,7 @@ def main(argv):
 
     # We merge the files
     output_merged = os.path.join(output_folder, 
-                                 "movie_" + os.path.basename(model_file))
+                                    "movie_" + os.path.basename(model_file))
 
     list_files = glob.glob(os.path.join(jobdir, "*.hdf5"))
     list_files = sorted(
