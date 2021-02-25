@@ -3,6 +3,7 @@ from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
 import getopt
 import numpy as np
+import sys
 
 
 def main(argv):
@@ -158,3 +159,7 @@ def main(argv):
     training_class.run()
 
     training_class.finalize()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
