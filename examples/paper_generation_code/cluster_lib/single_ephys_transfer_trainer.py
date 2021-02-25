@@ -115,10 +115,10 @@ def main(argv):
     training_param["period_save"] = 25
     training_param["nb_gpus"] = 1
     training_param["nb_times_through_data"] = 1
-    training_param["learning_rate"] = 0.0001
+    training_param["learning_rate"] = 0.0005
     training_param["apply_learning_decay"] = 1
-    training_param["initial_learning_rate"] = 0.0001
-    training_param["epochs_drop"] = 1000
+    training_param["initial_learning_rate"] = 0.0005
+    training_param["epochs_drop"] = 300
     training_param["loss"] = loss
     training_param["model_string"] = 'transfer_train_' + \
         "_" + training_param["loss"]
