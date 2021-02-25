@@ -1,23 +1,13 @@
 import h5py
 import os
+import numpy as np
+import sys
+import getopt
+from deepinterpolation.generic import JsonSaver, ClassLoader
+
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # model will be trained on GPU 1
-import keras
-from matplotlib import pyplot as plt
-import numpy as np
-import gzip
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
-from keras.models import Model
-from keras.optimizers import RMSprop
-import h5py
-from keras.models import load_model
-import sys, getopt
-import time
-from keras import backend as K
-import os
-from deepinterpolation.generic import JsonSaver, ClassLoader
-import datetime
 
 
 def main(argv):
@@ -32,7 +22,6 @@ def main(argv):
             "model_file=",
             "batch_size=",
             "pre_post_frame=",
-            "model_norm=",
             "pre_post_omission=",
         ],
     )
@@ -55,14 +44,6 @@ def main(argv):
         if opt == "--pre_post_omission":
             pre_post_omission = int(arg)
 
-    model = load_model(model_path)
-
-    frame_start = input_frames_start
-    frame_end = input_frames_end
-
-    NotDone = True
-    trial = 0
-
     generator_param = {}
     inferrence_param = {}
 
@@ -82,23 +63,22 @@ def main(argv):
     inferrence_param["model_path"] = model_path
     inferrence_param["output_file"] = output_file
 
-    while NotDone:
-        path_generator = output_file + ".generator.json"
-        json_obj = JsonSaver(generator_param)
-        json_obj.save_json(path_generator)
+    path_generator = output_file + ".generator.json"
+    json_obj = JsonSaver(generator_param)
+    json_obj.save_json(path_generator)
 
-        path_infer = output_file + ".inferrence.json"
-        json_obj = JsonSaver(inferrence_param)
-        json_obj.save_json(path_infer)
+    path_infer = output_file + ".inferrence.json"
+    json_obj = JsonSaver(inferrence_param)
+    json_obj.save_json(path_infer)
 
-        generator_obj = ClassLoader(path_generator)
-        data_generator = generator_obj.find_and_build()(path_generator)
+    generator_obj = ClassLoader(path_generator)
+    data_generator = generator_obj.find_and_build()(path_generator)
 
-        inferrence_obj = ClassLoader(path_infer)
-        inferrence_class = inferrence_obj.find_and_build()(path_infer, data_generator)
+    inferrence_obj = ClassLoader(path_infer)
+    inferrence_class = inferrence_obj.find_and_build()(path_infer,
+                                                       data_generator)
 
-        inferrence_class.run()
-        NotDone = False
+    inferrence_class.run()
 
     # to notify process is finished
     finish_file = h5py.File(output_file + ".done", "w")
@@ -107,4 +87,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
