@@ -158,3 +158,6 @@ def main(argv):
     training_class.run()
 
     training_class.finalize()
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
