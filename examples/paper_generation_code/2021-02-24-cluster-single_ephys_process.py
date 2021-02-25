@@ -8,7 +8,7 @@ python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
                r"cluster_lib/generic_ephys_transfer_inference_sync.py")
 
 output_folder = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
-                 r"Neuropixels_Data/simulated_ground_truth/deep_interp")
+                 r"Neuropixels_Data/simulated_ground_truth/deep_interp2")
 
 model_file = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
               r"Neuropixels_Data/neuropixels_10_sessions/" +
