@@ -30,7 +30,7 @@ except Exception:
 output_terminal = os.path.join(jobdir, run_uid + "_running_terminal.txt")
 script_basename = os.path.basename(__file__)
 copyfile(
-    os.path.realpath(__file__), os.path.join(jobdir, 
+    os.path.realpath(__file__), os.path.join(jobdir,
                                              run_uid + "_" + script_basename)
 )
 

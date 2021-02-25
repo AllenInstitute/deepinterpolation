@@ -27,16 +27,16 @@ def main(argv):
     )
     
       # default 
-    train_frame_start=20000
-    train_frame_end=-1
-    train_total_samples=10000000
-    val_frame_start=0
-    val_frame_end=19999
-    val_total_samples=-1
-    batch_size=100
-    pre_post_frame=30
-    pre_post_omission=1
-    loss='mean_squared_error'
+    train_frame_start = 20000
+    train_frame_end = -1
+    train_total_samples = 10000000
+    val_frame_start = 0
+    val_frame_end = 19999
+    val_total_samples = -1
+    batch_size = 100
+    pre_post_frame = 30
+    pre_post_omission = 1
+    loss = 'mean_squared_error'
     
     for opt, arg in opts:
         if opt == "--movie_path":
