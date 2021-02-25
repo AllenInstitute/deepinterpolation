@@ -38,7 +38,9 @@ def main(argv):
 
     # We fist fine-tune the model
 
-    python_file = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/cluster_lib/single_ephys_transfer_trainer.py"
+    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
+                   r"deepinterpolation/examples/cluster_lib/" +
+                   r"single_ephys_transfer_trainer.py")
 
     now = datetime.datetime.now()
     run_uid = now.strftime("%Y_%m_%d_%H_%M")
@@ -71,34 +73,34 @@ def main(argv):
                     })
 
     arg_to_pass = [
-        "--movie_path "
-        + dat_file
-        + " --train_frame_start "
-        + str(20000)
-        + " --train_frame_end "
-        + str(-1)
-        + " --train_total_samples "
-        + str(training_samples)
-        + " --val_frame_start "
-        + str(0)
-        + " --val_frame_end "
-        + str(19999)
-        + " --val_total_samples "
-        + str(-1)
-        + " --output_path "
-        + output_folder
-        + " --model_file "
-        + model_file
-        + " --batch_size "
-        + str(batch_size)
-        + " --pre_post_frame "
-        + str(pre_post_frame)
-        + " --pre_post_omission "
-        + str(pre_post_omission)
-        + " --loss "
-        + 'mean_squared_error'
-        ]
-    ]
+            "--movie_path "
+            + dat_file
+            + " --train_frame_start "
+            + str(20000)
+            + " --train_frame_end "
+            + str(-1)
+            + " --train_total_samples "
+            + str(training_samples)
+            + " --val_frame_start "
+            + str(0)
+            + " --val_frame_end "
+            + str(19999)
+            + " --val_total_samples "
+            + str(-1)
+            + " --output_path "
+            + output_folder
+            + " --model_file "
+            + model_file
+            + " --batch_size "
+            + str(batch_size)
+            + " --pre_post_frame "
+            + str(pre_post_frame)
+            + " --pre_post_omission "
+            + str(pre_post_omission)
+            + " --loss "
+            + 'mean_squared_error'
+            ]
+
     PythonJob(
         python_file,
         python_executable= (r"/allen/programs/braintv/workgroups/nc-ophys/" +
