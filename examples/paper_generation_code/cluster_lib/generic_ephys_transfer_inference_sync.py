@@ -189,8 +189,8 @@ def main(argv):
 
         PythonJob(
             python_file,
-            python_executable=(r"/home/jeromel/.conda/envs/" +
-                               r"deep_work2/bin/python"),
+            python_executable=(r"/allen/programs/braintv/workgroups/" +
+                               r"nc-ophys/Jeromel/conda/tf20-env/bin/python"),
             conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/" +
                        r"Jeromel/conda/tf20-env"),
             jobname="ephys_inferrence",
