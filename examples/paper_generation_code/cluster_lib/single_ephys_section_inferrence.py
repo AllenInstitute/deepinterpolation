@@ -55,6 +55,7 @@ def main(argv):
     generator_param["start_frame"] = input_frames_start
     generator_param["end_frame"] = input_frames_end
     generator_param["randomize"] = 0
+    generator_param["step_per_epoch"] = -1
 
     generator_param["train_path"] = movie_path
 
