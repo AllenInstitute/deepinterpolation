@@ -25,8 +25,8 @@ def main(argv):
             "loss=",      
         ],
     )
-    
-      # default 
+
+    # default 
     train_frame_start = 20000
     train_frame_end = -1
     train_total_samples = 10000000
@@ -37,7 +37,7 @@ def main(argv):
     pre_post_frame = 30
     pre_post_omission = 1
     loss = 'mean_squared_error'
-    
+
     for opt, arg in opts:
         if opt == "--movie_path":
             movie_path = arg
@@ -73,10 +73,6 @@ def main(argv):
 
     training_param = {}
 
-    generator_param1 = {}
-    generator_param2 = {}
-    generator_param3 = {}
-
     network_param = {}
     generator_test_param = {}
 
@@ -85,13 +81,13 @@ def main(argv):
     generator_param["name"] = "EphysGenerator"
     generator_param["pre_post_frame"] = pre_post_frame
     generator_param["train_path"] = movie_path
-    generator_param["batch_size"] = batch_size # 100
+    generator_param["batch_size"] = batch_size  # 100
     generator_param["start_frame"] = train_frame_start # 20000
-    generator_param["end_frame"] = train_frame_end # -1
-    generator_param["pre_post_omission"] = pre_post_omission # 1
+    generator_param["end_frame"] = train_frame_end  # -1
+    generator_param["pre_post_omission"] = pre_post_omission  # 1
     generator_param["randomize"] = 1
     generator_param["steps_per_epoch"] = 100
-    generator_param["total_samples"] = train_total_samples # 10000000
+    generator_param["total_samples"] = train_total_samples  # 10000000
 
     generator_test_param["type"] = "generator"
     generator_test_param["name"] = "EphysGenerator"
@@ -100,12 +96,12 @@ def main(argv):
         "train_path"
     ] = movie_path
     generator_test_param["batch_size"] = batch_size
-    generator_test_param["start_frame"] = val_frame_start # 0
-    generator_test_param["end_frame"] = val_frame_end # 19999
+    generator_test_param["start_frame"] = val_frame_start  # 0
+    generator_test_param["end_frame"] = val_frame_end  # 19999
     generator_test_param["pre_post_omission"] = pre_post_omission
     generator_test_param["randomize"] = 1
     generator_test_param["steps_per_epoch"] = -1
-    generator_test_param["total_samples"] = val_total_samples # -1
+    generator_test_param["total_samples"] = val_total_samples  # -1
 
     training_param["type"] = "trainer"
     training_param["name"] = "transfer_trainer"
@@ -131,7 +127,7 @@ def main(argv):
 
     try:
         os.mkdir(output_path)
-    except:
+    except Exception:
         print("folder already exists")
 
     path_training = os.path.join(output_path, "training.json")
