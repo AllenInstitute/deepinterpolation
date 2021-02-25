@@ -43,7 +43,7 @@ def main(argv):
     now = datetime.datetime.now()
     run_uid = now.strftime("%Y_%m_%d_%H_%M")
     output_terminal = os.path.join(
-        output_folder,run_uid+'_running_terminal.txt')
+        output_folder, run_uid+'_running_terminal.txt')
 
     nb_probes = 384
     raw_data = np.memmap(dat_file, dtype="int16")
@@ -101,9 +101,9 @@ def main(argv):
 
     PythonJob(
         python_file,
-        python_executable= (r"/allen/programs/braintv/workgroups/nc-ophys/" +
+        python_executable= (r"/allen/programs/braintv/workgroups/nc-ophys/" + 
                             r"Jeromel/conda/tf20-env/bin/python"),  
-        conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" +
+        conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" + 
                     r"conda/tf20-env"),
         jobname= 'fine_tuning_ephys',
         python_args= arg_to_pass[0] + ' > ' + output_terminal,
@@ -139,8 +139,8 @@ def main(argv):
         for f in files:
             os.remove(f)
 
-    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
-                    r"deepinterpolation/examples/cluster_lib/" +
+    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" + 
+                    r"deepinterpolation/examples/cluster_lib/" + 
                     r"single_ephys_section_inferrence.py")
 
     list_files_check = []
@@ -189,9 +189,9 @@ def main(argv):
 
         PythonJob(
             python_file,
-            python_executable=(r"/home/jeromel/.conda/envs/" +
+            python_executable=(r"/home/jeromel/.conda/envs/" + 
                                r"deep_work2/bin/python"),
-            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/" +
+            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/" + 
                        r"Jeromel/conda/tf20-env"),
             jobname="ephys_inferrence",
             python_args=arg_to_pass[0],
