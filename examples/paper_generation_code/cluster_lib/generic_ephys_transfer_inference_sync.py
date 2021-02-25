@@ -37,8 +37,8 @@ def main(argv):
     # We fist fine-tune the model
 
     python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
-                   r"deepinterpolation/examples/cluster_lib/" +
-                   r"single_ephys_transfer_trainer.py")
+                   r"deepinterpolation/examples/paper_generation_code/" +
+                   r"cluster_lib/single_ephys_transfer_trainer.py")
 
     now = datetime.datetime.now()
     run_uid = now.strftime("%Y_%m_%d_%H_%M")
@@ -140,8 +140,8 @@ def main(argv):
             os.remove(f)
 
     python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
-                   r"deepinterpolation/examples/cluster_lib/" +
-                   r"single_ephys_section_inferrence.py")
+                   r"deepinterpolation/examples/paper_generation_code/" +
+                   r"cluster_lib/single_ephys_section_inferrence.py")
 
     list_files_check = []
     for index, local_start_frame in enumerate(
