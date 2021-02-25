@@ -74,7 +74,6 @@ def main(argv):
 
     training_param = {}
 
-    network_param = {}
     generator_test_param = {}
 
     generator_param = {}
