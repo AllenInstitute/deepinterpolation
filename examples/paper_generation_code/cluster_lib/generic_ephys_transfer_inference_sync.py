@@ -106,10 +106,10 @@ def main(argv):
         python_executable= (r"/allen/programs/braintv/workgroups/nc-ophys/" +
                             r"Jeromel/conda/tf20-env/bin/python"),  
         conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" +
-                    r"conda/tf20-env"),  
+                    r"conda/tf20-env"),
         jobname= 'fine_tuning_ephys',
-        python_args= arg_to_pass[0]+' > '+output_terminal,
-        **job_settings	
+        python_args= arg_to_pass[0] + ' > '+output_terminal,
+        **job_settings
     ).run(dryrun=False)
 
     # We wait for the jobs to complete
@@ -118,9 +118,9 @@ def main(argv):
         time.sleep(60)
         list_files = glob.glob(os.path.join(output_folder, "*_model.h5"))
 
-        if len(list_files)>0:
+        if len(list_files) > 0:
             stay_in_loop = False
-            
+
     new_model_file = list_files[0]
 
     # We infer the movie in chunks
@@ -130,7 +130,7 @@ def main(argv):
     block_size = int(np.floor(block_size / batch_size) * batch_size)
 
     jobdir = os.path.join(
-        output_folder, 
+        output_folder,
         "tmp_" + os.path.splitext(os.path.basename(model_file))[0]
     )
     try:
@@ -151,7 +151,7 @@ def main(argv):
     ):
         local_path = os.path.join(jobdir, "movie_" + str(index) + ".hdf5")
         local_end_frame = np.min([end_frame, 
-                                    local_start_frame + block_size - 1])
+                                  local_start_frame + block_size - 1])
         job_settings = {
             "queue": "braintv",
             "mem": "180g",
@@ -191,9 +191,10 @@ def main(argv):
 
         PythonJob(
             python_file,
-            python_executable="/home/jeromel/.conda/envs/deep_work2/bin/python",
-            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/"+
-                r"Jeromel/conda/tf20-env"),  
+            python_executable=(r"/home/jeromel/.conda/envs/" +
+                               r"deep_work2/bin/python"),
+            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/" +
+                       r"Jeromel/conda/tf20-env"),
             jobname="ephys_inferrence",
             python_args=arg_to_pass[0],
             **job_settings
@@ -212,8 +213,8 @@ def main(argv):
             stay_in_loop = False
 
     # We merge the files
-    output_merged = os.path.join(output_folder, 
-                                    "movie_" + os.path.basename(model_file))
+    output_merged = os.path.join(output_folder,
+                                 "movie_" + os.path.basename(model_file))
 
     list_files = glob.glob(os.path.join(jobdir, "*.hdf5"))
     list_files = sorted(
@@ -242,7 +243,7 @@ def main(argv):
             with h5py.File(each_file, "r") as file_handle:
                 local_shape = file_handle["data"].shape
                 dset_out[
-                    global_index_frame : global_index_frame + local_shape[0], 
+                    global_index_frame: global_index_frame + local_shape[0],
                     :, :, :
                 ] = file_handle["data"][:, :, :, :]
                 global_index_frame += local_shape[0]
