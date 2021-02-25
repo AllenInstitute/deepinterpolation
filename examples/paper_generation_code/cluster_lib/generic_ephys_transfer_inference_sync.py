@@ -196,13 +196,13 @@ def main(argv):
             jobname="ephys_inferrence",
             python_args=arg_to_pass[0],
             **job_settings
-        ).run(dryrun= False)
+            ).run(dryrun=False)
 
     # We wait for the jobs to complete
-    stay_in_loop= True
+    stay_in_loop=True
     while stay_in_loop:
         time.sleep(60)
-        nb_file= 0
+        nb_file=0
         for indiv_file in list_files_check:
             if os.path.isfile(indiv_file):
                 nb_file += 1
