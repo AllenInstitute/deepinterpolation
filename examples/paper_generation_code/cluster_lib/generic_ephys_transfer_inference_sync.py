@@ -10,6 +10,7 @@ import glob
 import shutil
 import datetime
 
+
 def main(argv):
     opts, args = getopt.getopt(
         argv,
@@ -62,8 +63,8 @@ def main(argv):
                     } 
 
     job_settings.update({
-                    'outfile':os.path.join(output_folder, '$PBS_JOBID.out'),
-                    'errfile':os.path.join(output_folder, '$PBS_JOBID.err'),
+                    'outfile': os.path.join(output_folder, '$PBS_JOBID.out'),
+                    'errfile': os.path.join(output_folder, '$PBS_JOBID.err'),
                     'email': 'jeromel@alleninstitute.org',
                     'email_options': 'a'
                     })
@@ -99,10 +100,12 @@ def main(argv):
 ]
     PythonJob(
         python_file,
-        python_executable="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env/bin/python",  
-        conda_env="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env",  
-        jobname = 'fine_tuning_ephys',
-        python_args = arg_to_pass[0]+' > '+output_terminal,
+        python_executable= (r"/allen/programs/braintv/workgroups/nc-ophys/" +
+                            r"Jeromel/conda/tf20-env/bin/python"),  
+        conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/"+
+                    r"conda/tf20-env"),  
+        jobname= 'fine_tuning_ephys',
+        python_args= arg_to_pass[0]+' > '+output_terminal,
         **job_settings	
     ).run(dryrun=False)
 
@@ -129,13 +132,15 @@ def main(argv):
     )
     try:
         os.mkdir(jobdir)
-    except:
+    except Exception:
         print("Folder already created")
         files = glob.glob(os.path.join(jobdir, "*"))
         for f in files:
             os.remove(f)
 
-    python_file = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/cluster_lib/single_ephys_section_inferrence.py"
+    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/"+
+                   r"deepinterpolation/examples/cluster_lib/"+
+                   r"single_ephys_section_inferrence.py")
 
     list_files_check = []
     for index, local_start_frame in enumerate(
@@ -184,7 +189,8 @@ def main(argv):
         PythonJob(
             python_file,
             python_executable="/home/jeromel/.conda/envs/deep_work2/bin/python",
-            conda_env="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env",  
+            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/"+
+                r"Jeromel/conda/tf20-env"),  
             jobname="ephys_inferrence",
             python_args=arg_to_pass[0],
             **job_settings
