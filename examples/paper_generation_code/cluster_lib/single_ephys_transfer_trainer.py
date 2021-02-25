@@ -3,7 +3,7 @@ from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
 import getopt
 import numpy as np
-
+import sys
 
 def main(argv):
     opts, args = getopt.getopt(
