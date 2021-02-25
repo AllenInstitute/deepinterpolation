@@ -5,6 +5,7 @@ import getopt
 import numpy as np
 import sys
 
+
 def main(argv):
     opts, args = getopt.getopt(
         argv,
@@ -158,6 +159,7 @@ def main(argv):
     training_class.run()
 
     training_class.finalize()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
