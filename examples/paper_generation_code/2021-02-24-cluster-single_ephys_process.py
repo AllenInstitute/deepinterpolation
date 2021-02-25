@@ -1,9 +1,7 @@
 import os
-import sys
 from pbstools import PythonJob
 from shutil import copyfile
 import datetime
-import numpy as np
 
 python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
                r"deepinterpolation/examples/cluster_lib/" +
@@ -32,7 +30,8 @@ except Exception:
 output_terminal = os.path.join(jobdir, run_uid + "_running_terminal.txt")
 script_basename = os.path.basename(__file__)
 copyfile(
-    os.path.realpath(__file__), os.path.join(jobdir, run_uid + "_" + script_basename)
+    os.path.realpath(__file__), os.path.join(jobdir, 
+                                             run_uid + "_" + script_basename)
 )
 
 job_settings = {

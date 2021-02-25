@@ -1,8 +1,9 @@
-import deepinterpolation as de
 import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
-import sys, getopt
+import getopt
+import numpy as np
+
 
 def main(argv):
     opts, args = getopt.getopt(
