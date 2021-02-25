@@ -5,11 +5,20 @@ from shutil import copyfile
 import datetime
 import numpy as np
 
-python_file = r"/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/cluster_lib/generic_ephys_transfer_inference_sync.py"
+python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
+               r"deepinterpolation/examples/cluster_lib/" +
+               r"generic_ephys_transfer_inference_sync.py")
 
-output_folder = "/allen/programs/braintv/workgroups/neuralcoding/Neuropixels_Data/simulated_ground_truth/deep_interp"
-model_file = "/allen/programs/braintv/workgroups/neuralcoding/Neuropixels_Data/neuropixels_10_sessions/778998620_419112_20181114_probeD/trained_models/unet_single_ephys_1024_mean_squared_error_2020_02_29_15_28/2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5"
-dat_file = "/allen/programs/braintv/workgroups/neuralcoding/Neuropixels_Data/simulated_ground_truth/continuous_sim.dat
+output_folder = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
+                 r"Neuropixels_Data/simulated_ground_truth/deep_interp")
+model_file = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
+              r"Neuropixels_Data/neuropixels_10_sessions/" +
+              r"778998620_419112_20181114_probeD/trained_models/" +
+              r"unet_single_ephys_1024_mean_squared_error_" +
+              r"2020_02_29_15_28/2020_02_29_15_28_unet_single_" +
+              r"ephys_1024_mean_squared_error-1050.h5")
+dat_file = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
+            r"Neuropixels_Data/simulated_ground_truth/continuous_sim.dat")
 
 now = datetime.datetime.now()
 run_uid = now.strftime("%Y_%m_%d_%H_%M")
@@ -17,7 +26,7 @@ jobdir = output_folder
 
 try:
     os.mkdir(jobdir)
-except:
+except Exception:
     print("folder already exists")
 
 output_terminal = os.path.join(jobdir, run_uid + "_running_terminal.txt")
