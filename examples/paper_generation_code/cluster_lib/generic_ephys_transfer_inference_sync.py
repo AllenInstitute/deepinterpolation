@@ -1,5 +1,4 @@
 import os
-import sys
 from pbstools import PythonJob
 import sys
 import getopt
@@ -7,7 +6,6 @@ import numpy as np
 import glob
 import h5py
 import time
-import glob
 import shutil
 import datetime
 
@@ -44,8 +42,8 @@ def main(argv):
 
     now = datetime.datetime.now()
     run_uid = now.strftime("%Y_%m_%d_%H_%M")
-    output_terminal = os.path.join(output_folder,
-                                    run_uid+'_running_terminal.txt')
+    output_terminal = os.path.join(
+        output_folder,run_uid+'_running_terminal.txt')
 
     nb_probes = 384
     raw_data = np.memmap(dat_file, dtype="int16")
@@ -63,7 +61,7 @@ def main(argv):
                     'walltime': '48:00:00',
                     'ppn': 24,
                     'gpus': 1
-                    } 
+                    }
 
     job_settings.update({
                     'outfile': os.path.join(output_folder, '$PBS_JOBID.out'),
@@ -108,7 +106,7 @@ def main(argv):
         conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" +
                     r"conda/tf20-env"),
         jobname= 'fine_tuning_ephys',
-        python_args= arg_to_pass[0] + ' > '+output_terminal,
+        python_args= arg_to_pass[0] + ' > ' + output_terminal,
         **job_settings
     ).run(dryrun=False)
 
@@ -150,7 +148,7 @@ def main(argv):
         np.arange(start_frame, end_frame, block_size)
     ):
         local_path = os.path.join(jobdir, "movie_" + str(index) + ".hdf5")
-        local_end_frame = np.min([end_frame, 
+        local_end_frame = np.min([end_frame,
                                   local_start_frame + block_size - 1])
         job_settings = {
             "queue": "braintv",
