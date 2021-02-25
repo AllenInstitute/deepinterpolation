@@ -189,12 +189,12 @@ def main(argv):
 
         PythonJob(
             python_file,
-            python_executable = (r"/home/jeromel/.conda/envs/" +
-                                 r"deep_work2/bin/python"),
-            conda_env = (r"/allen/programs/braintv/workgroups/nc-ophys/" +
-                         r"Jeromel/conda/tf20-env"),
-            jobname= "ephys_inferrence",
-            python_args= arg_to_pass[0],
+            python_executable=(r"/home/jeromel/.conda/envs/" +
+                               r"deep_work2/bin/python"),
+            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/" +
+                       r"Jeromel/conda/tf20-env"),
+            jobname="ephys_inferrence",
+            python_args=arg_to_pass[0],
             **job_settings
         ).run(dryrun= False)
 
