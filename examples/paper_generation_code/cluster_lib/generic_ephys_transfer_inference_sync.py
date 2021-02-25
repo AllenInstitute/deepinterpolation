@@ -139,18 +139,18 @@ def main(argv):
         for f in files:
             os.remove(f)
 
-    python_file= (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
-                  r"deepinterpolation/examples/cluster_lib/" +
-                  r"single_ephys_section_inferrence.py")
+    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
+                   r"deepinterpolation/examples/cluster_lib/" +
+                   r"single_ephys_section_inferrence.py")
 
-    list_files_check=[]
+    list_files_check = []
     for index, local_start_frame in enumerate(
         np.arange(start_frame, end_frame, block_size)
     ):
-        local_path=os.path.join(jobdir, "movie_" + str(index) + ".hdf5")
-        local_end_frame=np.min([end_frame,
+        local_path = os.path.join(jobdir, "movie_" + str(index) + ".hdf5")
+        local_end_frame = np.min([end_frame,
                                   local_start_frame + block_size - 1])
-        job_settings={
+        job_settings = {
             "queue": "braintv",
             "mem": "180g",
             "walltime": "48:00:00",
@@ -189,10 +189,10 @@ def main(argv):
 
         PythonJob(
             python_file,
-            python_executable= (r"/home/jeromel/.conda/envs/" +
+            python_executable = (r"/home/jeromel/.conda/envs/" +
                                  r"deep_work2/bin/python"),
-            conda_env= (r"/allen/programs/braintv/workgroups/nc-ophys/" +
-                       r"Jeromel/conda/tf20-env"),
+            conda_env = (r"/allen/programs/braintv/workgroups/nc-ophys/" +
+                         r"Jeromel/conda/tf20-env"),
             jobname= "ephys_inferrence",
             python_args= arg_to_pass[0],
             **job_settings
@@ -232,9 +232,9 @@ def main(argv):
     with h5py.File(output_merged, "w") as file_handle:
         dset_out = file_handle.create_dataset(
             "data",
-            shape = final_shape,
-            chunks = (1, final_shape[1], final_shape[2], final_shape[3]),
-            dtype = "float16",
+            shape=final_shape,
+            chunks=(1, final_shape[1], final_shape[2], final_shape[3]),
+            dtype="float16",
         )
 
         for each_file in list_files:
