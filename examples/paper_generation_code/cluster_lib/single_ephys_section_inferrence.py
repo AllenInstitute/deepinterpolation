@@ -3,12 +3,12 @@ import os
 import numpy as np
 import sys
 import getopt
-import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # model will be trained on GPU 1
+
 
 def main(argv):
     opts, args = getopt.getopt(
@@ -76,7 +76,7 @@ def main(argv):
 
     inferrence_obj = ClassLoader(path_infer)
     inferrence_class = inferrence_obj.find_and_build()(path_infer,
-                                                        data_generator)
+                                                       data_generator)
 
     inferrence_class.run()
 
