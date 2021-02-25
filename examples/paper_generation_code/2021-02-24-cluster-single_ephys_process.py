@@ -4,17 +4,19 @@ from shutil import copyfile
 import datetime
 
 python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
-               r"deepinterpolation/examples/cluster_lib/" +
-               r"generic_ephys_transfer_inference_sync.py")
+               r"deepinterpolation/examples/paper_generation_code/" +
+               r"cluster_lib/generic_ephys_transfer_inference_sync.py")
 
 output_folder = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
                  r"Neuropixels_Data/simulated_ground_truth/deep_interp")
+
 model_file = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
               r"Neuropixels_Data/neuropixels_10_sessions/" +
               r"778998620_419112_20181114_probeD/trained_models/" +
               r"unet_single_ephys_1024_mean_squared_error_" +
               r"2020_02_29_15_28/2020_02_29_15_28_unet_single_" +
               r"ephys_1024_mean_squared_error-1050.h5")
+
 dat_file = (r"/allen/programs/braintv/workgroups/neuralcoding/" +
             r"Neuropixels_Data/simulated_ground_truth/continuous_sim.dat")
 
