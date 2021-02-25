@@ -2,21 +2,10 @@ import h5py
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # model will be trained on GPU 1
-import keras
-from matplotlib import pyplot as plt
 import numpy as np
-import gzip
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
-from keras.models import Model
-from keras.optimizers import RMSprop
-import h5py
-from keras.models import load_model
 import sys, getopt
-import time
-from keras import backend as K
 import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
-import datetime
 
 
 def main(argv):
@@ -55,11 +44,7 @@ def main(argv):
 
     model = load_model(model_path)
 
-    frame_start = input_frames_start
-    frame_end = input_frames_end
-
     NotDone = True
-    trial = 0
 
     generator_param = {}
     inferrence_param = {}
@@ -93,7 +78,8 @@ def main(argv):
         data_generator = generator_obj.find_and_build()(path_generator)
 
         inferrence_obj = ClassLoader(path_infer)
-        inferrence_class = inferrence_obj.find_and_build()(path_infer, data_generator)
+        inferrence_class = inferrence_obj.find_and_build()(path_infer,
+                                                           data_generator)
 
         inferrence_class.run()
         NotDone = False
@@ -105,4 +91,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
