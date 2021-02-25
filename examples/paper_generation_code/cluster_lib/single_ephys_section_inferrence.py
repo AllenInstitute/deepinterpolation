@@ -1,12 +1,14 @@
 import h5py
 import os
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # model will be trained on GPU 1
 import numpy as np
-import sys, getopt
+import sys
+import getopt
 import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 
+
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # model will be trained on GPU 1
 
 def main(argv):
     opts, args = getopt.getopt(
@@ -42,10 +44,6 @@ def main(argv):
         if opt == "--pre_post_omission":
             pre_post_omission = int(arg)
 
-    model = load_model(model_path)
-
-    NotDone = True
-
     generator_param = {}
     inferrence_param = {}
 
@@ -65,24 +63,22 @@ def main(argv):
     inferrence_param["model_path"] = model_path
     inferrence_param["output_file"] = output_file
 
-    while NotDone:
-        path_generator = output_file + ".generator.json"
-        json_obj = JsonSaver(generator_param)
-        json_obj.save_json(path_generator)
+    path_generator = output_file + ".generator.json"
+    json_obj = JsonSaver(generator_param)
+    json_obj.save_json(path_generator)
 
-        path_infer = output_file + ".inferrence.json"
-        json_obj = JsonSaver(inferrence_param)
-        json_obj.save_json(path_infer)
+    path_infer = output_file + ".inferrence.json"
+    json_obj = JsonSaver(inferrence_param)
+    json_obj.save_json(path_infer)
 
-        generator_obj = ClassLoader(path_generator)
-        data_generator = generator_obj.find_and_build()(path_generator)
+    generator_obj = ClassLoader(path_generator)
+    data_generator = generator_obj.find_and_build()(path_generator)
 
-        inferrence_obj = ClassLoader(path_infer)
-        inferrence_class = inferrence_obj.find_and_build()(path_infer,
-                                                           data_generator)
+    inferrence_obj = ClassLoader(path_infer)
+    inferrence_class = inferrence_obj.find_and_build()(path_infer,
+                                                        data_generator)
 
-        inferrence_class.run()
-        NotDone = False
+    inferrence_class.run()
 
     # to notify process is finished
     finish_file = h5py.File(output_file + ".done", "w")
