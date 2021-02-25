@@ -101,20 +101,20 @@ def main(argv):
 
     PythonJob(
         python_file,
-        python_executable = (r"/allen/programs/braintv/workgroups/nc-ophys/" +
+        python_executable=(r"/allen/programs/braintv/workgroups/nc-ophys/" +
                              r"Jeromel/conda/tf20-env/bin/python"),
-        conda_env = (r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" +
+        conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/Jeromel/" +
                     r"conda/tf20-env"),
-        jobname= 'fine_tuning_ephys',
-        python_args = arg_to_pass[0] + ' > ' + output_terminal,
+        jobname='fine_tuning_ephys',
+        python_args=arg_to_pass[0] + ' > ' + output_terminal,
         **job_settings
-    ).run(dryrun = False)
+    ).run(dryrun=False)
 
     # We wait for the jobs to complete
-    stay_in_loop = True
+    stay_in_loop=True
     while stay_in_loop:
         time.sleep(60)
-        list_files = glob.glob(os.path.join(output_folder, "*_model.h5"))
+        list_files=glob.glob(os.path.join(output_folder, "*_model.h5"))
 
         if len(list_files) > 0:
             stay_in_loop = False
@@ -139,18 +139,18 @@ def main(argv):
         for f in files:
             os.remove(f)
 
-    python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
+    python_file=(r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
                    r"deepinterpolation/examples/cluster_lib/" +
                    r"single_ephys_section_inferrence.py")
 
-    list_files_check = []
+    list_files_check=[]
     for index, local_start_frame in enumerate(
         np.arange(start_frame, end_frame, block_size)
     ):
-        local_path = os.path.join(jobdir, "movie_" + str(index) + ".hdf5")
-        local_end_frame = np.min([end_frame,
+        local_path=os.path.join(jobdir, "movie_" + str(index) + ".hdf5")
+        local_end_frame=np.min([end_frame,
                                   local_start_frame + block_size - 1])
-        job_settings = {
+        job_settings={
             "queue": "braintv",
             "mem": "180g",
             "walltime": "48:00:00",
@@ -189,12 +189,12 @@ def main(argv):
 
         PythonJob(
             python_file,
-            python_executable = (r"/home/jeromel/.conda/envs/" +
+            python_executable=(r"/home/jeromel/.conda/envs/" +
                                  r"deep_work2/bin/python"),
-            conda_env =(r"/allen/programs/braintv/workgroups/nc-ophys/" +
+            conda_env=(r"/allen/programs/braintv/workgroups/nc-ophys/" +
                        r"Jeromel/conda/tf20-env"),
-            jobname = "ephys_inferrence",
-            python_args = arg_to_pass[0],
+            jobname="ephys_inferrence",
+            python_args=arg_to_pass[0],
             **job_settings
         ).run(dryrun = False)
 
