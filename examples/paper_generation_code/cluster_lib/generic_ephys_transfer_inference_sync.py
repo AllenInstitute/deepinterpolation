@@ -51,7 +51,7 @@ def main(argv):
     pre_post_frame = 30
     batch_size = 100
     nb_jobs = 100
-    training_samples = 100000  # 10000000
+    training_samples = 10000000
     pre_post_omission = 1
     start_frame = pre_post_omission + pre_post_frame
     end_frame = img_per_movie - pre_post_frame - pre_post_omission - 1
