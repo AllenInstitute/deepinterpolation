@@ -15,6 +15,12 @@ Principle of Deep Interpolation
 
 For more information, consult the associated bioRxiv publication : https://www.biorxiv.org/content/10.1101/2020.10.15.341602v1
 
+Support
+========================
+
+For bug and issues, please submit issue tickets on this repository. 
+For installation and running support, join the slack channel (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-n36he49d-6fw1LNqqe5jgbhrk2ktGMg
+
 Installation
 ========================
 
