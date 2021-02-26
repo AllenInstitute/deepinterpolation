@@ -8,7 +8,7 @@ python_file = (r"/home/jeromel/Documents/Projects/Deep2P/repos/" +
                r"cluster_lib/generic_ophys_transfer_inference_sync.py")
 
 output_folder = (r"/allen/programs/braintv/workgroups/neuralcoding/2p_data/" +
-                 r"single_plane/ground_truth/denoised" )
+                 r"single_plane/ground_truth/denoised")
 
 model_file = (r"/allen/programs/braintv/workgroups/ophysdev/OPhysCore/" +
               r"Deep2p/" +
