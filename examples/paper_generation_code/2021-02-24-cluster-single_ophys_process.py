@@ -17,7 +17,7 @@ model_file = (r"/allen/programs/braintv/workgroups/ophysdev/OPhysCore/" +
               r"_Ai93-0450.h5")
 
 dat_file = (r"/allen/programs/braintv/workgroups/neuralcoding/2p_data/" +
-            r"single_plane/ground_truth/20191215_raw_noisy.h5")
+            r"single_plane/ground_truth/20191215_raw_noisy_time_first.h5")
 
 now = datetime.datetime.now()
 run_uid = now.strftime("%Y_%m_%d_%H_%M")
