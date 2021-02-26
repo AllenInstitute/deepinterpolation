@@ -8,7 +8,6 @@ import h5py
 import time
 import shutil
 import datetime
-import h5py
 
 
 def main(argv):

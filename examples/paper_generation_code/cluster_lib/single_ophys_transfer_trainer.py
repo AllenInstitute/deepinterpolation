@@ -62,8 +62,6 @@ def main(argv):
             batch_size = np.int(arg)
         if opt == "--pre_post_frame":
             pre_post_frame = np.int(arg)
-        if opt == "--pre_post_omission":
-            pre_post_omission = np.int(arg)
         if opt == "--loss":
             loss = arg
 
