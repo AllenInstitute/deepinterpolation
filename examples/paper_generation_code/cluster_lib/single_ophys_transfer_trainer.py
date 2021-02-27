@@ -105,9 +105,9 @@ def main(argv):
     training_param["nb_gpus"] = 1
     training_param["nb_times_through_data"] = 3
     training_param["learning_rate"] = 0.0005
-    training_param["apply_learning_decay"] = 0
-    # training_param["initial_learning_rate"] = 0.0005
-    # training_param["epochs_drop"] = 300
+    training_param["apply_learning_decay"] = 1
+    training_param["initial_learning_rate"] = 0.0005
+    training_param["epochs_drop"] = 10
     training_param["loss"] = loss
     training_param["model_string"] = 'transfer_train_' + \
         "_" + training_param["loss"]
