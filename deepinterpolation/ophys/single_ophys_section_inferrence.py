@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
-import sys, getopt
+import sys
+import getopt
 from deepinterpolation.generic import JsonSaver, ClassLoader
 
 
@@ -17,12 +18,12 @@ def main(argv):
             "batch_size=",
             "pre_frame=",
             "post_frame=",
-            "model_norm=",            
+            "model_norm=",
             "save_raw=",
         ],
     )
 
-    # default 
+    # default
     save_raw = False
 
     for opt, arg in opts:
@@ -55,7 +56,8 @@ def main(argv):
     generator_param["pre_frame"] = pre_frame
     generator_param["post_frame"] = post_frame
 
-    # This is meant to allow compatibility with a generator also used in training
+    # This is meant to allow compatibility with a generator
+    # also used in training
     generator_param["steps_per_epoch"] = 100
 
     generator_param["batch_size"] = batch_size
@@ -83,7 +85,8 @@ def main(argv):
         data_generator = generator_obj.find_and_build()(path_generator)
 
         inferrence_obj = ClassLoader(path_infer)
-        inferrence_class = inferrence_obj.find_and_build()(path_infer, data_generator)
+        inferrence_class = inferrence_obj.find_and_build()(
+                path_infer, data_generator)
 
         inferrence_class.run()
         NotDone = False
