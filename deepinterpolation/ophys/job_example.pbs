@@ -1,0 +1,20 @@
+#!/bin/bash
+#PBS -q braintv
+#PBS -N ophys_deepint
+#PBS -l nodes=1:ppn=8
+#PBS -l mem=50g,walltime=48:00:00
+#PBS -j oe
+#PBS -o /allen/aibs/informatics/danielk/deepinterpolation/logs
+
+image=docker://alleninstitutepika/deepinterpolation:develop
+TMPDIR=/scratch/capacity/${PBS_JOBID}
+model_file=/allen/programs/braintv/workgroups/ophysdev/OPhysCore/Deep2p/unet_single_1024_mean_absolute_error_Ai93_2019_09_11_23_32/2019_09_11_23_32_unet_single_1024_mean_absolute_error_Ai93-0450.h5
+movie_path=/allen/programs/braintv/workgroups/neuralcoding/2p_data/single_plane/ground_truth/20191215_raw_noisy_time_first.h5
+
+SINGULARITY_TMPDIR=${TMPDIR} singularity run \
+    --bind /allen:/allen,/scratch/capacity/${PBS_JOBID}:/tmp \
+    ${image} /home/deepuser/envs/deep_env/bin/python -m \
+        deepinterpolation.ophys.single_ophys_transfer_trainer \
+        --movie_path ${movie_path} \
+        --model_file ${model_file} \
+        --output_path /allen/aibs/informatics/danielk/deepinterpolation/output
