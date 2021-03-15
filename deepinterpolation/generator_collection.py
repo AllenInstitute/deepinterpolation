@@ -1221,7 +1221,7 @@ class OphysGenerator(DeepGenerator):
         "Denotes the total number of batches"
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
-    def on_epoch_end(self):            
+    def on_epoch_end(self):
         # We only increase index if steps_per_epoch is set
         # to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
