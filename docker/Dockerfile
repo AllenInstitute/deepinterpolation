@@ -4,6 +4,7 @@ ARG REPO_TAG="feature/ephys_transfer"
 ARG COMMIT="unspecified to docker build"
 
 RUN adduser deepuser
+USER deepuser
 
 ENV REPOS=/home/deepuser/repos
 ENV REPO=/home/deepuser/repos/deepinterpolation
@@ -13,11 +14,9 @@ ENV CONDA_ENV_NAME=deep_env
 ENV DEEPINTERPOLATION_COMMIT_SHA=${COMMIT}
 ENV TMPDIR=/tmp
 
-RUN apt-get -y update
-USER deepuser
 RUN mkdir ${REPOS} \
     && git clone -b ${REPO_TAG} https://github.com/AllenInstitute/deepinterpolation ${REPO} \
     && conda create -n ${CONDA_ENV_NAME} python=3.8 \
     && conda run -n ${CONDA_ENV_NAME} pip install ${REPO}
 
-ENTRYPOINT ["/home/deepuser/envs/deep_env/bin/python"]
+ENTRYPOINT ["/bin/bash", "-c", "$@", "--"]
