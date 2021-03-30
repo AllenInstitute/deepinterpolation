@@ -55,7 +55,7 @@ def main(argv):
         if opt == "--batch_size":
             batch_size = np.int(arg)
         if opt == "--output_path":
-            output_path = arg
+          output_path = arg
         if opt == "--model_file":
             model_file = arg
         if opt == "--batch_size":
@@ -134,19 +134,19 @@ def main(argv):
     json_obj = JsonSaver(generator_test_param)
     json_obj.save_json(path_test_generator)
 
-    generator_test_obj = ClassLoader(path_test_generator)
+    #generator_test_obj = ClassLoader(path_test_generator)
 
-    trainer_obj = ClassLoader(path_training)
+    #trainer_obj = ClassLoader(path_training)
 
-    test_generator = generator_test_obj.find_and_build()(path_test_generator)
+    #test_generator = generator_test_obj.find_and_build()(path_test_generator)
 
-    training_class = trainer_obj.find_and_build()(
-        train_generator, test_generator, path_training
-    )
+    #training_class = trainer_obj.find_and_build()(
+    #    train_generator, test_generator, path_training
+    #)
 
-    training_class.run()
+    #training_class.run()
 
-    training_class.finalize()
+    #training_class.finalize()
 
 
 if __name__ == "__main__":
