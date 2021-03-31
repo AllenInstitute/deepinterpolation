@@ -35,13 +35,20 @@ class TransferTrainer(argschema.ArgSchemaParser):
         generator_test_obj = ClassLoader(test_generator_json_path)
         trainer_obj = ClassLoader(training_json_path)
 
+        self.logger.info("created objects for training")
+
         train_generator = generator_obj.find_and_build()(generator_json_path)
+        self.logger.info("built train_generator")
         test_generator = generator_test_obj.find_and_build()(
                 test_generator_json_path)
+        self.logger.info("built test_generator")
         training_class = trainer_obj.find_and_build()(
             train_generator, test_generator, training_json_path)
+        self.logger.info("built trainer")
         training_class.run()
+        self.logger.info("trainer.run() complete")
         training_class.finalize()
+        self.logger.info("trainer.finalize() complete")
 
 
 if __name__ == "__main__":
