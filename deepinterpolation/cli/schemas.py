@@ -111,6 +111,10 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
     output_dir = argschema.fields.OutputDir(
         required=True,
         description="ouptut destination")
+    caching_validation = argschema.fields.Bool(
+        require=False,
+        default=False,
+        description="need this to resolve memory error")
 
     @mm.post_load
     def set_model_str(self, data, **kwargs):
