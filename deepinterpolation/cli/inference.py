@@ -23,7 +23,10 @@ class Inference(argschema.ArgSchemaParser):
 
         generator_json_path = outdir / f"{uid}_generator.json"
         with open(generator_json_path, "w") as f:
-            json.dump(self.args['generator_params'], f, indent=2)
+            json.dump(self.args['generator_params'],
+                      f,
+                      indent=2,
+                      ensure_ascii=False)
         self.logger.info(f"wrote {generator_json_path}")
 
         generator_obj = ClassLoader(generator_json_path)
