@@ -233,6 +233,6 @@ class InferenceInputSchema(argschema.ArgSchema):
 
     @mm.post_load
     def inference_specific_settings(self, data, **kwargs):
-        data['generator_params']['name'] = "MovieJSONGenerator"
+        data['generator_params']['name'] = "OphysGenerator"
         data['generator_params']['randomize'] = 0
         return data
