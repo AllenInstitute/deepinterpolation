@@ -13,19 +13,20 @@ class TransferTrainer(argschema.ArgSchemaParser):
         self.logger.name = type(self).__name__
 
         outdir = Path(self.args['output_dir'])
+        uid = self.args['training_params']['run_uid']
 
         # save the json parameters to 3 different files
-        training_json_path = outdir / "training.json"
+        training_json_path = outdir / f"{uid}_training.json"
         with open(training_json_path, "w") as f:
             json.dump(self.args['training_params'], f,  indent=2)
         self.logger.info(f"wrote {training_json_path}")
 
-        generator_json_path = outdir / "generator.json"
+        generator_json_path = outdir / f"{uid}_generator.json"
         with open(generator_json_path, "w") as f:
             json.dump(self.args['generator_params'], f, indent=2)
         self.logger.info(f"wrote {generator_json_path}")
 
-        test_generator_json_path = outdir / "test_generator.json"
+        test_generator_json_path = outdir / f"{uid}_test_generator.json"
         with open(test_generator_json_path, "w") as f:
             json.dump(self.args['generator_test_params'], f, indent=2)
         self.logger.info(f"wrote {test_generator_json_path}")

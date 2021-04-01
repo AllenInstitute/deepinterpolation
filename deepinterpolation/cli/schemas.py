@@ -143,7 +143,9 @@ class TransferTrainerInputSchema(argschema.ArgSchema):
     output_dir = argschema.fields.OutputDir(
         required=True,
         description="ouptut destination")
-    training_params = argschema.fields.Nested(TrainingSchema)
+    training_params = argschema.fields.Nested(
+        TrainingSchema,
+        default={})
     generator_params = argschema.fields.Nested(
         GeneratorSchema,
         default={})
@@ -188,4 +190,49 @@ class TransferTrainerInputSchema(argschema.ArgSchema):
                 data["generator_test_params"]["start_frame"] = 0
                 data["generator_params"]["end_frame"] = -1
                 data["generator_test_params"]["end_frame"] = 1000
+        return data
+
+
+class InferenceSchema(argschema.schemas.DefaultSchema):
+    type = argschema.fields.String(
+        required=False,
+        default="inferrence",
+        description="")
+    name = argschema.fields.String(
+        required=False,
+        default="core_inferrence",
+        description="")
+    model_path = argschema.fields.InputFile(
+        required=True,
+        description="path to model source for transfer training.")
+    output_file = argschema.fields.OutputFile(
+        required=True,
+        description="")
+    save_raw = argschema.fields.Bool(
+        required=False,
+        default=True,
+        description="")
+    rescale = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description="")
+
+
+class InferenceInputSchema(argschema.ArgSchema):
+    log_level = argschema.fields.LogLevel(default="INFO")
+    run_uid = argschema.fields.Str(
+        required=False,
+        default=datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"),
+        description="unique identifier")
+    inference_params = argschema.fields.Nested(
+        InferenceSchema,
+        default={})
+    generator_params = argschema.fields.Nested(
+        GeneratorSchema,
+        default={})
+
+    @mm.post_load
+    def inference_specific_settings(self, data, **kwargs):
+        data['generator_params']['name'] = "MovieJSONGenerator"
+        data['generator_params']['randomize'] = 0
         return data
