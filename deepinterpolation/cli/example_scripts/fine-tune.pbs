@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -q braintv
 #PBS -N ophys_deepint
-#PBS -l nodes=1:ppn=8
-#PBS -l mem=50g,walltime=48:00:00
+#PBS -l mem=250g,walltime=10:00:00
+#PBS -l nodes=1:ppn=88:gpus=4
 #PBS -j oe
 #PBS -o /allen/aibs/informatics/danielk/deepinterpolation/logs
 
@@ -13,8 +13,15 @@ movie_path=/allen/programs/braintv/workgroups/neuralcoding/2p_data/single_plane/
 
 SINGULARITY_TMPDIR=${TMPDIR} singularity run \
     --bind /allen:/allen,/scratch/capacity/${PBS_JOBID}:/tmp \
-    ${image} /home/deepuser/envs/deep_env/bin/python -m \
-        deepinterpolation.ophys.single_ophys_transfer_trainer \
-        --movie_path ${movie_path} \
-        --model_file ${model_file} \
-        --output_path /allen/aibs/informatics/danielk/deepinterpolation/output
+    --nv \
+    ${image} python -m \
+        deepinterpolation.cli.transfer_trainer \
+        --train_path ${movie_path} \
+        --training_params.model_path ${model_file} \
+        --output_dir /allen/aibs/informatics/danielk/deepinterpolation/output4 \
+	--set_defaults ophys \
+	--generator_params.total_samples 10000 \
+	--generator_test_params.total_samples 1000 \
+        --batch_size 5 \
+	--training_params.nb_gpus 4 \
+	--training_params.nb_times_through_data 1

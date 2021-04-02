@@ -1,0 +1,21 @@
+#!/bin/bash
+#PBS -q braintv
+#PBS -N ophys_deepint
+#PBS -l mem=250g,walltime=4:00:00
+#PBS -l nodes=1:ppn=24
+#PBS -j oe
+#PBS -o /allen/aibs/informatics/danielk/deepinterpolation/logs
+
+image=docker://alleninstitutepika/deepinterpolation:develop
+TMPDIR=/scratch/capacity/${PBS_JOBID}
+model_file=/allen/aibs/informatics/danielk/deepinterpolation/output/2021_03_31_17_39_transfer_train__mean_squared_error_transfer_model.h5
+movie_path=/allen/programs/braintv/workgroups/neuralcoding/2p_data/single_plane/ground_truth/20191215_raw_noisy_time_first.h5
+
+SINGULARITY_TMPDIR=${TMPDIR} singularity run \
+    --bind /allen:/allen,/scratch/capacity/${PBS_JOBID}:/tmp \
+    ${image} python -m \
+        deepinterpolation.cli.inference \
+        --generator_params.batch_size 5 \
+        --generator_params.train_path ${movie_path} \
+        --inference_params.model_path ${model_file} \
+        --inference_params.output_file /allen/aibs/informatics/danielk/deepinterpolation/output4/denoised.h5
