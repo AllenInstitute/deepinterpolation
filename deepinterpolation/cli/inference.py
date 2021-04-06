@@ -56,7 +56,7 @@ class Inference(argschema.ArgSchemaParser):
 
         d = (d - d.min()) * dmax / d.ptp()
         d = d.astype('uint16')
-        nextra = d.shape[0] - dshape[0]
+        nextra = dshape[0] - d.shape[0]
         dextra = np.zeros((nextra, *d.shape[1:]), dtype='uint16')
         d = np.concatenate((d, dextra), axis=0)
 
