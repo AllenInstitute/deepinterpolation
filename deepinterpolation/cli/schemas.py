@@ -152,6 +152,12 @@ class TransferTrainerInputSchema(argschema.ArgSchema):
     generator_test_params = argschema.fields.Nested(
         GeneratorSchema,
         default={})
+    output_full_args = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description=("whether to output the full set of args to a json. "
+                     "this will show the args sent to the underlying classes "
+                     "including defaults."))
 
     @mm.pre_load
     def set_outdir(self, data, **kwargs):
