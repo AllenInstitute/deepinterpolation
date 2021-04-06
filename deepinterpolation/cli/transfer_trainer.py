@@ -14,7 +14,7 @@ class TransferTrainer(argschema.ArgSchemaParser):
 
         outdir = Path(self.args['output_dir'])
         if self.args["output_full_args"]:
-            full_args_path = outdir / "full_args.json"
+            full_args_path = outdir / "fine_tune_full_args.json"
             with open(full_args_path, "w") as f:
                 json.dump(self.args, f, indent=2)
             self.logger.info(f"wrote {full_args_path}")
