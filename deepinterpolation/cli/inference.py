@@ -47,7 +47,7 @@ class Inference(argschema.ArgSchemaParser):
         # patch up the output movie
         self.logger.info("fixing up the range and shape of the result")
         with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
-            dmax = f["data"].max()
+            dmax = f["data"][()].max()
             dshape = f["data"].shape
 
         with h5py.File(
