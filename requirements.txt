@@ -7,5 +7,5 @@ python-dateutil
 scipy==1.4.1
 tifffile
 fsspec==0.8.7
-s3fs==0.5.2
+s3fs==0.5.1
 argschema==2.0.2
