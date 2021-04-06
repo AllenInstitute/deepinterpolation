@@ -1,5 +1,7 @@
 import argschema
 import json
+import h5py
+import numpy as np
 from pathlib import Path
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
@@ -40,8 +42,29 @@ class Inference(argschema.ArgSchemaParser):
                 data_generator)
 
         self.logger.info("created objects for inference")
-
         inferrence_class.run()
+
+        # patch up the output movie
+        self.logger.info("fixing up the range and shape of the result")
+        with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
+            dmax = f["data"].max()
+            dshape = f["data"].shape
+
+        with h5py.File(
+                self.args["inference_params"]["output_file"], "r") as f:
+            d = f["data"][()].squeeze()
+
+        d = (d - d.min()) * dmax / d.ptp()
+        d = d.astype('uint16')
+        nextra = d.shape[0] - dshape[0]
+        dextra = np.zeros((nextra, *d.shape[1:]), dtype='uint16')
+        d = np.concatenate((d, dextra), axis=0)
+
+        with h5py.File(
+                self.args["inference_params"]["output_file"], "w") as f:
+            f.create_dataset("data", data=d)
+        self.logger.info(
+            f"wrote {self.args['inference_params']['output_file']}")
 
 
 if __name__ == "__main__":
