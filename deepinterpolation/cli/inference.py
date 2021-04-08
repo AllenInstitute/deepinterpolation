@@ -18,21 +18,21 @@ def mp_job(inf_params, gen_params, uid, job_index, indices):
     inf_params["output_file"] = str(out_path.parent / split_name)
     with open(inference_json_path, "w") as f:
         json.dump(inf_params, f,  indent=2)
-    
+
     generator_json_path = outdir / f"{uid}__{job_index}_generator.json"
     gen_params["start_frame"] = indices[0]
     gen_params["end_frame"] = indices[1]
     with open(generator_json_path, "w") as f:
         json.dump(gen_params, f, indent=2)
-    
+
     generator_obj = ClassLoader(generator_json_path)
     data_generator = generator_obj.find_and_build()(generator_json_path)
-    
+
     inferrence_obj = ClassLoader(inference_json_path)
     inferrence_class = inferrence_obj.find_and_build()(
             inference_json_path,
             data_generator)
-    
+
     inferrence_class.run()
 
     return inf_params["output_file"]
@@ -92,9 +92,8 @@ class Inference(argschema.ArgSchemaParser):
             with multiprocessing.Pool(self.args["n_parallel_workers"]) as pool:
                 split_files = pool.starmap(mp_job, mp_args[0:2])
 
-        #inferrence_class.run()
-        self.logger.info("inference jobs done,
-                          concatenating and normalizing.")
+        self.logger.info("inference jobs done, "
+                         "concatenating and normalizing.")
 
         # stats about the input movie
         with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
@@ -106,7 +105,8 @@ class Inference(argschema.ArgSchemaParser):
         for split_file in split_files:
             with h5py.File(split_file, "r") as f:
                 outputs.append(f["data"][()].squeeze())
-            self.logger.info(f"read {outputs[-1].shape[0]} frames from {split_file}")
+            self.logger.info(f"read {outputs[-1].shape[0]} "
+                             "frames from {split_file}")
             # delete the file
             Path(split_file).unlink()
         d = np.concatenate(outputs, axis=0)
