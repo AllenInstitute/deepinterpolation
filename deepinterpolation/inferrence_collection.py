@@ -137,6 +137,16 @@ class core_inferrence:
         else:
             self.rescale = True
 
+        if "use_multiprocessing" in self.json_data.keys():
+            self.use_multiprocessing = self.json_data["use_multiprocessing"]
+        else:
+            self.use_multiprocessing = True
+
+        if "nb_workers" in self.json_data.keys():
+            self.workers = self.json_data["nb_workers"]
+        else:
+            self.workers = 16
+
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
@@ -173,7 +183,10 @@ class core_inferrence:
             for index_dataset in np.arange(0, self.nb_datasets, 1):
                 local_data = self.generator_obj.__getitem__(index_dataset)
 
-                predictions_data = self.model.predict(local_data[0])
+                predictions_data = self.model.predict(local_data[0],
+                                                      workers=self.workers,
+                                                      use_multiprocessing=self.use_multiprocessing,
+                                                      max_queue_size=32)
 
                 local_mean, local_std = \
                     self.generator_obj.__get_norm_parameters__(index_dataset)
