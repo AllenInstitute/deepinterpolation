@@ -3,11 +3,11 @@ import numpy as np
 from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
-from scipy.io.wavfile import write
 
 
 class fmri_inferrence:
-    # This inferrence is specific to fMRI which is raster scanning for denoising
+    # This inferrence is specific to fMRI which is raster scanning
+    # for denoising
 
     def __init__(self, inferrence_json_path, generator_obj):
         self.inferrence_json_path = inferrence_json_path
@@ -20,7 +20,8 @@ class fmri_inferrence:
         self.model_path = self.json_data["model_path"]
 
         # This is used when output is a full volume to select only the center
-        # currently only set to true. Future implementation could make smarter scanning of the volume and leverage more
+        # currently only set to true. Future implementation could make smarter
+        # scanning of the volume and leverage more
         # than just the center pixel
         if "single_voxel_output_single" in self.json_data.keys():
             self.single_voxel_output_single = self.json_data[
@@ -47,7 +48,8 @@ class fmri_inferrence:
                 chunks=tuple(chunk_size),
                 dtype="float32",
             )
-            # This was used to alter the volume infered and reduce computation time
+            # This was used to alter the volume infered and reduce
+            # computation time
             # np.array([20])
             all_z_values = np.arange(0, self.input_data_size[2])
             all_y_values = np.arange(0, self.input_data_size[1])
@@ -141,7 +143,8 @@ class core_inferrence:
 
         self.model = load_model(
             self.model_path,
-            custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
+            custom_objects={
+                "annealed_loss": lc.loss_selector("annealed_loss")},
         )
 
     def run(self):
@@ -172,9 +175,8 @@ class core_inferrence:
 
                 predictions_data = self.model.predict(local_data[0])
 
-                local_mean, local_std = self.generator_obj.__get_norm_parameters__(
-                    index_dataset
-                )
+                local_mean, local_std = \
+                    self.generator_obj.__get_norm_parameters__(index_dataset)
                 local_size = predictions_data.shape[0]
 
                 if self.rescale:
@@ -182,22 +184,13 @@ class core_inferrence:
                 else:
                     corrected_data = predictions_data
 
+                istart = index_dataset * self.batch_size
+                iend = istart + local_size
+
                 if self.save_raw:
                     if self.rescale:
                         corrected_raw = local_data[1] * local_std + local_mean
                     else:
                         corrected_raw = local_data[1]
-
-                    raw_out[
-                        index_dataset
-                        * self.batch_size : index_dataset
-                        * self.batch_size
-                        + local_size,
-                        :,
-                    ] = corrected_raw
-
-                dset_out[
-                    index_dataset * self.batch_size : index_dataset * self.batch_size
-                    + local_size,
-                    :,
-                ] = corrected_data
+                    raw_out[istart: iend, :, ] = corrected_raw
+                dset_out[istart: iend, :, ] = corrected_data
