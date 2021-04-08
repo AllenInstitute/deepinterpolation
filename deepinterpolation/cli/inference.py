@@ -90,7 +90,7 @@ class Inference(argschema.ArgSchemaParser):
             split_files = [mp_job(*mp_args)]
         else:
             with multiprocessing.Pool(self.args["n_parallel_workers"]) as pool:
-                split_files = pool.starmap(mp_job, mp_args[0:2])
+                split_files = pool.starmap(mp_job, mp_args)
 
         self.logger.info("inference jobs done, "
                          "concatenating and normalizing.")
