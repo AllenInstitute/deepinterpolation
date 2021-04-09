@@ -164,13 +164,16 @@ class core_inferrence:
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape)
 
+        dset_out = self.model.predict(self.generator_obj,
+                                      workers=self.workers,
+                                      use_multiprocessing=self.use_multiprocessing,
+                                      max_queue_size=32)
+
         with h5py.File(self.output_file, "w") as file_handle:
             dset_out = file_handle.create_dataset(
-                "data",
-                shape=tuple(final_shape),
-                chunks=tuple(chunk_size),
-                dtype="float32",
-            )
+                "data", data=dset_out)
+
+            return
 
             if self.save_raw:
                 raw_out = file_handle.create_dataset(
