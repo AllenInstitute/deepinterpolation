@@ -222,6 +222,14 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=False,
         description="")
+    use_multiprocessing = argschema.fields.Bool(
+        required=False,
+        default=True,
+        description="sent to model.predict() as 'use_multiprocessing'")
+    nb_workers = argschema.fields.Int(
+        required=False,
+        default=16,
+        descriptipn="sent to model.predict() as 'workers'")
 
 
 class InferenceInputSchema(argschema.ArgSchema):
