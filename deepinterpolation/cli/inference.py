@@ -2,7 +2,7 @@ import argschema
 import json
 import h5py
 import time
-import numpy as np
+import copy
 from pathlib import Path
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
@@ -10,6 +10,9 @@ from deepinterpolation.generic import ClassLoader
 
 
 def chunk_job(inf_params, gen_params, uid, job_index, indices):
+    inf_params = copy.deepcopy(inf_params)
+    gen_params = copy.deepcopy(gen_params)
+
     outdir = Path(inf_params['output_file']).parent
 
     inference_json_path = outdir / f"{uid}_{job_index}_inference.json"
@@ -33,8 +36,8 @@ def chunk_job(inf_params, gen_params, uid, job_index, indices):
             inference_json_path,
             data_generator)
 
-    inferrence_class.run()
-    return inf_params["output_file"]
+    # min value, max value, path
+    return inferrence_class.run()
 
 
 class Inference(argschema.ArgSchemaParser):
@@ -52,53 +55,58 @@ class Inference(argschema.ArgSchemaParser):
         uid = self.args['run_uid']
         self.logger.info(f"inference run {self.args['run_uid']} started")
 
-        if (self.args["n_frames_chunk"] != -1):
-            index_list = []
-            with h5py.File(
-                    self.args["generator_params"]["train_path"], "r") as f:
-                nframes = f["data"].shape[0]
-            start_frame = 0
-            while True:
-                index_list.append([start_frame,
-                                   start_frame + self.args["n_frames_chunk"]])
-                if index_list[-1][-1] >= nframes:
-                    index_list[-1][-1] = nframes
-                    break
-                start_frame = index_list[-1][-1] - \
-                    self.args["generator_params"]["pre_post_frame"]
+        # read in result, concatenating to output file
+        outfile = self.args["inference_params"]["output_file"]
 
-            chunk_args = []
-            for job_index, indices in enumerate(index_list):
-                chunk_args.append([self.args["inference_params"],
-                                self.args["generator_params"],
-                                uid,
-                                job_index,
-                                indices])
-        else:
-            chunk_args = [[self.args["inference_params"],
-                           self.args["generator_params"],
-                           uid,
-                           job_index,
-                           indices]]
+        with h5py.File(
+                self.args["generator_params"]["train_path"], "r") as f:
+            nframes = f["data"].shape[0]
+        if (self.args["n_frames_chunk"] == -1):
+            self.args["n_frames_chunk"] = nframes
+        index_list = []
+        start_frame = 0
+        while True:
+            index_list.append([start_frame,
+                               start_frame + self.args["n_frames_chunk"]])
+            if index_list[-1][-1] >= (nframes - 1):
+                index_list[-1][-1] = -1
+                break
+            start_frame = index_list[-1][-1] - \
+                self.args["generator_params"]["pre_post_frame"]
 
-        self.logger.info(f"breaking job into {len(chunk_args)} chunks"
-                         f"with limit of {self.args['n_frames_chunk']} frames"
-                         "per chunk")
+        chunk_args = []
+        for job_index, indices in enumerate(index_list):
+            chunk_args.append([self.args["inference_params"],
+                               self.args["generator_params"],
+                               uid,
+                               job_index,
+                               indices])
 
+        self.logger.info(f"breaking job into {len(chunk_args)} chunks "
+                         f"with limit of {self.args['n_frames_chunk']} "
+                         "frames per chunk.")
+
+        # loop through movie in largish sequential chunks
+        # so we never have a huge thing in memory
         split_files = []
+        min_vals = []
+        max_vals = []
         for chunk_arg in chunk_args:
             t0 = time.time()
-            split_files.append(chunk_job(chunk_arg))
+            vmin, vmax, split_file = chunk_job(*chunk_arg)
+            split_files.append(split_file)
+            min_vals.append(vmin)
+            max_vals.append(vmax)
+            self.logger.info(f"done: {split_files[-1]}")
             dt = time.time() - t0
-            with h5py.File(slpit_files[-1], "r") as f:
+            with h5py.File(split_files[-1], "r") as f:
                 nframes = f["data"].shape[0]
             rate = nframes / (dt / 60.0)
             self.logger.info(f"inference on {nframes} frames in {int(dt)} "
                              f"seconds: {rate:.2f} frames / min")
-        
+
         self.logger.info("inference jobs done, "
                          "concatenating and normalizing.")
-
 
         # stats about the input movie
         with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
@@ -106,29 +114,24 @@ class Inference(argschema.ArgSchemaParser):
             indata_shape = f["data"].shape
             indata_dtype = f["data"].dtype
 
-        # read in result, concatenating to output file
-        p = Path(self.args["inference_params"]["output_file"])
-        outfile = p.parent / f"{uid}_{p.name}"
+        pmin = min(min_vals)
+        pmax = max(max_vals)
+        pptp = pmax - pmin
+
         with h5py.File(outfile, "w") as fout:
             dout = fout.create_dataset("data",
                                        shape=indata_shape,
                                        dtype=indata_dtype,
                                        fillvalue=0)
-            start_index = 0
-            for split_file in split_files:
+            for split_file, indices in zip(split_files, index_list):
                 with h5py.File(split_file, "r") as fin:
                     partial_data = fin["data"][()].squeeze()
-                pmin = partial_data.min()
-                pmax = partial_data.max()
-                pptp = partial_data.ptp()
-             partial_data = (partial_data - pmin) * indata_max / pptp
-             partial_data = partial_data.astype('uint16')
-             npartial = partial_data.shape[0]
-             dout[start_index:(start_index + npartial)] = partial_data
-             start_index += npartial
-
-             # delete the file
-             Path(split_file).unlink()
+                partial_data = (partial_data - pmin) * indata_max / pptp
+                partial_data = partial_data.astype('uint16')
+                npartial = partial_data.shape[0]
+                dout[indices[0]:(indices[0] + npartial)] = partial_data
+                # delete the file
+                Path(split_file).unlink()
 
         self.logger.info(f"wrote {outfile}")
 

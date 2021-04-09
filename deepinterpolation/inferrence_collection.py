@@ -137,16 +137,6 @@ class core_inferrence:
         else:
             self.rescale = True
 
-        if "use_multiprocessing" in self.json_data.keys():
-            self.use_multiprocessing = self.json_data["use_multiprocessing"]
-        else:
-            self.use_multiprocessing = True
-
-        if "nb_workers" in self.json_data.keys():
-            self.workers = self.json_data["nb_workers"]
-        else:
-            self.workers = 16
-
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
@@ -165,48 +155,46 @@ class core_inferrence:
         chunk_size.extend(self.indiv_shape)
 
         dset_out = self.model.predict(self.generator_obj,
-                                      workers=self.workers,
-                                      use_multiprocessing=self.use_multiprocessing,
                                       max_queue_size=32)
 
         with h5py.File(self.output_file, "w") as file_handle:
-            dset_out = file_handle.create_dataset(
-                "data", data=dset_out)
+            file_handle.create_dataset("data", data=dset_out)
 
-            return
+        # min value, max value, path
+        return dset_out.min(), dset_out.max(), self.output_file
 
-            if self.save_raw:
-                raw_out = file_handle.create_dataset(
-                    "raw",
-                    shape=tuple(final_shape),
-                    chunks=tuple(chunk_size),
-                    dtype="float32",
-                )
+        #    if self.save_raw:
+        #        raw_out = file_handle.create_dataset(
+        #            "raw",
+        #            shape=tuple(final_shape),
+        #            chunks=tuple(chunk_size),
+        #            dtype="float32",
+        #        )
 
-            for index_dataset in np.arange(0, self.nb_datasets, 1):
-                local_data = self.generator_obj.__getitem__(index_dataset)
+        #    for index_dataset in np.arange(0, self.nb_datasets, 1):
+        #        local_data = self.generator_obj.__getitem__(index_dataset)
 
-                predictions_data = self.model.predict(local_data[0],
-                                                      workers=self.workers,
-                                                      use_multiprocessing=self.use_multiprocessing,
-                                                      max_queue_size=32)
+        #        predictions_data = self.model.predict(local_data[0],
+        #                                              workers=self.workers,
+        #                                              use_multiprocessing=self.use_multiprocessing,
+        #                                              max_queue_size=32)
 
-                local_mean, local_std = \
-                    self.generator_obj.__get_norm_parameters__(index_dataset)
-                local_size = predictions_data.shape[0]
+        #        local_mean, local_std = \
+        #            self.generator_obj.__get_norm_parameters__(index_dataset)
+        #        local_size = predictions_data.shape[0]
 
-                if self.rescale:
-                    corrected_data = predictions_data * local_std + local_mean
-                else:
-                    corrected_data = predictions_data
+        #        if self.rescale:
+        #            corrected_data = predictions_data * local_std + local_mean
+        #        else:
+        #            corrected_data = predictions_data
 
-                istart = index_dataset * self.batch_size
-                iend = istart + local_size
+        #        istart = index_dataset * self.batch_size
+        #        iend = istart + local_size
 
-                if self.save_raw:
-                    if self.rescale:
-                        corrected_raw = local_data[1] * local_std + local_mean
-                    else:
-                        corrected_raw = local_data[1]
-                    raw_out[istart: iend, :, ] = corrected_raw
-                dset_out[istart: iend, :, ] = corrected_data
+        #        if self.save_raw:
+        #            if self.rescale:
+        #                corrected_raw = local_data[1] * local_std + local_mean
+        #            else:
+        #                corrected_raw = local_data[1]
+        #            raw_out[istart: iend, :, ] = corrected_raw
+        #        dset_out[istart: iend, :, ] = corrected_data
