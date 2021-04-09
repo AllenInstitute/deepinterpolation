@@ -256,11 +256,6 @@ class InferenceInputSchema(argschema.ArgSchema):
         description=("if not -1 and n_parallel_processors != 1 "
                      "this will set the number of frames per job "
                      "to run in parallel."))
-    n_parallel_workers = argschema.fields.Int(
-        required=False,
-        default=1,
-        description=("if not 1 and n_frames_chunk != -1 "
-                     "this will set the number of multiprocessing workers."))
 
     @mm.post_load
     def inference_specific_settings(self, data, **kwargs):

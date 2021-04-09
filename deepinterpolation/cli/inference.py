@@ -1,15 +1,15 @@
 import argschema
 import json
 import h5py
+import time
 import numpy as np
-import multiprocessing
 from pathlib import Path
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
 from deepinterpolation.generic import ClassLoader
 
 
-def mp_job(inf_params, gen_params, uid, job_index, indices):
+def chunk_job(inf_params, gen_params, uid, job_index, indices):
     outdir = Path(inf_params['output_file']).parent
 
     inference_json_path = outdir / f"{uid}_{job_index}_inference.json"
@@ -34,7 +34,6 @@ def mp_job(inf_params, gen_params, uid, job_index, indices):
             data_generator)
 
     inferrence_class.run()
-
     return inf_params["output_file"]
 
 
@@ -53,8 +52,7 @@ class Inference(argschema.ArgSchemaParser):
         uid = self.args['run_uid']
         self.logger.info(f"inference run {self.args['run_uid']} started")
 
-        if (self.args["n_frames_chunk"] != -1) & \
-                (self.args["n_parallel_workers"] != 1):
+        if (self.args["n_frames_chunk"] != -1):
             index_list = []
             with h5py.File(
                     self.args["generator_params"]["train_path"], "r") as f:
@@ -69,61 +67,69 @@ class Inference(argschema.ArgSchemaParser):
                 start_frame = index_list[-1][-1] - \
                     self.args["generator_params"]["pre_post_frame"]
 
-            mp_args = []
+            chunk_args = []
             for job_index, indices in enumerate(index_list):
-                mp_args.append([self.args["inference_params"],
+                chunk_args.append([self.args["inference_params"],
                                 self.args["generator_params"],
                                 uid,
                                 job_index,
                                 indices])
-                print(indices)
         else:
-            mp_args = [[self.args["inference_params"],
-                        self.args["generator_params"],
-                        uid,
-                        job_index,
-                        indices]]
+            chunk_args = [[self.args["inference_params"],
+                           self.args["generator_params"],
+                           uid,
+                           job_index,
+                           indices]]
 
-        self.logger.info(f"breaking job into {len(mp_args)} chunks")
+        self.logger.info(f"breaking job into {len(chunk_args)} chunks"
+                         f"with limit of {self.args['n_frames_chunk']} frames"
+                         "per chunk")
 
-        if len(mp_args) == 1:
-            split_files = [mp_job(*mp_args)]
-        else:
-            with multiprocessing.Pool(self.args["n_parallel_workers"]) as pool:
-                split_files = pool.starmap(mp_job, mp_args)
-
+        split_files = []
+        for chunk_arg in chunk_args:
+            t0 = time.time()
+            split_files.append(chunk_job(chunk_arg))
+            dt = time.time() - t0
+            with h5py.File(slpit_files[-1], "r") as f:
+                nframes = f["data"].shape[0]
+            rate = nframes / (dt / 60.0)
+            self.logger.info(f"inference on {nframes} frames in {int(dt)} "
+                             f"seconds: {rate:.2f} frames / min")
+        
         self.logger.info("inference jobs done, "
                          "concatenating and normalizing.")
 
+
         # stats about the input movie
         with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
-            dmax = f["data"][()].max()
-            dshape = f["data"].shape
+            indata_max = f["data"][()].max()
+            indata_shape = f["data"].shape
+            indata_dtype = f["data"].dtype
 
-        # read in result, concatenating
-        outputs = []
-        for split_file in split_files:
-            with h5py.File(split_file, "r") as f:
-                outputs.append(f["data"][()].squeeze())
-            self.logger.info(f"read {outputs[-1].shape[0]} "
-                             "frames from {split_file}")
-            # delete the file
-            Path(split_file).unlink()
-        d = np.concatenate(outputs, axis=0)
+        # read in result, concatenating to output file
+        p = Path(self.args["inference_params"]["output_file"])
+        outfile = p.parent / f"{uid}_{p.name}"
+        with h5py.File(outfile, "w") as fout:
+            dout = fout.create_dataset("data",
+                                       shape=indata_shape,
+                                       dtype=indata_dtype,
+                                       fillvalue=0)
+            start_index = 0
+            for split_file in split_files:
+                with h5py.File(split_file, "r") as fin:
+                    partial_data = fin["data"][()].squeeze()
+                pmin = partial_data.min()
+                pmax = partial_data.max()
+                pptp = partial_data.ptp()
+             partial_data = (partial_data - pmin) * indata_max / pptp
+             partial_data = partial_data.astype('uint16')
+             npartial = partial_data.shape[0]
+             dout[start_index:(start_index + npartial)] = partial_data
+             start_index += npartial
 
-        # normalize
-        d = (d - d.min()) * dmax / d.ptp()
-        d = d.astype('uint16')
-        nextra = dshape[0] - d.shape[0]
-        dextra = np.zeros((nextra, *d.shape[1:]), dtype='uint16')
-        d = np.concatenate((d, dextra), axis=0)
-
-        # output
-        with h5py.File(
-                self.args["inference_params"]["output_file"], "w") as f:
-            f.create_dataset("data", data=d)
-        self.logger.info(
-            f"wrote {self.args['inference_params']['output_file']}")
+             # delete the file
+             Path(split_file).unlink()
+        self.logger.info(f"wrote {outfile}")
 
 
 if __name__ == "__main__":
