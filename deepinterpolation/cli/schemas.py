@@ -248,6 +248,10 @@ class InferenceInputSchema(argschema.ArgSchema):
         description=("if not -1 and n_parallel_processors != 1 "
                      "this will set the number of frames per job "
                      "to run in parallel."))
+    n_parallel_processes = argschema.fields.Int(
+        required=False,
+        default=1,
+        description=("a lowish number to keep the processors busy"))
 
     @mm.post_load
     def inference_specific_settings(self, data, **kwargs):

@@ -3,11 +3,16 @@ import json
 import h5py
 import time
 import copy
+import logging
+import multiprocessing
+import numpy as np
 from pathlib import Path
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
 from deepinterpolation.generic import ClassLoader
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
 def chunk_job(inf_params, gen_params, uid, job_index, indices):
     inf_params = copy.deepcopy(inf_params)
@@ -38,6 +43,26 @@ def chunk_job(inf_params, gen_params, uid, job_index, indices):
 
     # min value, max value, path
     return inferrence_class.run()
+
+
+def chunk_joblist(chunk_args):
+    split_files = []
+    min_vals = []
+    max_vals = []
+    for chunk_arg in chunk_args:
+        t0 = time.time()
+        vmin, vmax, split_file = chunk_job(*chunk_arg)
+        split_files.append(split_file)
+        min_vals.append(vmin)
+        max_vals.append(vmax)
+        logger.info(f"done: {split_files[-1]}")
+        dt = time.time() - t0
+        with h5py.File(split_files[-1], "r") as f:
+            nframes = f["data"].shape[0]
+        rate = nframes / (dt / 60.0)
+        logger.info(f"inference on {nframes} frames in {int(dt)} "
+                    f"seconds: {rate:.2f} frames / min")
+    return min_vals, max_vals, split_files
 
 
 class Inference(argschema.ArgSchemaParser):
@@ -91,19 +116,17 @@ class Inference(argschema.ArgSchemaParser):
         split_files = []
         min_vals = []
         max_vals = []
-        for chunk_arg in chunk_args:
-            t0 = time.time()
-            vmin, vmax, split_file = chunk_job(*chunk_arg)
-            split_files.append(split_file)
-            min_vals.append(vmin)
-            max_vals.append(vmax)
-            self.logger.info(f"done: {split_files[-1]}")
-            dt = time.time() - t0
-            with h5py.File(split_files[-1], "r") as f:
-                nframes = f["data"].shape[0]
-            rate = nframes / (dt / 60.0)
-            self.logger.info(f"inference on {nframes} frames in {int(dt)} "
-                             f"seconds: {rate:.2f} frames / min")
+        chunklists = [i.tolist()
+                      for i in np.array_split(
+                          chunk_args,
+                          self.args["n_parallel_processes"])]
+        with multiprocessing.Pool(
+                self.args["n_parallel_processes"]) as pool:
+            results = pool.map(chunk_joblist, chunklists)
+            for mins, maxs, splits in results:
+                min_vals.extend(mins)
+                max_vals.extend(maxs)
+                split_files.extend(splits)
 
         self.logger.info("inference jobs done, "
                          "concatenating and normalizing.")
