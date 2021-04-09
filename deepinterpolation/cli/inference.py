@@ -129,6 +129,7 @@ class Inference(argschema.ArgSchemaParser):
 
              # delete the file
              Path(split_file).unlink()
+
         self.logger.info(f"wrote {outfile}")
 
 
