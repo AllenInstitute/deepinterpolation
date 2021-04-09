@@ -1170,11 +1170,11 @@ class OphysGenerator(DeepGenerator):
 
         if self.from_s3:
             s3_filesystem = s3fs.S3FileSystem()
-            raw_data = h5py.File(
-                s3_filesystem.open(self.raw_data_file, "rb"), "r")["data"]
+            h5_file = h5py.File(
+                    s3_filesystem.open(self.raw_data_file, "rb"), "r")
         else:
-            raw_data = h5py.File(self.raw_data_file, "r")["data"]
-
+            h5_file = h5py.File(self.raw_data_file, "r")
+        raw_data = h5_file["data"]
         self.total_frame_per_movie = int(raw_data.shape[0])
 
         if self.end_frame < 0:
@@ -1195,6 +1195,8 @@ class OphysGenerator(DeepGenerator):
         average_nb_samples = 1000
 
         local_data = raw_data[0:average_nb_samples, :, :].flatten()
+        h5_file.close()
+
         local_data = local_data.astype("float32")
 
         self.local_mean = np.mean(local_data)
