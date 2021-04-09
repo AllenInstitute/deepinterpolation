@@ -1,6 +1,7 @@
 import argschema
 import json
 import h5py
+import time
 import numpy as np
 from pathlib import Path
 
@@ -22,6 +23,10 @@ class Inference(argschema.ArgSchemaParser):
             self.logger.info(f"wrote {full_args_path}")
         uid = self.args['run_uid']
 
+        p = Path(self.args["inference_params"]["output_file"])
+        outfile = p.parent / f"{uid}_{p.name}"
+        self.args["inference_params"]["output_file"] = str(outfile)
+
         # save the json parameters to 2 different files
         inference_json_path = outdir / f"{uid}_inference.json"
         with open(inference_json_path, "w") as f:
@@ -42,7 +47,18 @@ class Inference(argschema.ArgSchemaParser):
                 data_generator)
 
         self.logger.info("created objects for inference")
+
+        t0 = time.time()
         inferrence_class.run()
+        dt = time.time() - t0
+        with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
+            nframes = f["data"].shape[0]
+        rate = nframes / (dt / 60.0)
+        self.logger.info(f"inference on {nframes} frames in {int(dt)} "
+                         f"seconds: {rate:.2f} frames / min")
+
+        del inferrence_obj
+        del generator_obj
 
         # patch up the output movie
         self.logger.info("fixing up the range and shape of the result")
@@ -50,8 +66,7 @@ class Inference(argschema.ArgSchemaParser):
             dmax = f["data"][()].max()
             dshape = f["data"].shape
 
-        with h5py.File(
-                self.args["inference_params"]["output_file"], "r") as f:
+        with h5py.File(outfile, "r") as f:
             d = f["data"][()].squeeze()
 
         d = (d - d.min()) * dmax / d.ptp()
@@ -60,11 +75,9 @@ class Inference(argschema.ArgSchemaParser):
         dextra = np.zeros((nextra, *d.shape[1:]), dtype='uint16')
         d = np.concatenate((d, dextra), axis=0)
 
-        with h5py.File(
-                self.args["inference_params"]["output_file"], "w") as f:
+        with h5py.File(outfile, "w") as f:
             f.create_dataset("data", data=d)
-        self.logger.info(
-            f"wrote {self.args['inference_params']['output_file']}")
+        self.logger.info(f"wrote {outfile}")
 
 
 if __name__ == "__main__":
