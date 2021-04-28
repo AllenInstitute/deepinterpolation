@@ -1,5 +1,6 @@
 import argschema
 import marshmallow as mm
+from marshmallow import ValidationError
 import datetime
 
 
@@ -199,6 +200,36 @@ class TransferTrainerInputSchema(argschema.ArgSchema):
         return data
 
 
+class MlflowSchema(argschema.schemas.DefaultSchema):
+    tracking_uri = argschema.fields.String(
+        required=True,
+        description="MLflow tracking URI"
+    )
+    model_name = argschema.fields.String(
+        required=True,
+        description="Model name"
+    )
+    model_version = argschema.fields.Int(
+        required=False,
+        description='Model version. Either this needs to be supplied or '
+                    'model_stage'
+    )
+    model_stage = argschema.fields.String(
+        required=False,
+        description='Model stage. Either this needs to be supplied or '
+                    'model_version'
+    )
+
+    @mm.validates_schema
+    def validate_model_version(self, data):
+        model_version_given = 'model_version' in data
+        model_stage_given = 'model_stage' in data
+
+        if model_version_given and model_stage_given:
+            raise ValidationError('Either model_version or model_stage should '
+                                  'be supplied but not both')
+
+
 class InferenceSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
@@ -208,9 +239,15 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default="core_inferrence",
         description="")
+    mlflow_params = argschema.fields.Nested(
+        MlflowSchema,
+        required=False,
+        description="MLflow params, if the model should be loaded from mlflow."
+                    "If this is provided, then model_path should not be.")
     model_path = argschema.fields.InputFile(
-        required=True,
-        description="path to model source for transfer training.")
+        required=False,
+        description="Local path to model source for transfer training. "
+                    "If this is provided then mlflow_params should not be.")
     output_file = argschema.fields.OutputFile(
         required=True,
         description="")
@@ -222,6 +259,18 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=False,
         description="")
+
+    @mm.validates_schema
+    def validate_model_path(self, data):
+        model_path_given = 'model_path' in data
+        mlflow_params_given = 'mlflow_params' in data
+        if model_path_given and mlflow_params_given:
+            raise ValidationError('Either model_path or mlflow_params should '
+                                  'be supplied but not both')
+
+        if not model_path_given and not mlflow_params_given:
+            raise ValidationError('One of model_path or mlflow_params should '
+                                  'be supplied')
 
 
 class InferenceInputSchema(argschema.ArgSchema):

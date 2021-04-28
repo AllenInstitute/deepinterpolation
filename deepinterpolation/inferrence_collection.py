@@ -125,7 +125,6 @@ class core_inferrence:
         self.json_data = local_json_loader.json_data
 
         self.output_file = self.json_data["output_file"]
-        self.model_path = self.json_data["model_path"]
 
         if "save_raw" in self.json_data.keys():
             self.save_raw = self.json_data["save_raw"]
@@ -141,10 +140,51 @@ class core_inferrence:
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
 
+        self.__load_model()
+
+    def __load_model(self):
+        if "model_path" in self.json_data:
+            self.__load_local_model()
+        else:
+            self.__load_model_from_mlflow()
+
+    def __load_local_model(self):
         self.model = load_model(
-            self.model_path,
+            self.json_data["model_path"],
             custom_objects={
                 "annealed_loss": lc.loss_selector("annealed_loss")},
+        )
+
+    def __load_model_from_mlflow(self):
+        from mlflow.tracking import MlflowClient
+        import mlflow
+
+        mlflow_params = self.json_data['mlflow_params']
+
+        model_name = mlflow_params['model_name']
+        model_version = mlflow_params.get('model_version')
+        model_stage = mlflow_params.get('model_stage')
+
+        mlflow.set_tracking_uri(mlflow_params['tracking_uri'])
+
+        def __get_latest_model_version():
+            """Gets latest model version"""
+            client = MlflowClient()
+            model_versions = client.search_model_versions(
+                f"name='{model_name}'")
+            latest_version = model_versions[-1].version
+            return latest_version
+
+        if model_version is not None:
+            model_uri = f"models:/{model_name}/{model_version}"
+        elif model_stage:
+            model_uri = f"models:/{model_name}/{model_stage}"
+        else:
+            latest_version = __get_latest_model_version()
+            model_uri = f"models:/{model_name}/{latest_version}"
+
+        self.model = mlflow.keras.load_model(
+            model_uri=model_uri
         )
 
     def run(self):

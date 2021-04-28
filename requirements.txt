@@ -9,3 +9,4 @@ tifffile
 fsspec==0.8.7
 s3fs==0.5.1
 argschema==2.0.2
+mlflow>=1.14.1
