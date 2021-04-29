@@ -135,13 +135,24 @@ class core_inferrence:
         else:
             self.rescale = True
 
+        if "use_multiprocessing" in json_data.keys():
+            self.use_multiprocessing = json_data["use_multiprocessing"]
+        else:
+            self.use_multiprocessing = False
+
+        if "nb_workers" in json_data.keys():
+            self.workers = json_data["nb_workers"]
+        else:
+            self.workers = 5
+
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
 
         self.model = load_model(
             self.model_path,
-            custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
+            custom_objects={
+                "annealed_loss": lc.loss_selector("annealed_loss")},
         )
 
     def run(self):
@@ -151,53 +162,78 @@ class core_inferrence:
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape)
 
-        with h5py.File(self.output_file, "w") as file_handle:
-            dset_out = file_handle.create_dataset(
-                "data",
-                shape=tuple(final_shape),
-                chunks=tuple(chunk_size),
-                dtype="float32",
-            )
+           if self.use_multiprocessing:
 
-            if self.save_raw:
-                raw_out = file_handle.create_dataset(
-                    "raw",
-                    shape=tuple(final_shape),
-                    chunks=tuple(chunk_size),
-                    dtype="float32",
-                )
-
-            for index_dataset in np.arange(0, self.nb_datasets, 1):
-                local_data = self.generator_obj.__getitem__(index_dataset)
-
-                predictions_data = self.model.predict(local_data[0])
-
+                dset_out = self.model.predict(self.generator_obj,
+                                              use_multiprocessing=self.use_multiprocessing,
+                                              max_queue_size=self.workers)
                 local_mean, local_std = self.generator_obj.__get_norm_parameters__(
-                    index_dataset
+                    0
                 )
                 local_size = predictions_data.shape[0]
 
                 if self.rescale:
-                    corrected_data = predictions_data * local_std + local_mean
-                else:
-                    corrected_data = predictions_data
+                    dset_out = dset_out * local_std + local_mean
 
                 if self.save_raw:
-                    if self.rescale:
-                        corrected_raw = local_data[1] * local_std + local_mean
-                    else:
-                        corrected_raw = local_data[1]
+                    print('saving raw data is not available with' +
+                          ' multiprocessing to maintain performance')
+                with h5py.File(self.output_file, "w") as file_handle:
+                    file_handle.create_dataset("data", data=dset_out
+                                               shape=tuple(final_shape),
+                        chunks=tuple(chunk_size),
+                        dtype="float32"
+                    )
+            else:
+                with h5py.File(self.output_file, "w") as file_handle:
+                    dset_out = file_handle.create_dataset(
+                        "data",
+                        shape=tuple(final_shape),
+                        chunks=tuple(chunk_size),
+                        dtype="float32",
+                    )
 
-                    raw_out[
-                        index_dataset
-                        * self.batch_size : index_dataset
-                        * self.batch_size
-                        + local_size,
-                        :,
-                    ] = corrected_raw
+                    if self.save_raw:
+                        raw_out = file_handle.create_dataset(
+                            "raw",
+                            shape=tuple(final_shape),
+                            chunks=tuple(chunk_size),
+                            dtype="float32",
+                        )
 
-                dset_out[
-                    index_dataset * self.batch_size : index_dataset * self.batch_size
-                    + local_size,
-                    :,
-                ] = corrected_data
+                    for index_dataset in np.arange(0, self.nb_datasets, 1):
+                        local_data = self.generator_obj.__getitem__(
+                            index_dataset)
+
+                        predictions_data = self.model.predict(local_data[0])
+
+                        local_mean, local_std = self.generator_obj.__get_norm_parameters__(
+                            index_dataset
+                        )
+                        local_size = predictions_data.shape[0]
+
+                        if self.rescale:
+                            corrected_data = predictions_data * local_std + local_mean
+                        else:
+                            corrected_data = predictions_data
+
+                        if self.save_raw:
+                            if self.rescale:
+                                corrected_raw = local_data[1] * \
+                                    local_std + local_mean
+                            else:
+                                corrected_raw = local_data[1]
+
+                            raw_out[
+                                index_dataset
+                                * self.batch_size: index_dataset
+                                * self.batch_size
+                                + local_size,
+                                :,
+                            ] = corrected_raw
+
+                        dset_out[
+                            index_dataset * self.batch_size: index_dataset * self.batch_size
+                            + local_size,
+                            :,
+                        ] = corrected_data
