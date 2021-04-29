@@ -167,9 +167,11 @@ class core_inferrence:
 
         if self.use_multiprocessing:
 
-            dset_out = self.model.predict(self.generator_obj,
-                                          use_multiprocessing=self.use_multiprocessing,
-                                          max_queue_size=self.workers)
+            dset_out = self.model.predict(
+                self.generator_obj,
+                use_multiprocessing=self.use_multiprocessing,
+                max_queue_size=self.workers)
+
             local_mean, local_std =\
                 self.generator_obj.__get_norm_parameters__(
                     0
@@ -183,8 +185,9 @@ class core_inferrence:
             if self.save_raw:
                 print('saving raw data is not available with' +
                       ' multiprocessing to maintain performance')
+
             with h5py.File(self.output_file, "w") as file_handle:
-                file_handle.create_dataset("data", data=dset_out
+                file_handle.create_dataset("data", data=dset_out,
                                            shape=tuple(final_shape),
                                            chunks=tuple(chunk_size),
                                            dtype="float32"
