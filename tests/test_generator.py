@@ -1,5 +1,3 @@
-import pytest
-
 from deepinterpolation.generic import JsonSaver, ClassLoader
 import os
 import pathlib
@@ -8,7 +6,6 @@ import pathlib
 def test_generator_tif_creation(tmp_path):
 
     generator_param = {}
-    inferrence_param = {}
 
     # We are reusing the data generator for training here.
     generator_param["type"] = "generator"
@@ -17,7 +14,7 @@ def test_generator_tif_creation(tmp_path):
     generator_param["pre_post_omission"] = 0
     generator_param[
         "steps_per_epoch"
-    ] = -1  # No steps necessary for inference as epochs are not relevant. -1 deactivate it.
+    ] = -1
 
     generator_param["train_path"] = os.path.join(
         pathlib.Path(__file__).parent.absolute(),
@@ -28,10 +25,10 @@ def test_generator_tif_creation(tmp_path):
 
     generator_param["batch_size"] = 5
     generator_param["start_frame"] = 0
-    generator_param["end_frame"] = 99  # -1 to go until the end.
+    generator_param["end_frame"] = 99
     generator_param[
         "randomize"
-    ] = 0  # This is important to keep the order and avoid the randomization used during training
+    ] = 0
 
     path_generator = os.path.join(tmp_path, "generator.json")
     json_obj = JsonSaver(generator_param)
