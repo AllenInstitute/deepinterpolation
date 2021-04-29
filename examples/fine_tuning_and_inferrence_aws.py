@@ -45,7 +45,7 @@ def main(argv):
     frame_end_training = -1
     frame_start_inferrence = 0
     frame_end_inferrence = -1
-    output_file_inferrence =
+
     input_data_generator = "OphysGenerator"
     for opt, arg in opts:
         if opt == "--movie_path":
