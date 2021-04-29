@@ -43,14 +43,13 @@ def test_generator_tif_creation(tmp_path):
 def test_generator_ephys_creation(tmp_path):
     generator_param = {}
 
-    # We are reusing the data generator for training here. Some parameters like steps_per_epoch are irrelevant but currently needs to be provided
     generator_param["type"] = "generator"
     generator_param["name"] = "EphysGenerator"
     generator_param["pre_post_frame"] = 30
     generator_param["pre_post_omission"] = 1
     generator_param[
         "steps_per_epoch"
-    ] = -1  # No steps necessary for inference as epochs are not relevant. -1 deactivate it.
+    ] = -1
 
     generator_param["train_path"] = os.path.join(
         pathlib.Path(__file__).parent.absolute(),
@@ -61,10 +60,10 @@ def test_generator_ephys_creation(tmp_path):
 
     generator_param["batch_size"] = 10
     generator_param["start_frame"] = 0
-    generator_param["end_frame"] = -1  # -1 to go until the end.
+    generator_param["end_frame"] = -1
     generator_param[
         "randomize"
-    ] = 0  # This is important to keep the order and avoid the randomization used during training
+    ] = 0
 
     path_generator = os.path.join(tmp_path, "generator.json")
     json_obj = JsonSaver(generator_param)
