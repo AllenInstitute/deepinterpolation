@@ -1,13 +1,7 @@
-import deepinterpolation as de
-from shutil import copyfile
 import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
-from typing import Any, Dict
-import pathlib
-import numpy as np
 import argparse
-import json
 
 if __name__ == "__main__":
 
@@ -55,6 +49,8 @@ if __name__ == "__main__":
     val_data_path = args.val_data_path
     output_path = args.output_path
     nb_gpus = args.nb_gpus
+
+    input_data_generator = args.input_data_generator
 
     batch_size = args.batch_size
     training_loss = args.training_loss
