@@ -50,7 +50,7 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
 
     # Passing on the parameters
-    raw_model_path  args.raw_model_path
+    raw_model_path = args.raw_model_path
     raw_data_path = args.raw_data_path
     val_data_path = args.val_data_path
     output_path = args.output_path
