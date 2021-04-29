@@ -1,14 +1,8 @@
-import deepinterpolation as de
 import sys
-from shutil import copyfile
 import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
-from typing import Any, Dict
-import pathlib
-import sys
 import getopt
-import numpy as np
 
 
 def main(argv):
@@ -49,7 +43,7 @@ def main(argv):
     input_data_generator = "OphysGenerator"
     for opt, arg in opts:
         if opt == "--movie_path":
-            file_h5_path = arg
+            movie_path = arg
         if opt == "--input_data_generator":
             input_data_generator = arg
         if opt == "--raw_model_path":
@@ -173,7 +167,7 @@ def main(argv):
 
     try:
         os.mkdir(jobdir)
-    except Exception as e:
+    except Exception:
         print("folder already exists")
 
     # Here we create all json files that are fed to the training.
@@ -244,23 +238,22 @@ def main(argv):
     inferrence_param["output_file"] = output_file_inferrence
     inferrence_param["save_raw"] = save_raw
 
-    while NotDone:
-        path_generator = output_file + ".generator.json"
-        json_obj = JsonSaver(generator_param)
-        json_obj.save_json(path_generator)
+    path_generator = output_file_inferrence + ".generator.json"
+    json_obj = JsonSaver(generator_param)
+    json_obj.save_json(path_generator)
 
-        path_infer = output_file + ".inferrence.json"
-        json_obj = JsonSaver(inferrence_param)
-        json_obj.save_json(path_infer)
+    path_infer = output_file_inferrence + ".inferrence.json"
+    json_obj = JsonSaver(inferrence_param)
+    json_obj.save_json(path_infer)
 
-        generator_obj = ClassLoader(path_generator)
-        data_generator = generator_obj.find_and_build()(path_generator)
+    generator_obj = ClassLoader(path_generator)
+    data_generator = generator_obj.find_and_build()(path_generator)
 
-        inferrence_obj = ClassLoader(path_infer)
-        inferrence_class = inferrence_obj.find_and_build()(path_infer,
-                                                           data_generator)
+    inferrence_obj = ClassLoader(path_infer)
+    inferrence_class = inferrence_obj.find_and_build()(path_infer,
+                                                       data_generator)
 
-        inferrence_class.run()
+    inferrence_class.run()
 
 
 if __name__ == "__main__":
