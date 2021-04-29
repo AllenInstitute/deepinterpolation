@@ -22,7 +22,7 @@ def main(argv):
                    'nb_times_training_through_data', 'frame_start_validation',
                    'frame_end_validation', 'frame_start_training',
                    'frame_end_training', 'frame_start_inferrence',
-                   'frame_end_inferrence', 'output_file_inferrence
+                   'frame_end_inferrence', 'output_file_inferrence'
                    ],
     )
 
@@ -173,7 +173,7 @@ def main(argv):
 
     try:
         os.mkdir(jobdir)
-    except:
+    except Exception as e:
         print("folder already exists")
 
     # Here we create all json files that are fed to the training.
