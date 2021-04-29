@@ -3,7 +3,6 @@ import numpy as np
 from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
-from scipy.io.wavfile import write
 
 
 class fmri_inferrence:
@@ -139,12 +138,12 @@ class core_inferrence:
             self.rescale = True
 
         if "use_multiprocessing" in json_data.keys():
-            self.use_multiprocessing = json_data["use_multiprocessing"]
+            self.use_multiprocessing = self.json_data["use_multiprocessing"]
         else:
             self.use_multiprocessing = False
 
         if "nb_workers" in json_data.keys():
-            self.workers = json_data["nb_workers"]
+            self.workers = self.json_data["nb_workers"]
         else:
             self.workers = 5
 
@@ -176,8 +175,6 @@ class core_inferrence:
                 self.generator_obj.__get_norm_parameters__(
                     0
                 )
-
-            local_size = predictions_data.shape[0]
 
             if self.rescale:
                 dset_out = dset_out * local_std + local_mean
