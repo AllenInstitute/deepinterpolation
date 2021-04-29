@@ -137,12 +137,12 @@ class core_inferrence:
         else:
             self.rescale = True
 
-        if "use_multiprocessing" in json_data.keys():
+        if "use_multiprocessing" in self.json_data.keys():
             self.use_multiprocessing = self.json_data["use_multiprocessing"]
         else:
             self.use_multiprocessing = False
 
-        if "nb_workers" in json_data.keys():
+        if "nb_workers" in self.json_data.keys():
             self.workers = self.json_data["nb_workers"]
         else:
             self.workers = 5
