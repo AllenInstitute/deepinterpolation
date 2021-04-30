@@ -66,7 +66,8 @@ def test_ephys_inference(tmp_path):
     data_generator = generator_obj.find_and_build()(path_generator)
 
     inferrence_obj = ClassLoader(path_infer)
-    inferrence_class = inferrence_obj.find_and_build()(path_infer, data_generator)
+    inferrence_class = inferrence_obj.find_and_build()(path_infer,
+                                                       data_generator)
 
     inferrence_class.run()
 
