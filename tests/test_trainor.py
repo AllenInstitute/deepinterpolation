@@ -126,4 +126,6 @@ def test_ephys_training(tmp_path):
     # Finalize and save output of the training.
     training_class.finalize()
 
-    pass
+    # Validation is a bit random due to initilization. We check that you get
+    # reasonable number
+    assert training_class.model_train.history["val_loss"][-1] < 1
