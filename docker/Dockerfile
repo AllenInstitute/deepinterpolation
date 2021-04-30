@@ -1,6 +1,6 @@
 FROM tensorflow/tensorflow:2.2.2-gpu
 
-ARG REPO_TAG="feature/ephys_transfer"
+ARG REPO_TAG="master"
 ARG COMMIT="unspecified to docker build"
 
 RUN adduser deepuser
