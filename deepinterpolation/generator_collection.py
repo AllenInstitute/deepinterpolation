@@ -368,11 +368,15 @@ class FmriGenerator(DeepGenerator):
         return int(np.floor(float(len(self.x_list) / self.batch_size)))
 
     def on_epoch_end(self):
-        if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
-            self.epoch_index = self.epoch_index + 1
-        else:
-            # if we reach the end of the data, we roll over
-            self.epoch_index = 0
+        # We only increase index if steps_per_epoch
+        # is set to positive value. -1 will force the generator
+        # to not iterate at the end of each epoch
+        if self.steps_per_epoch > 0:
+            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+                self.epoch_index = self.epoch_index + 1
+            else:
+                # if we reach the end of the data, we roll over
+                self.epoch_index = 0
 
     def __getitem__(self, index):
         # This is to ensure we are going through the
@@ -1217,12 +1221,16 @@ class OphysGenerator(DeepGenerator):
         "Denotes the total number of batches"
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
 
-    def on_epoch_end(self):
-        # We only increase index if steps_per_epoch
-        # is set to positive value. -1 will force the generator
+    def on_epoch_end(self):            
+        # We only increase index if steps_per_epoch is set
+        # to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
-            self.epoch_index = self.epoch_index + 1
+            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+                self.epoch_index = self.epoch_index + 1
+            else:
+                # if we reach the end of the data, we roll over
+                self.epoch_index = 0
 
     def __getitem__(self, index):
         if self.steps_per_epoch > 0:
@@ -1331,7 +1339,11 @@ class MovieJSONGenerator(DeepGenerator):
         # is set to positive value. -1 will force the generator
         # to not iterate at the end of each epoch
         if self.steps_per_epoch > 0:
-            self.epoch_index = self.epoch_index + 1
+            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+                self.epoch_index = self.epoch_index + 1
+            else:
+                # if we reach the end of the data, we roll over
+                self.epoch_index = 0
 
     def __getitem__(self, index):
         # This is to ensure we are going through
