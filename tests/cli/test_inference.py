@@ -2,8 +2,10 @@ import pytest
 import h5py
 import json
 from pathlib import Path
+import os
 
 import deepinterpolation.cli.inference as inf_cli
+from deepinterpolation.generic import JsonSaver, ClassLoader
 
 
 @pytest.fixture
@@ -14,9 +16,9 @@ def inference_args(tmpdir):
     with h5py.File(model_path, "w") as f:
         f.create_dataset("data", data=[1, 2, 3])
     args = {
-            "model_path": str(model_path),
-            "output_file": str(output_path)
-            }
+        "model_path": str(model_path),
+        "output_file": str(output_path)
+    }
     yield args
 
 
@@ -27,8 +29,8 @@ def generator_args(tmpdir):
     with h5py.File(train_path, "w") as f:
         f.create_dataset("data", data=[1, 2, 3])
     args = {
-            "train_path": str(train_path)
-            }
+        "train_path": str(train_path)
+    }
     yield args
 
 
@@ -36,6 +38,7 @@ class MockGenerator():
     """for these mocked tests, the generator needs
     no actual functionality
     """
+
     def __init__(self, arg):
         pass
 
@@ -43,6 +46,7 @@ class MockGenerator():
 class MockInference():
     """for mocked tests, inference only needs to produce a file
     """
+
     def __init__(self, inference_json_path, arg):
         self.inference_json_path = inference_json_path
 
@@ -56,6 +60,7 @@ class MockInference():
 class MockClassLoader():
     """mocks the behavior of the ClassLoader
     """
+
     def __init__(self, arg=None):
         pass
 
@@ -77,11 +82,72 @@ def test_inference_cli(generator_args, inference_args, monkeypatch):
     are minimally mocked.
     """
     args = {
-            "inference_params": inference_args,
-            "generator_params": generator_args,
-            "output_full_args": True
-            }
+        "inference_params": inference_args,
+        "generator_params": generator_args,
+        "output_full_args": True
+    }
     monkeypatch.setattr(inf_cli, "ClassLoader", MockClassLoader)
+    inference = inf_cli.Inference(input_data=args, args=[])
+    inference.run()
+    assert Path(args["inference_params"]["output_file"]).exists()
+
+
+def test_integration_cli_ephys_inference(tmp_path):
+
+    generator_param = {}
+    inferrence_param = {}
+
+    generator_param["type"] = "generator"
+    generator_param["name"] = "EphysGenerator"
+    generator_param["pre_post_frame"] = 30
+    generator_param["pre_post_omission"] = 1
+    generator_param[
+        "steps_per_epoch"
+    ] = -1
+
+    generator_param["train_path"] = os.path.join(
+        Path(__file__).parent.absolute(),
+        "..",
+        "..",
+        "sample_data",
+        "ephys_tiny_continuous.dat2",
+    )
+
+    generator_param["batch_size"] = 100
+    generator_param["start_frame"] = 100
+    generator_param["end_frame"] = 200  # -1 to go until the end.
+    generator_param[
+        "randomize"
+    ] = 0
+
+    inferrence_param["type"] = "inferrence"
+    inferrence_param["name"] = "core_inferrence"
+
+    # Replace this path to where you stored your model
+    inferrence_param[
+        "model_path"
+    ] = os.path.join(
+        Path(__file__).parent.absolute(),
+        "..",
+        "..",
+        "sample_data",
+        "2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5",
+    )
+
+    # Replace this path to where you want to store your output file
+    inferrence_param[
+        "output_file"
+    ] = os.path.join(
+        tmp_path,
+        "ephys_tiny_continuous_deep_interpolation.h5"
+    )
+
+    args = {
+        "inference_params": inferrence_param,
+        "generator_params": generator_param,
+        "output_full_args": True
+    }
+
     inference = inf_cli.Inference(input_data=args, args=[])
     inference.run()
     assert Path(args["inference_params"]["output_file"]).exists()

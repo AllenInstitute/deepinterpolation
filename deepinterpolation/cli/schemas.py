@@ -20,6 +20,10 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=30,
         description="")
+    pre_post_omission = argschema.fields.Int(
+        required=False,
+        default=0,
+        description="")
     train_path = argschema.fields.InputFile(
         required=True,
         description="training data input path")
@@ -95,6 +99,8 @@ class InferenceInputSchema(argschema.ArgSchema):
 
     @mm.post_load
     def inference_specific_settings(self, data, **kwargs):
-        data['generator_params']['name'] = "OphysGenerator"
+        # Commented to allow CLI to work with more than just h5 files
+        # data['generator_params']['name'] = "OphysGenerator"
+        # To remove when updating CLI with pre/post processing modules
         data['generator_params']['randomize'] = 0
         return data

@@ -38,33 +38,37 @@ class Inference(argschema.ArgSchemaParser):
 
         inferrence_obj = ClassLoader(inference_json_path)
         inferrence_class = inferrence_obj.find_and_build()(
-                inference_json_path,
-                data_generator)
+            inference_json_path,
+            data_generator)
 
         self.logger.info("created objects for inference")
         inferrence_class.run()
 
         # patch up the output movie
-        self.logger.info("fixing up the range and shape of the result")
-        with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
-            dmax = f["data"][()].max()
-            dshape = f["data"].shape
+        # This code below will go within the inference library as pre/post
+        # processings modules. Adding temporary fix to remove for non-h5 files
+        # so that the CLI works with tiff, dat, ... files.
+        if '.h5' in self.args["generator_params"]["train_path"]:
+            self.logger.info("fixing up the range and shape of the result")
+            with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
+                dmax = f["data"][()].max()
+                dshape = f["data"].shape
 
-        with h5py.File(
-                self.args["inference_params"]["output_file"], "r") as f:
-            d = f["data"][()].squeeze()
+            with h5py.File(
+                    self.args["inference_params"]["output_file"], "r") as f:
+                d = f["data"][()].squeeze()
 
-        d = (d - d.min()) * dmax / d.ptp()
-        d = d.astype('uint16')
-        nextra = dshape[0] - d.shape[0]
-        dextra = np.zeros((nextra, *d.shape[1:]), dtype='uint16')
-        d = np.concatenate((d, dextra), axis=0)
+            d = (d - d.min()) * dmax / d.ptp()
+            d = d.astype('uint16')
+            nextra = dshape[0] - d.shape[0]
+            dextra = np.zeros((nextra, *d.shape[1:]), dtype='uint16')
+            d = np.concatenate((d, dextra), axis=0)
 
-        with h5py.File(
-                self.args["inference_params"]["output_file"], "w") as f:
-            f.create_dataset("data", data=d)
-        self.logger.info(
-            f"wrote {self.args['inference_params']['output_file']}")
+            with h5py.File(
+                    self.args["inference_params"]["output_file"], "w") as f:
+                f.create_dataset("data", data=d)
+            self.logger.info(
+                f"wrote {self.args['inference_params']['output_file']}")
 
 
 if __name__ == "__main__":  # pragma: nocover
