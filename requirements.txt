@@ -7,3 +7,4 @@ python-dateutil
 scipy==1.4.1
 tifffile
 s3fs
+argschema==2.0.2
