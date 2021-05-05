@@ -50,7 +50,8 @@ class Inference(argschema.ArgSchemaParser):
         # so that the CLI works with tiff, dat, ... files.
         if '.h5' in self.args["generator_params"]["train_path"]:
             self.logger.info("fixing up the range and shape of the result")
-            with h5py.File(self.args["generator_params"]["train_path"], "r") as f:
+            with h5py.File(self.args["generator_params"]["train_path"], "r") \
+                    as f:
                 dmax = f["data"][()].max()
                 dshape = f["data"].shape
 
