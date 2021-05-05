@@ -11,15 +11,17 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
         default="generator",
-        description="")
+        description="sent to ClassLoader to instantiate a generator class.")
     name = argschema.fields.String(
         required=False,
         default="",
-        description="")
+        description=("used in conjunction with above to instantiate object "
+                     "via ClassLoader"))
     pre_post_frame = argschema.fields.Int(
         required=False,
         default=30,
-        description="")
+        description=("number of frames considered before and after a frame "
+                     "for interpolation."))
     pre_post_omission = argschema.fields.Int(
         required=False,
         default=0,
@@ -30,19 +32,20 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     batch_size = argschema.fields.Int(
         required=False,
         default=5,
-        description="")
+        description="batch size provided to model by generator")
     start_frame = argschema.fields.Int(
         required=False,
         default=1000,
-        description="")
+        description="first frame for starting the generator.")
     end_frame = argschema.fields.Int(
         required=False,
         default=-1,
-        description="")
+        description=("last frame for the generator. -1 defaults to "
+                     "last frame in input data set."))
     randomize = argschema.fields.Int(
         required=False,
-        default=1,
-        description="integer as bool?")
+        default=0,
+        description="integer as bool. useful in training, not inference.")
     steps_per_epoch = argschema.fields.Int(
         required=False,
         default=100,
@@ -50,32 +53,37 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     total_samples = argschema.fields.Int(
         required=False,
         default=-1,
-        description="")
+        description="-1 defaults to all samples in input data set.")
 
 
 class InferenceSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
         default="inferrence",
-        description="")
+        description=("type and name sent to ClassLoader for object "
+                     "instantiation"))
     name = argschema.fields.String(
         required=False,
         default="core_inferrence",
-        description="")
+        description=("type and name sent to ClassLoader for object "
+                     "instantiation"))
     model_path = argschema.fields.InputFile(
         required=True,
         description="path to model source for transfer training.")
     output_file = argschema.fields.OutputFile(
         required=True,
-        description="")
+        description="where the infernce output will get written.")
     save_raw = argschema.fields.Bool(
         required=False,
         default=True,
-        description="")
+        description=("currently using this to perform global normalization "
+                     "on floating point output. Will likely stop doing this "
+                     "soon."))
     rescale = argschema.fields.Bool(
         required=False,
         default=False,
-        description="")
+        description=("currently not using the chunked rescaling as it does "
+                     "not handle negative values and convert to uint16."))
 
 
 class InferenceInputSchema(argschema.ArgSchema):
