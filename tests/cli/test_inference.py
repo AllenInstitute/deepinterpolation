@@ -5,7 +5,6 @@ from pathlib import Path
 import os
 
 import deepinterpolation.cli.inference as inf_cli
-from deepinterpolation.generic import JsonSaver, ClassLoader
 
 
 @pytest.fixture
