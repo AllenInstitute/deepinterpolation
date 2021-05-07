@@ -125,7 +125,7 @@ class core_inferrence:
         self.json_data = local_json_loader.json_data
 
         self.output_file = self.json_data["output_file"]
-        self.model_path = self.json_data["model_path"]
+        self.model_path = self.json_data.get('model_path')
 
         if "save_raw" in self.json_data.keys():
             self.save_raw = self.json_data["save_raw"]
@@ -141,28 +141,22 @@ class core_inferrence:
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
 
-        self.model = load_model(
-            self.model_path,
-            custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
-        )
-
         self.__load_model()
 
     def __load_model(self):
-        if "model_path" in self.json_data:
+        if self.model_path:
             self.__load_local_model()
         else:
             self.__load_model_from_mlflow()
 
     def __load_local_model(self):
         self.model = load_model(
-            self.json_data["model_path"],
+            self.model_path,
             custom_objects={
                 "annealed_loss": lc.loss_selector("annealed_loss")},
         )
 
     def __load_model_from_mlflow(self):
-        from mlflow.tracking import MlflowClient
         import mlflow
 
         mlflow_params = self.json_data['mlflow_params']

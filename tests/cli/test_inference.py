@@ -8,16 +8,28 @@ import deepinterpolation.cli.inference as inf_cli
 
 
 @pytest.fixture
-def inference_args(tmpdir):
-    # make some dummy files so the schema validation is satisfied
-    model_path = tmpdir / "model.h5"
+def inference_args(tmpdir, request):
     output_path = tmpdir / "output.h5"
-    with h5py.File(model_path, "w") as f:
-        f.create_dataset("data", data=[1, 2, 3])
-    args = {
-        "model_path": str(model_path),
-        "output_file": str(output_path)
-    }
+    
+    if request.param.get('load_model_from_mlflow'):
+        mlflow_params = {
+            'tracking_uri': 'localhost',
+            'model_name': 'test'
+        }
+        args = {
+            "mlflow_params": mlflow_params
+        }
+    else:
+        # make some dummy files so the schema validation is satisfied
+        model_path = tmpdir / "model.h5"
+
+        with h5py.File(model_path, "w") as f:
+            f.create_dataset("data", data=[1, 2, 3])
+        args = {
+            "model_path": str(model_path)
+        }
+    args["output_file"] = str(output_path)
+
     yield args
 
 
@@ -75,6 +87,10 @@ class MockClassLoader():
             return MockInference(args[0], args[1])
 
 
+@pytest.mark.parametrize('inference_args',
+                         [{'load_model_from_mlflow': True},
+                          {'load_model_from_mlflow': False}],
+                         indirect=['inference_args'])
 def test_inference_cli(generator_args, inference_args, monkeypatch):
     """this tests that the inference CLI validates the schemas
     and executes its logic. Calls to generator and inference
