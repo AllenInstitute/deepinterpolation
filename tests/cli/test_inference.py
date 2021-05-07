@@ -10,7 +10,7 @@ import deepinterpolation.cli.inference as inf_cli
 @pytest.fixture
 def inference_args(tmpdir, request):
     output_path = tmpdir / "output.h5"
-    
+
     if request.param.get('load_model_from_mlflow'):
         mlflow_params = {
             'tracking_uri': 'localhost',

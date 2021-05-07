@@ -154,8 +154,3 @@ def test_mlflow_inference():
     out_mlflow = _get_mlflow_out(local_model=local_model)
 
     assert np.allclose(out_local, out_mlflow)
-
-
-
-
-

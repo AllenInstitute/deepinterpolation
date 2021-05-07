@@ -207,9 +207,8 @@ class core_inferrence:
 
                 predictions_data = self.model.predict(local_data[0])
 
-                local_mean, local_std = self.generator_obj.__get_norm_parameters__(
-                    index_dataset
-                )
+                local_mean, local_std = \
+                    self.generator_obj.__get_norm_parameters__(index_dataset)
                 local_size = predictions_data.shape[0]
 
                 if self.rescale:
@@ -225,14 +224,12 @@ class core_inferrence:
 
                     raw_out[
                         index_dataset
-                        * self.batch_size : index_dataset
+                        * self.batch_size:index_dataset
                         * self.batch_size
                         + local_size,
                         :,
                     ] = corrected_raw
 
-                dset_out[
-                    index_dataset * self.batch_size : index_dataset * self.batch_size
-                    + local_size,
-                    :,
-                ] = corrected_data
+                start = index_dataset * self.batch_size
+                end = index_dataset * self.batch_size + local_size
+                dset_out[start:end, :] = corrected_data
