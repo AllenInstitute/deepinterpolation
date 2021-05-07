@@ -74,8 +74,10 @@ workflows:
       - lint
       - py37_test
       - docker:
-        filters:
-          branches:
-            only: 
-              - master
-              - feature/ephys_transfer
+          requires:
+            - py37_test
+          filters:
+            branches:
+              only:
+                - master
+                - /.*dev.*/

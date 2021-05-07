@@ -6,7 +6,6 @@ numpy
 python-dateutil
 scipy==1.4.1
 tifffile
-fsspec==0.8.7
-s3fs==0.5.1
+s3fs
 argschema==2.0.2
-mlflow>=1.14.1
+mlflow==1.14.1
