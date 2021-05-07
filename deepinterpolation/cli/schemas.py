@@ -2,6 +2,10 @@ import argschema
 import marshmallow as mm
 import datetime
 
+from marshmallow import ValidationError
+
+from deepinterpolation.cli.mlflow.schemas import MlflowSchema
+
 
 class GeneratorSchema(argschema.schemas.DefaultSchema):
     """defaults set in this class should be applicable to
@@ -67,9 +71,15 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         default="core_inferrence",
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
+    mlflow_params = argschema.fields.Nested(
+        MlflowSchema,
+        required=False,
+        description="MLflow params, if the model should be loaded from mlflow."
+                    "If this is provided, then model_path should not be.")
     model_path = argschema.fields.InputFile(
-        required=True,
-        description="path to model source for transfer training.")
+        required=False,
+        description="Local path to model source for transfer training. "
+                    "If this is provided then mlflow_params should not be.")
     output_file = argschema.fields.OutputFile(
         required=True,
         description="where the infernce output will get written.")
@@ -84,6 +94,18 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         default=False,
         description=("currently not using the chunked rescaling as it does "
                      "not handle negative values and convert to uint16."))
+
+    @mm.validates_schema
+    def validate_model_path(self, data):
+        model_path_given = 'model_path' in data
+        mlflow_params_given = 'mlflow_params' in data
+        if model_path_given and mlflow_params_given:
+            raise ValidationError('Either model_path or mlflow_params should '
+                                  'be supplied but not both')
+
+        if not model_path_given and not mlflow_params_given:
+            raise ValidationError('One of model_path or mlflow_params should '
+                                  'be supplied')
 
 
 class InferenceInputSchema(argschema.ArgSchema):
