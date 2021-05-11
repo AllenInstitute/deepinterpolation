@@ -44,11 +44,12 @@ def _get_inference_params(output_path, mlflow_params=False):
     params = {
         "type": "inferrence",
         "name": "core_inferrence",
+        "model_source": {},
         "output_file": output_file
     }
 
     if mlflow_params:
-        params['mlflow_params'] = {
+        params['model_source']['mlflow_registry'] = {
             'tracking_uri': f"sqlite:///{output_path}/mlruns.db",
             'model_name': model_name
         }
@@ -59,7 +60,7 @@ def _get_inference_params(output_path, mlflow_params=False):
             "sample_data",
             f"{model_name}.h5",
         )
-        params['model_path'] = model_path
+        params['model_source']['local_path'] = model_path
     return params
 
 
@@ -133,8 +134,10 @@ def test_mlflow_inference():
             inference_params = _get_inference_params(output_path=jobdir,
                                                      mlflow_params=True)
 
-            tracking_uri = inference_params['mlflow_params']['tracking_uri']
-            model_name = inference_params['mlflow_params']['model_name']
+            mlflow_registry_params = \
+                inference_params['model_source']['mlflow_registry']
+            tracking_uri = mlflow_registry_params['tracking_uri']
+            model_name = mlflow_registry_params['model_name']
             _register_model(model=local_model, tracking_uri=tracking_uri,
                             model_name=model_name,
                             artifact_path=jobdir)

@@ -125,7 +125,6 @@ class core_inferrence:
         self.json_data = local_json_loader.json_data
 
         self.output_file = self.json_data["output_file"]
-        self.model_path = self.json_data.get('model_path')
 
         if "save_raw" in self.json_data.keys():
             self.save_raw = self.json_data["save_raw"]
@@ -144,14 +143,15 @@ class core_inferrence:
         self.__load_model()
 
     def __load_model(self):
-        if self.model_path:
+        if "local_path" in self.json_data["model_source"]:
             self.__load_local_model()
         else:
             self.__load_model_from_mlflow()
 
     def __load_local_model(self):
+        path = self.json_data["model_source"]["local_path"]
         self.model = load_model(
-            self.model_path,
+            path,
             custom_objects={
                 "annealed_loss": lc.loss_selector("annealed_loss")},
         )
@@ -159,13 +159,14 @@ class core_inferrence:
     def __load_model_from_mlflow(self):
         import mlflow
 
-        mlflow_params = self.json_data['mlflow_params']
+        mlflow_registry_params = \
+            self.json_data['model_source']['mlflow_registry']
 
-        model_name = mlflow_params['model_name']
-        model_version = mlflow_params.get('model_version')
-        model_stage = mlflow_params.get('model_stage')
+        model_name = mlflow_registry_params['model_name']
+        model_version = mlflow_registry_params.get('model_version')
+        model_stage = mlflow_registry_params.get('model_stage')
 
-        mlflow.set_tracking_uri(mlflow_params['tracking_uri'])
+        mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
 
         if model_version is not None:
             model_uri = f"models:/{model_name}/{model_version}"

@@ -58,7 +58,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         description="-1 defaults to all samples in input data set.")
 
 
-class MlflowSchema(argschema.schemas.DefaultSchema):
+class MlflowRegistrySchema(argschema.schemas.DefaultSchema):
     tracking_uri = argschema.fields.String(
         required=True,
         description="MLflow tracking URI"
@@ -81,6 +81,30 @@ class MlflowSchema(argschema.schemas.DefaultSchema):
     )
 
 
+class ModelSourceSchema(argschema.schemas.DefaultSchema):
+    mlflow_registry = argschema.fields.Nested(
+        MlflowRegistrySchema,
+        required=False,
+        description="MLflow registry, if the model should be loaded from mlflow."
+                    "If this is provided, then local_path should not be.")
+    local_path = argschema.fields.InputFile(
+        required=False,
+        description="Local path to model source. "
+                    "If this is provided then mlflow_registry should not be.")
+
+    @mm.validates_schema
+    def validate(self, data):
+        path_given = 'local_path' in data
+        mlflow_params_given = 'mlflow_registry' in data
+        if path_given and mlflow_params_given:
+            raise ValidationError('Either local_path or mlflow_registry should '
+                                  'be supplied but not both')
+
+        if not path_given and not mlflow_params_given:
+            raise ValidationError('One of local_path or mlflow_registry should '
+                                  'be supplied')
+
+
 class InferenceSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
@@ -92,15 +116,10 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         default="core_inferrence",
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
-    mlflow_params = argschema.fields.Nested(
-        MlflowSchema,
-        required=False,
-        description="MLflow params, if the model should be loaded from mlflow."
-                    "If this is provided, then model_path should not be.")
-    model_path = argschema.fields.InputFile(
-        required=False,
-        description="Local path to model source for transfer training. "
-                    "If this is provided then mlflow_params should not be.")
+    model_source = argschema.fields.Nested(
+        ModelSourceSchema,
+        description="Path to model if loading locally, or mlflow registry"
+    )
     output_file = argschema.fields.OutputFile(
         required=True,
         description="where the infernce output will get written.")
@@ -115,18 +134,6 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         default=False,
         description=("currently not using the chunked rescaling as it does "
                      "not handle negative values and convert to uint16."))
-
-    @mm.validates_schema
-    def validate_model_path(self, data):
-        model_path_given = 'model_path' in data
-        mlflow_params_given = 'mlflow_params' in data
-        if model_path_given and mlflow_params_given:
-            raise ValidationError('Either model_path or mlflow_params should '
-                                  'be supplied but not both')
-
-        if not model_path_given and not mlflow_params_given:
-            raise ValidationError('One of model_path or mlflow_params should '
-                                  'be supplied')
 
 
 class InferenceInputSchema(argschema.ArgSchema):

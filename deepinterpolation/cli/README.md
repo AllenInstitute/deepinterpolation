@@ -16,8 +16,8 @@ To use a model registered with mlflow instead of a local model, just supply `mlf
 
 ```
 python -m deepinterpolation.cli.inference \
-    --inference_params.mlflow_params.tracking_uri <tracking_uri> \
-    --inference_params.mlflow_params.model_name <model_name> 
+    --inference_params.model_source.mlflow_registry.tracking_uri <tracking_uri> \
+    --inference_params.model_source.mlflow_registry.model_name <model_name> 
     ...
 ```
 
