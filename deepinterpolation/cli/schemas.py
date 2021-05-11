@@ -85,8 +85,9 @@ class ModelSourceSchema(argschema.schemas.DefaultSchema):
     mlflow_registry = argschema.fields.Nested(
         MlflowRegistrySchema,
         required=False,
-        description="MLflow registry, if the model should be loaded from mlflow."
-                    "If this is provided, then local_path should not be.")
+        description="MLflow registry, if the model should be loaded from "
+                    "mlflow. If this is provided, then local_path should "
+                    "not be.")
     local_path = argschema.fields.InputFile(
         required=False,
         description="Local path to model source. "
@@ -97,12 +98,12 @@ class ModelSourceSchema(argschema.schemas.DefaultSchema):
         path_given = 'local_path' in data
         mlflow_params_given = 'mlflow_registry' in data
         if path_given and mlflow_params_given:
-            raise ValidationError('Either local_path or mlflow_registry should '
-                                  'be supplied but not both')
+            raise ValidationError('Either local_path or mlflow_registry '
+                                  'should be supplied but not both')
 
         if not path_given and not mlflow_params_given:
-            raise ValidationError('One of local_path or mlflow_registry should '
-                                  'be supplied')
+            raise ValidationError('One of local_path or mlflow_registry '
+                                  'should be supplied')
 
 
 class InferenceSchema(argschema.schemas.DefaultSchema):
