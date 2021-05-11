@@ -12,7 +12,7 @@ In addition to loading a pre-trained model for inference from a local file, Deep
 
 #### Example
 
-To use a model registered with mlflow instead of a local model, just supply `mlflow_params`to `inference_params` instead of `model_path `.
+To use a model registered with mlflow instead of a local model, just supply `mlflow_registry`to `inference_params.model_source` instead of `local_path `.
 
 ```
 python -m deepinterpolation.cli.inference \
