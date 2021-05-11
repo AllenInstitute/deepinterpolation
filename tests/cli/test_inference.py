@@ -8,16 +8,27 @@ import deepinterpolation.cli.inference as inf_cli
 
 
 @pytest.fixture
-def inference_args(tmpdir):
-    # make some dummy files so the schema validation is satisfied
-    model_path = tmpdir / "model.h5"
+def inference_args(tmpdir, request):
     output_path = tmpdir / "output.h5"
-    with h5py.File(model_path, "w") as f:
-        f.create_dataset("data", data=[1, 2, 3])
+
     args = {
-        "model_path": str(model_path),
-        "output_file": str(output_path)
+        'model_source': {}
     }
+    if request.param.get('load_model_from_mlflow'):
+        args['model_source']["mlflow_registry"] = {
+            'tracking_uri': 'localhost',
+            'model_name': 'test'
+        }
+    else:
+        # make some dummy files so the schema validation is satisfied
+        model_path = tmpdir / "model.h5"
+
+        with h5py.File(model_path, "w") as f:
+            f.create_dataset("data", data=[1, 2, 3])
+        args["model_source"]["local_path"] = str(model_path)
+
+    args["output_file"] = str(output_path)
+
     yield args
 
 
@@ -75,6 +86,10 @@ class MockClassLoader():
             return MockInference(args[0], args[1])
 
 
+@pytest.mark.parametrize('inference_args',
+                         [{'load_model_from_mlflow': True},
+                          {'load_model_from_mlflow': False}],
+                         indirect=['inference_args'])
 def test_inference_cli(generator_args, inference_args, monkeypatch):
     """this tests that the inference CLI validates the schemas
     and executes its logic. Calls to generator and inference
@@ -123,15 +138,19 @@ def test_integration_cli_ephys_inference(tmp_path):
     inferrence_param["name"] = "core_inferrence"
 
     # Replace this path to where you stored your model
-    inferrence_param[
-        "model_path"
-    ] = os.path.join(
-        Path(__file__).parent.absolute(),
-        "..",
-        "..",
-        "sample_data",
-        "2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5",
-    )
+    filename = \
+        "2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5"
+    local_path = \
+        os.path.join(
+            Path(__file__).parent.absolute(),
+            "..",
+            "..",
+            "sample_data",
+            filename
+        )
+    inferrence_param["model_source"] = {
+        "local_path": local_path
+    }
 
     # Replace this path to where you want to store your output file
     inferrence_param[
