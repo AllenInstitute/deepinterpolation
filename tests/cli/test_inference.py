@@ -138,14 +138,15 @@ def test_integration_cli_ephys_inference(tmp_path):
     inferrence_param["name"] = "core_inferrence"
 
     # Replace this path to where you stored your model
+    filename = \
+        "2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5"
     local_path = \
         os.path.join(
             Path(__file__).parent.absolute(),
             "..",
             "..",
             "sample_data",
-            "2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050"
-                ".h5"
+            filename
         )
     inferrence_param["model_source"] = {
         "local_path": local_path
