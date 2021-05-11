@@ -1,13 +1,13 @@
 import os
+import pathlib
 import tempfile
 
-import numpy as np
-
+import h5py
 import mlflow
+import numpy as np
+import pytest
 
 from deepinterpolation.generic import JsonSaver, ClassLoader
-import pathlib
-import h5py
 
 
 def _get_generator_params():
@@ -32,7 +32,8 @@ def _get_generator_params():
     }
 
 
-def _get_inference_params(output_path, mlflow_params=False):
+def _get_inference_params(output_path, mlflow_params=False,
+                          use_legacy_model_path=False):
     model_name = "2020_02_29_15_28_unet_single_ephys_1024_" \
                  "mean_squared_error-1050"
 
@@ -60,7 +61,10 @@ def _get_inference_params(output_path, mlflow_params=False):
             "sample_data",
             f"{model_name}.h5",
         )
-        params['model_source']['local_path'] = model_path
+        if use_legacy_model_path:
+            params['model_path'] = model_path
+        else:
+            params['model_source']['local_path'] = model_path
     return params
 
 
@@ -81,10 +85,13 @@ def _get_ephys_model(jobdir, generator_params, inference_params):
     return model
 
 
-def test_ephys_inference():
+@pytest.mark.parametrize('use_legacy_model_path', [True, False])
+def test_ephys_inference(use_legacy_model_path):
     with tempfile.TemporaryDirectory() as jobdir:
         generator_params = _get_generator_params()
-        inference_params = _get_inference_params(output_path=jobdir)
+        inference_params = _get_inference_params(
+            output_path=jobdir,
+            use_legacy_model_path=use_legacy_model_path)
         ephys_model = _get_ephys_model(jobdir=jobdir,
                                        generator_params=generator_params,
                                        inference_params=inference_params)
@@ -100,6 +107,7 @@ def test_ephys_inference():
 def test_mlflow_inference():
     """Tests that local model and model registered with mlflow provide same
     outputs"""
+
     def _get_local_model(jobdir):
         generator_params = _get_generator_params()
         inference_params = _get_inference_params(output_path=jobdir)

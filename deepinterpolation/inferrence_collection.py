@@ -1,3 +1,5 @@
+import warnings
+
 import h5py
 import numpy as np
 from deepinterpolation.generic import JsonLoader
@@ -143,13 +145,22 @@ class core_inferrence:
         self.__load_model()
 
     def __load_model(self):
-        if "local_path" in self.json_data["model_source"]:
-            self.__load_local_model()
-        else:
+        try:
+            local_model_path = self.__get_local_model_path()
+            self.__load_local_model(path=local_model_path)
+        except KeyError:
             self.__load_model_from_mlflow()
 
-    def __load_local_model(self):
-        path = self.json_data["model_source"]["local_path"]
+    def __get_local_model_path(self):
+        try:
+            model_path = self.json_data['model_path']
+            warnings.warn('Loading model from model_path will be deprecated '
+                          'in a future release')
+        except KeyError:
+            model_path = self.json_data['model_source']['local_path']
+        return model_path
+
+    def __load_local_model(self, path: str):
         self.model = load_model(
             path,
             custom_objects={
