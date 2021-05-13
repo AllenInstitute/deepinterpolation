@@ -987,6 +987,26 @@ class SingleTifGenerator(DeepGenerator):
 
         self.total_frame_per_movie = self.raw_data.shape[0]
 
+        # This is used to force a particular image size,
+        # potentially padding with zeros.
+        if "x_size" in self.json_data.keys():
+            self.x_size = self.json_data["x_size"]
+            # We force the image size if the data is too large
+            if self.x_size < self.raw_data.shape[1]:
+                self.x_size = self.raw_data.shape[1]
+        else:
+            self.x_size = self.raw_data.shape[1]
+
+        # This is used to force a particular image size,
+        # potentially padding with zeros.
+        if "y_size" in self.json_data.keys():
+            self.y_size = self.json_data["y_size"]
+            # We force the image size if the data is too large
+            if self.y_size < self.raw_data.shape[2]:
+                self.y_size = self.raw_data.shape[2]
+        else:
+            self.y_size = self.raw_data.shape[2]
+
         if self.end_frame < 0:
             self.img_per_movie = (
                 self.total_frame_per_movie + 1
@@ -1050,8 +1070,8 @@ class SingleTifGenerator(DeepGenerator):
         input_full = np.zeros(
             [
                 self.batch_size,
-                self.raw_data.shape[1],
-                self.raw_data.shape[2],
+                self.x_size,
+                self.y_size,
                 self.pre_frame + self.post_frame,
             ],
             dtype="float32",
@@ -1077,15 +1097,15 @@ class SingleTifGenerator(DeepGenerator):
         input_full = np.zeros(
             [
                 1,
-                self.raw_data.shape[1],
-                self.raw_data.shape[2],
+                self.x_size,
+                self.y_size,
                 self.pre_frame + self.post_frame,
             ],
             dtype="float32",
         )
         output_full = np.zeros(
-            [1, self.raw_data.shape[1],
-             self.raw_data.shape[2], 1], dtype="float32"
+            [1, self.x_size,
+             self.y_size, 1], dtype="float32"
         )
 
         input_index = np.arange(
