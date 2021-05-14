@@ -1,13 +1,16 @@
+
+import warnings
+
 import h5py
 import numpy as np
 from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
-from scipy.io.wavfile import write
 
 
 class fmri_inferrence:
-    # This inferrence is specific to fMRI which is raster scanning for denoising
+    # This inferrence is specific to fMRI which is raster scanning for
+    # denoising
 
     def __init__(self, inferrence_json_path, generator_obj):
         self.inferrence_json_path = inferrence_json_path
@@ -20,7 +23,8 @@ class fmri_inferrence:
         self.model_path = self.json_data["model_path"]
 
         # This is used when output is a full volume to select only the center
-        # currently only set to true. Future implementation could make smarter scanning of the volume and leverage more
+        # currently only set to true. Future implementation could make smarter
+        # scanning of the volume and leverage more
         # than just the center pixel
         if "single_voxel_output_single" in self.json_data.keys():
             self.single_voxel_output_single = self.json_data[
@@ -47,7 +51,8 @@ class fmri_inferrence:
                 chunks=tuple(chunk_size),
                 dtype="float32",
             )
-            # This was used to alter the volume infered and reduce computation time
+            # This was used to alter the volume infered and reduce computation
+            # time
             # np.array([20])
             all_z_values = np.arange(0, self.input_data_size[2])
             all_y_values = np.arange(0, self.input_data_size[1])
@@ -123,7 +128,6 @@ class core_inferrence:
         self.json_data = local_json_loader.json_data
 
         self.output_file = self.json_data["output_file"]
-        self.model_path = self.json_data["model_path"]
 
         if "save_raw" in self.json_data.keys():
             self.save_raw = self.json_data["save_raw"]
@@ -139,9 +143,53 @@ class core_inferrence:
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
 
+        self.__load_model()
+
+    def __load_model(self):
+        try:
+            local_model_path = self.__get_local_model_path()
+            self.__load_local_model(path=local_model_path)
+        except KeyError:
+            self.__load_model_from_mlflow()
+
+    def __get_local_model_path(self):
+        try:
+            model_path = self.json_data['model_path']
+            warnings.warn('Loading model from model_path will be deprecated '
+                          'in a future release')
+        except KeyError:
+            model_path = self.json_data['model_source']['local_path']
+        return model_path
+
+    def __load_local_model(self, path: str):
         self.model = load_model(
-            self.model_path,
-            custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
+            path,
+            custom_objects={
+                "annealed_loss": lc.loss_selector("annealed_loss")},
+        )
+
+    def __load_model_from_mlflow(self):
+        import mlflow
+
+        mlflow_registry_params = \
+            self.json_data['model_source']['mlflow_registry']
+
+        model_name = mlflow_registry_params['model_name']
+        model_version = mlflow_registry_params.get('model_version')
+        model_stage = mlflow_registry_params.get('model_stage')
+
+        mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
+
+        if model_version is not None:
+            model_uri = f"models:/{model_name}/{model_version}"
+        elif model_stage:
+            model_uri = f"models:/{model_name}/{model_stage}"
+        else:
+            # Gets the latest version without any stage
+            model_uri = f"models:/{model_name}/None"
+
+        self.model = mlflow.keras.load_model(
+            model_uri=model_uri
         )
 
     def run(self):
@@ -172,9 +220,8 @@ class core_inferrence:
 
                 predictions_data = self.model.predict(local_data[0])
 
-                local_mean, local_std = self.generator_obj.__get_norm_parameters__(
-                    index_dataset
-                )
+                local_mean, local_std = \
+                    self.generator_obj.__get_norm_parameters__(index_dataset)
                 local_size = predictions_data.shape[0]
 
                 if self.rescale:
@@ -190,14 +237,12 @@ class core_inferrence:
 
                     raw_out[
                         index_dataset
-                        * self.batch_size : index_dataset
+                        * self.batch_size:index_dataset
                         * self.batch_size
                         + local_size,
                         :,
                     ] = corrected_raw
 
-                dset_out[
-                    index_dataset * self.batch_size : index_dataset * self.batch_size
-                    + local_size,
-                    :,
-                ] = corrected_data
+                start = index_dataset * self.batch_size
+                end = index_dataset * self.batch_size + local_size
+                dset_out[start:end, :] = corrected_data
