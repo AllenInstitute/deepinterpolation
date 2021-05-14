@@ -1,37 +1,22 @@
 import os
-import sys
 from pbstools import PythonJob
 from shutil import copyfile
 import datetime
-import json
-import csv
-import ophysextractor
-from ophysextractor.datasets.lims_ophys_experiment import LimsOphysExperiment
-import pandas as pd
 import glob
 
-raw_path_folder = r"/allen/programs/braintv/workgroups/mct-t300/CalibrationTF/rawdata"
-output_path = r"/allen/programs/braintv/workgroups/neuralcoding/2p_data/single_plane/2021-02-17-transfer_traning_oephys"
-path_models = r"/allen/programs/braintv/workgroups/neuralcoding/2p_data/single_plane/2021-02-17-transfer_traning_oephys"
+raw_path_folder = r"/allen/programs/braintv/workgroups/mct-t300/"\
+    "CalibrationTF/rawdata"
+output_path = r"/allen/programs/braintv/workgroups/neuralcoding/"\
+    "2p_data/single_plane/2021-05-13-transfer_traning_oephys"
+path_models = r"/allen/programs/braintv/workgroups/neuralcoding/"\
+    "2p_data/single_plane/2021-05-13-transfer_traning_oephys"
 list_exp_id = [
-    103954,
-    103980,
-    103871,
-    103879,
-    103913,
-    103922,
-    103930,
-    104003,
-    103948,
-    103951,
-    103960,
-    103976,
-    103997,
-    103993,
-    103984,
-    103987,
-    103972,
+    102932,
+    102939,
+    102941,
+    102945,
 ]
+
 all_models = os.listdir(path_models)
 
 for indiv_id in list_exp_id:
@@ -43,7 +28,9 @@ for indiv_id in list_exp_id:
         raw_model = os.path.join(output_path, str(indiv_id), "*_model.h5")
         raw_model = glob.glob(raw_model)[0]
 
-        python_file = r"/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/paper_generation_code/cluster_lib/single_tif_section_inferrence.py"
+        python_file = r"/home/jeromel/Documents/Projects/Deep2P/repos/"\
+            "deepinterpolation/examples/paper_generation_code/cluster_lib/"\
+            "single_tif_section_inferrence.py"
 
         model_file = raw_model
 
@@ -109,8 +96,10 @@ for indiv_id in list_exp_id:
 
         PythonJob(
             python_file,
-            python_executable="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env/bin/python",
-            conda_env="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env",
+            python_executable="/allen/programs/braintv/workgroups/nc-ophys/"
+            "Jeromel/conda/tf20-env/bin/python",
+            conda_env="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/"
+            "conda/tf20-env",
             jobname="movie_2p",
             python_args=arg_to_pass[0] + " > " + output_terminal,
             **job_settings
