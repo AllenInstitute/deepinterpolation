@@ -1,14 +1,8 @@
-import deepinterpolation as de
 import sys
-from shutil import copyfile
 import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
-from typing import Any, Dict
-import pathlib
-import sys
 import getopt
-import numpy as np
 
 
 def main(argv):
@@ -34,8 +28,10 @@ def main(argv):
     network_param = {}
     generator_test_param = {}
 
-    # An epoch is defined as the number of batches pulled from the dataset. Because our datasets are VERY large. Often, we cannot
-    # go through the entirity of the data so we define an epoch slightly differently than is usual.
+    # An epoch is defined as the number of batches pulled from the dataset.
+    # Because our datasets are VERY large. Often, we cannot
+    # go through the entirity of the data so we define an epoch
+    # slightly differently than is usual.
     steps_per_epoch = 200
 
     generator_param["type"] = "generator"
@@ -76,17 +72,23 @@ def main(argv):
     training_param["steps_per_epoch"] = steps_per_epoch
     training_param[
         "period_save"
-    ] = 1  # network model is potentially saved during training between a regular nb epochs
+    ] = 1
+    # network model is potentially saved during
+    # training between a regular nb epochs
     training_param["nb_gpus"] = 1
     training_param["apply_learning_decay"] = 0
     training_param[
         "nb_times_through_data"
-    ] = 3  # if you want to cycle through the entire data. Two many iterations will cause noise overfitting
+    ] = 3
+    # if you want to cycle through the entire data.
+    # Two many iterations will cause noise overfitting
     training_param["learning_rate"] = 0.0005
     training_param["loss"] = "mean_squared_error"
     training_param[
         "nb_workers"
-    ] = 16  # this is to enable multiple threads for data generator loading. Useful when this is slower than training
+    ] = 16
+    # this is to enable multiple threads for data generator loading.
+    # Useful when this is slower than training
 
     training_param["model_string"] = (
         "transfer" + "_" +
@@ -102,7 +104,8 @@ def main(argv):
     except:
         print("folder already exists")
 
-    # Here we create all json files that are fed to the training. This is used for recording purposes as well as input to the
+    # Here we create all json files that are fed to the training.
+    # This is used for recording purposes as well as input to the
     # training process
     path_training = os.path.join(jobdir, "training.json")
     json_obj = JsonSaver(training_param)
@@ -123,7 +126,8 @@ def main(argv):
     # We find the training obj in the collection using the json file
     trainer_obj = ClassLoader(path_training)
 
-    # We build the generators object. This will, among other things, calculate normalizing parameters.
+    # We build the generators object. This will, among other things,
+    # calculate normalizing parameters.
     train_generator = generator_obj.find_and_build()(path_generator)
     test_generator = generator_test_obj.find_and_build()(path_test_generator)
 
