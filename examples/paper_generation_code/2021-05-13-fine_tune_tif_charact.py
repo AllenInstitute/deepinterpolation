@@ -100,7 +100,7 @@ def main(argv):
 
     try:
         os.mkdir(jobdir)
-    except:
+    except Exception:
         print("folder already exists")
 
     # Here we create all json files that are fed to the training.
