@@ -75,10 +75,14 @@ def main(argv):
     # network model is potentially saved during
     # training between a regular nb epochs
     training_param["nb_gpus"] = 1
-    training_param["apply_learning_decay"] = 0
+    training_param["apply_learning_decay"] = 1
+    training_param["initial_learning_rate"] = 0.0005
+    training_param["epochs_drop"] = 5
+
     training_param[
         "nb_times_through_data"
     ] = 3
+
     # if you want to cycle through the entire data.
     # Two many iterations will cause noise overfitting
     training_param["learning_rate"] = 0.0005
