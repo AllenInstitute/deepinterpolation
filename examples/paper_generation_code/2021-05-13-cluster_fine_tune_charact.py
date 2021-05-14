@@ -3,7 +3,7 @@ from pbstools import PythonJob
 import datetime
 
 folder_path = r"/allen/programs/braintv/workgroups/neuralcoding/2p_data/"\
-    "single_plane/2021-02-17-transfer_traning_oephys"
+    "single_plane/2021-05-14-transfer_traning_oephys"
 raw_path_folder = r"/allen/programs/braintv/workgroups/mct-t300/"\
     "CalibrationTF/rawdata"
 list_exp_id = [

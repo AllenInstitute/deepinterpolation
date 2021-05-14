@@ -7,9 +7,9 @@ import glob
 raw_path_folder = r"/allen/programs/braintv/workgroups/mct-t300/"\
     "CalibrationTF/rawdata"
 output_path = r"/allen/programs/braintv/workgroups/neuralcoding/"\
-    "2p_data/single_plane/2021-05-13-transfer_traning_oephys"
+    "2p_data/single_plane/2021-05-14-transfer_traning_oephys"
 path_models = r"/allen/programs/braintv/workgroups/neuralcoding/"\
-    "2p_data/single_plane/2021-05-13-transfer_traning_oephys"
+    "2p_data/single_plane/2021-05-14-transfer_traning_oephys"
 list_exp_id = [
     102932,
     102939,
