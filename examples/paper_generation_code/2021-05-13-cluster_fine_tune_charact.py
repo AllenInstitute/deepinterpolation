@@ -29,7 +29,7 @@ for indiv_id in list_exp_id:
 
     try:
         os.mkdir(local_output_path)
-    except:
+    except Exception:
         print("folder already exists")
 
     now = datetime.datetime.now()

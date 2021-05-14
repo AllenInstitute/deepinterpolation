@@ -25,7 +25,6 @@ def main(argv):
     # Initialize meta-parameters objects
     training_param = {}
     generator_param = {}
-    network_param = {}
     generator_test_param = {}
 
     # An epoch is defined as the number of batches pulled from the dataset.

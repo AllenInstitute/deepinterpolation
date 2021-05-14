@@ -104,5 +104,5 @@ for indiv_id in list_exp_id:
             python_args=arg_to_pass[0] + " > " + output_terminal,
             **job_settings
         ).run(dryrun=False)
-    except:
+    except Exception:
         print("experiment associated could not be found")
