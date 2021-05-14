@@ -1077,8 +1077,8 @@ class SingleTifGenerator(DeepGenerator):
             dtype="float32",
         )
         output_full = np.zeros(
-            [self.batch_size, self.raw_data.shape[1],
-             self.raw_data.shape[2], 1],
+            [self.batch_size, self.x_size,
+             self.y_size, 1],
             dtype="float32",
         )
 
