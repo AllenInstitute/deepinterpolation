@@ -45,6 +45,8 @@ for indiv_id in list_exp_id:
         batch_size = 5
         save_raw = True
         output_type = "float32"
+        x_size = 512
+        y_size = 512
 
         output_terminal = os.path.join(
             jobdir, run_uid + "_running_terminal.txt")
@@ -92,6 +94,10 @@ for indiv_id in list_exp_id:
             + str(pre_post_omission)
             + " --save_raw "
             + str(save_raw)
+            + " --x_size "
+            + str(x_size)
+            + " --y_size "
+            + str(y_size)
         ]
 
         PythonJob(

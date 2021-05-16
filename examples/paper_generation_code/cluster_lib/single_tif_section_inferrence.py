@@ -20,6 +20,8 @@ def main(argv):
             "pre_post_omission=",
             "model_norm=",
             "save_raw=",
+            "x_size=",
+            "y_size="
         ],
     )
 
@@ -45,6 +47,10 @@ def main(argv):
             pre_post_omission = int(arg)
         if opt == "--save_raw":
             save_raw = bool(arg)
+        if opt == "--x_size":
+            x_size = int(arg)
+        if opt == "--y_size":
+            y_size = int(arg)
 
     generator_param = {}
     inferrence_param = {}
@@ -63,6 +69,8 @@ def main(argv):
     generator_param["end_frame"] = input_frames_end
     generator_param["train_path"] = movie_path
     generator_param["randomize"] = 0
+    generator_param["x_size"] = x_size
+    generator_param["y_size"] = y_size
 
     inferrence_param["type"] = "inferrence"
     inferrence_param["name"] = "core_inferrence"
