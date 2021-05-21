@@ -11,8 +11,8 @@ output_path = r"/allen/programs/braintv/workgroups/neuralcoding/2p_data/"\
     "single_plane/2021-05-14-simulation-naomi/"
 
 list_exp_folder = [
-    'typicalVolume80mW',
-    'typicalVolume160mW',
+    #    'typicalVolume80mW',
+    #    'typicalVolume160mW',
     'sparseLabelingVolume'
 ]
 
