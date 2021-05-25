@@ -95,9 +95,17 @@ class Inference(argschema.ArgSchemaParser):
             data = normalize_uint16_output(
                     Path(self.args["generator_params"]["train_path"]),
                     Path(self.args["inference_params"]["output_file"]))
+            chunks = self.args["inference_params"]["h5_chunk_shape"]
+            chunk_ok = all([c <= d for c, d in zip(chunks, data.shape)])
+            if not chunk_ok:
+                self.logger.info(f"h5_chunk_shape {chunks} is not compatibile "
+                                 f"with data shape {data.shape}. Will tell "
+                                 "h5py to autochunk output.")
+                chunks = True
+
             with h5py.File(
                     self.args["inference_params"]["output_file"], "w") as f:
-                f.create_dataset("data", data=data)
+                f.create_dataset("data", data=data, chunks=chunks)
             self.logger.info(
                 f"wrote {self.args['inference_params']['output_file']}")
 

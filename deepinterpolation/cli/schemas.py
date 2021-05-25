@@ -1,5 +1,6 @@
 import argschema
 import marshmallow as mm
+from marshmallow.fields import Int
 import datetime
 
 from marshmallow import ValidationError
@@ -124,6 +125,12 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
     output_file = argschema.fields.OutputFile(
         required=True,
         description="where the infernce output will get written.")
+    h5_chunk_shape = argschema.fields.Tuple(
+        (Int(), Int(), (Int())),
+        default=(50, 32, 32),
+        description=("passed to h5py.File.create_dataset(chunks=)"
+                     "this can help access speed for different dimensional "
+                     "slices."))
     save_raw = argschema.fields.Bool(
         required=False,
         default=True,

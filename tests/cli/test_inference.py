@@ -1,6 +1,7 @@
 import pytest
 import h5py
 import json
+import numpy as np
 from pathlib import Path
 import os
 
@@ -36,8 +37,10 @@ def inference_args(tmpdir, request):
 def generator_args(tmpdir):
     # make some dummy files so the schema validation is satisfied
     train_path = tmpdir / "train_data.h5"
+    data = np.random.randint(low=0, high=2**12, size=(10, 4, 4),
+                             dtype="uint16")
     with h5py.File(train_path, "w") as f:
-        f.create_dataset("data", data=[1, 2, 3])
+        f.create_dataset("data", data=data)
     args = {
         "train_path": str(train_path)
     }
@@ -63,8 +66,10 @@ class MockInference():
     def run(self):
         with open(self.inference_json_path, "r") as f:
             j = json.load(f)
+        data = np.random.randint(low=0, high=2**12, size=(10, 4, 4),
+                                 dtype="uint16")
         with h5py.File(j["output_file"], "w") as f:
-            f.create_dataset("data", data=[1, 2, 3])
+            f.create_dataset("data", data=data)
 
 
 class MockClassLoader():
