@@ -19,7 +19,7 @@ Support
 ========================
 
 For bug and issues, please submit issue tickets on this repository. 
-For installation and running support, join the slack channel (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-q5e0offm-yyL7FsQCzpNfol3htMrrnw
+For installation and running support, join the slack channel (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-rkmcw7h1-v8y0Grwe3fZg4m~DiAQVMg
 
 Installation
 ========================
