@@ -45,6 +45,11 @@ Feel free to reach out if you are interested in working on this and have data yo
 
 **Answer:** Feel free to do so! Just make a PR request and we will review it shortly. We are building up a continuous integration system with a battery of tests to facilitate this effort.  
 
+**Question:Why is my output movie size smaller than the input ?**
+
+**Answer:** This denoising framework uses surrounding frames (pre_frame and post_frame parameters) to predict a center frame. As a result, the first set of frames at the beginning and end of the movies are missing key values for the network to operate. We chose to only train our DeepInterpolation networks to expect full size inputs and excluded boundary conditions. As a result the current inference code truncate the first few and final frames of data. This is very similar to boundary conditions with rolling averages. However in this case, artifactual frames at tne onset and end of the movie could be more severe due to the non-linear nature of DeepInterpolation. 
+It is possible to train specific networks to deal with those boundary conditions, for example by training only forward (or backward) looking inputs but we have not done so yet.
+
 Template:
 **Q:**
 **A:**
