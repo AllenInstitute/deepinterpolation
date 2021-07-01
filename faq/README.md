@@ -50,6 +50,10 @@ Feel free to reach out if you are interested in working on this and have data yo
 **Answer:** This denoising framework uses surrounding frames (pre_frame and post_frame parameters) to predict a center frame. As a result, the first set of frames at the beginning and end of the movies are missing key values for the network to operate. We chose to only train our DeepInterpolation networks to expect full size inputs and excluded boundary conditions. As a result the current inference code truncate the first few and final frames of data. This is very similar to boundary conditions with rolling averages. However in this case, artifactual frames at tne onset and end of the movie could be more severe due to the non-linear nature of DeepInterpolation. 
 It is possible to train specific networks to deal with those boundary conditions, for example by training only forward (or backward) looking inputs but we have not done so yet.
 
+**Question:Why is my output data type float32 instead of the original input type (uint16 or others) ?**
+
+**Answer:** First, Deep Learning methods typically convert input to float so as to have differentiable functions. Second, while the output values are mapped back on the same range as the input, the bit depth could potentially improve through denoising as DeepInterpolation is pulling more information than is present in a single pixel. We chose not to enforce the original bit depth because of that. Arguably some datasets are collected with excessive bit depth to begin with so it is possible that your data will not benefit from being represented with the higher precision of float32. We recommend to exercise good judgement when choosing your final bit depth based on these criterias. 
+
 Template:
 **Q:**
 **A:**
