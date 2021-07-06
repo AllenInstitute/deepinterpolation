@@ -54,6 +54,12 @@ It is possible to train specific networks to deal with those boundary conditions
 
 **Answer:** First, Deep Learning methods typically convert input to float so as to have differentiable functions. Second, while the output values are mapped back on the same range as the input, the bit depth could potentially improve through denoising as DeepInterpolation is pulling more information than is present in a single pixel. We chose not to enforce the original bit depth because of that. Arguably some datasets are collected with excessive bit depth to begin with so it is possible that your data will not benefit from being represented with the higher precision of float32. We recommend to exercise good judgement when choosing your final bit depth based on these criterias. 
 
+**Question:When training or fine-tuning a network for 2d movies, I get the following error (or similar): 
+"ValueError: A `Concatenate` layer requires inputs with matching shapes except for the concat axis. Got inputs shapes: [(None, 49, 43, 1024), (None, 49, 42, 512)]" 
+?**
+
+**Answer:** Our pre-trained 2p DeepInterpolation models were trained on (512, 512) images. It is likely your input movie has odd dimensions causing boundary conditions errors. Essentially the "MaxPooling" layers are downsampling the size of each image, rounding off the dimensions. Then, after upsampling, the concatenation layers that implement the skip connection will receive two inputs of different sizes, as a result of this rounding of image dimensions.  You could either re-trained a network that implement padding (for example see here: https://github.com/AllenInstitute/deepinterpolation/blob/6bec1e7b3cdd83a85b1f95e1ec168210e7a5e18c/deepinterpolation/network_collection.py#L568) OR just pad your input with zeros to match our image size of (512, 512). In practice, our pre-trained networks handle black borders very well as those were present throughout our training data as a consequence of motion correction.
+
 Template:
 **Q:**
 **A:**
