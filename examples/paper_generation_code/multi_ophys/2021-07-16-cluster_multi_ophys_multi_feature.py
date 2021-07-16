@@ -29,8 +29,6 @@ for indiv_file in os.listdir(folder_path):
         partition= 'braintv',
         time='48:00:00', 
         job_name="tf_deepInterp",
-        mail-user='jeromel@alleninstitute.org',
-        mail-type='ALL',
         output=jobdir+f'{Slurm.JOB_ARRAY_MASTER_ID}_{Slurm.JOB_ARRAY_ID}.out',
     )
 
