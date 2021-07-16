@@ -4,7 +4,7 @@ from simple_slurm import Slurm
 from shutil import copyfile
 import datetime
 
-folder_path = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/multi_ophys/multi-feature"
+folder_path = "/home/jeromel/Documents/Projects/Deep2P/repos/deepinterpolation/examples/paper_generation_code/multi_ophys/multi-feature"
 
 for indiv_file in os.listdir(folder_path):
     python_file = os.path.join(folder_path, indiv_file)
