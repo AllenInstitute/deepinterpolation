@@ -1323,8 +1323,22 @@ class MovieJSONGenerator(DeepGenerator):
 
     def __len__(self):
         "Denotes the total number of batches"
-        return int(np.ceil(float(self.nb_lims
-                                 * self.img_per_movie) / self.batch_size))
+        
+        total_batches_available = int(np.ceil(float(self.nb_lims
+                * self.img_per_movie) / self.batch_size))
+        
+        # We can limit the number of batches used with the total_samples parameter
+        # Note that total_samples can be negative
+        if "total_samples" in self.json_data.keys():
+            if total_batches_available<self.json_data["total_samples"]:
+                return total_batches_available
+            elif self.json_data["total_samples"]<0:
+                return total_batches_available+self.json_data["total_samples"]+1
+            else 
+                return self.json_data["total_samples"]
+        else:
+            return total_batches_available
+        
 
     def on_epoch_end(self):
         # We only increase index if steps_per_epoch
