@@ -1334,7 +1334,7 @@ class MovieJSONGenerator(DeepGenerator):
                 return total_batches_available
             elif self.json_data["total_samples"]<0:
                 return total_batches_available+self.json_data["total_samples"]+1
-            else 
+            else: 
                 return self.json_data["total_samples"]
         else:
             return total_batches_available
