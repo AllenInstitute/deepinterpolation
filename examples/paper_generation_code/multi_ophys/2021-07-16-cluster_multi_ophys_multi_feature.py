@@ -19,7 +19,7 @@ for indiv_file in os.listdir(folder_path):
 
     arg_to_pass = ""
 
-    python_executable="./allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env/bin/python"
+    python_executable="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env/bin/python"
     
     # instantiate a Slurm object
     slurm = Slurm(
