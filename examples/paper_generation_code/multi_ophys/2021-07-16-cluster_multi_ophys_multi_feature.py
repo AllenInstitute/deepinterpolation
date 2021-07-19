@@ -26,7 +26,7 @@ for indiv_file in os.listdir(folder_path):
         cpus_per_task=1,
         nodes=1,
         gpus=1,
-        tasks_per_node=16,
+        ntasks_per_node=16,
         mem='250G',
         partition= 'braintv',
         time='48:00:00', 
