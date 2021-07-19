@@ -23,11 +23,11 @@ for indiv_file in os.listdir(folder_path):
     
     # instantiate a Slurm object
     slurm = Slurm(
-        cpus_per_task=1,
+        cpus_per_task=16,
         nodes=1,
         gpus=1,
-        ntasks_per_node=16,
-        mem='250GI',
+        ntasks_per_node=1,
+        mem='250G',
         partition= 'braintv',
         time='48:00:00', 
         job_name="tf_deepInterp",
