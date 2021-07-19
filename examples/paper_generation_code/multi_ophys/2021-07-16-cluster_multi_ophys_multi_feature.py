@@ -27,7 +27,7 @@ for indiv_file in os.listdir(folder_path):
         nodes=1,
         gpus=1,
         ntasks_per_node=16,
-        mem='250G',
+        mem='250GI',
         partition= 'braintv',
         time='48:00:00', 
         job_name="tf_deepInterp",
