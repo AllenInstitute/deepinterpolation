@@ -9,10 +9,6 @@ import tensorflow
 
 tensorflow.compat.v1.disable_eager_execution()
 
-gpus = tensorflow.config.experimental.list_physical_devices('GPU')
-for gpu in gpus:
-    tensorflow.config.experimental.set_memory_growth(gpu, True)
-    
 now = datetime.datetime.now()
 run_uid = now.strftime("%Y_%m_%d_%H_%M_%S_%f")
 
@@ -64,10 +60,10 @@ training_param["period_save"] = 5
 training_param["nb_gpus"] = 1
 training_param["apply_learning_decay"] = 0
 training_param["nb_times_through_data"] = 1
-training_param["learning_rate"] = 0.0005
+training_param["learning_rate"] = 0.0001
 training_param["caching_validation"] = False
 
-training_param["loss"] = "mean_absolute_error"
+training_param["loss"] = "mean_squared_error"
 training_param["model_string"] = (
     network_param["name"]
     + "_"
