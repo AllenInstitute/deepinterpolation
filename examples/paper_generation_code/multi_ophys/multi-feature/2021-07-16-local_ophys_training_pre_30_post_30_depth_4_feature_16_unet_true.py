@@ -9,6 +9,10 @@ import tensorflow
 
 tensorflow.compat.v1.disable_eager_execution()
 
+gpus = tensorflow.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
+    
 now = datetime.datetime.now()
 run_uid = now.strftime("%Y_%m_%d_%H_%M_%S_%f")
 
