@@ -13,13 +13,10 @@ for indiv_file in os.listdir(folder_path):
     now = datetime.datetime.now()
     run_uid = now.strftime("%Y_%m_%d_%H_%M_%S_%f")
     jobdir = "/home/jeromel/Documents/Projects/Deep2P/ClusterJobs/"
-    output_terminal = os.path.join(
-        jobdir, run_uid + os.path.basename(python_file) + "_running_terminal.txt"
-    )
-
+    
     arg_to_pass = ""
 
-    python_executable="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/tf20-env/bin/python"
+    python_executable="/allen/programs/braintv/workgroups/nc-ophys/Jeromel/conda/cuda11.1_deepinterp/bin/python"
     
     # instantiate a Slurm object
     slurm = Slurm(

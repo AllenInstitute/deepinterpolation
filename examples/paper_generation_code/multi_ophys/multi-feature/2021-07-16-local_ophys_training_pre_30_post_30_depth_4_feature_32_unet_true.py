@@ -61,7 +61,7 @@ training_param["nb_gpus"] = 1
 training_param["apply_learning_decay"] = 0
 training_param["nb_times_through_data"] = 1
 training_param["learning_rate"] = 0.0001
-training_param["caching_validation"] = False
+training_param["caching_validation"] = True
 
 training_param["loss"] = "mean_squared_error"
 training_param["model_string"] = (
