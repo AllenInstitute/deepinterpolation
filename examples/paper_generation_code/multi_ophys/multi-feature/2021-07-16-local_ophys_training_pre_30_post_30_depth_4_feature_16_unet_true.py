@@ -43,7 +43,7 @@ generator_test_param["pre_frame"] = 30
 generator_test_param["post_frame"] = 30
 generator_test_param["batch_size"] = 5
 generator_test_param["train_path"] = val_path
-generator_test_param["steps_per_epoch"] = steps_per_epoch
+generator_test_param["steps_per_epoch"] = -1
 
 network_param["type"] = "network"
 network_param["name"] = "unet_1024_search"
@@ -61,7 +61,7 @@ training_param["nb_gpus"] = 1
 training_param["apply_learning_decay"] = 0
 training_param["nb_times_through_data"] = 1
 training_param["learning_rate"] = 0.0001
-training_param["caching_validation"] = True
+training_param["caching_validation"] = False
 
 training_param["loss"] = "mean_squared_error"
 training_param["model_string"] = (
