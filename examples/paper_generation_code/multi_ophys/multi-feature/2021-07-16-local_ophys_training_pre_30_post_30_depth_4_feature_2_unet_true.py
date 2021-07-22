@@ -47,7 +47,7 @@ generator_test_param["steps_per_epoch"] = -1
 
 network_param["type"] = "network"
 network_param["name"] = "unet_1024_search"
-network_param["nb_features_scale"] = 32
+network_param["nb_features_scale"] = 2
 network_param["network_depth"] = 4
 network_param["unet"] = True
 

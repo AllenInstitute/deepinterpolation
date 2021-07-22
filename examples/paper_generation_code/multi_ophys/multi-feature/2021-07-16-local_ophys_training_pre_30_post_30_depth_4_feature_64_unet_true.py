@@ -35,7 +35,7 @@ generator_param["post_frame"] = 30
 generator_param["batch_size"] = 5
 generator_param["train_path"] = train_path
 generator_param["steps_per_epoch"] = steps_per_epoch
-generator_param["total_samples"] = 400000
+generator_param["total_samples"] = 200000
 
 generator_test_param["type"] = "generator"
 generator_test_param["name"] = "MovieJSONGenerator"

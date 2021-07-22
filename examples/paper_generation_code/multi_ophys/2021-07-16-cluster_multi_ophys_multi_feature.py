@@ -28,7 +28,7 @@ for indiv_file in os.listdir(folder_path):
         partition= 'braintv',
         time='48:00:00', 
         job_name="tf_deepInterp",
-        output=jobdir+f'{Slurm.JOB_ARRAY_MASTER_ID}_{Slurm.JOB_ARRAY_ID}.out',
+        output=jobdir+f'{Slurm.JOB_ARRAY_MASTER_ID}_{Slurm.JOB_ARRAY_ID}_{os.path.basename(indiv_file)}.out',
     )
 
     # call the `sbatch` command to run the jobs
