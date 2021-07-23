@@ -127,6 +127,8 @@ training_class = trainer_obj.find_and_build()(
     train_generator, test_generator, network_callback, path_training
 )
 
+training_class.local_model.summary()
+
 training_class.run()
 
 training_class.finalize()
