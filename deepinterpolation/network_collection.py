@@ -381,14 +381,19 @@ def unet_1024_search(path_json):
     local_json_loader = JsonLoader(path_json)
     local_json_loader.load_json()
     json_data = local_json_loader.json_data
-
+    
+    if 'feature_increase_power' in json_data.keys():
+        feature_increase_power = json_data["feature_increase_power"]
+    else:
+        feature_increase_power = 2
+    
     def local_network_function(input_img):
 
         # encoder
         local_input = input_img
         for local_depth in range(json_data["network_depth"]):
             local_conv = Conv2D(
-                2 ** local_depth * json_data["nb_features_scale"],
+                feature_increase_power ** local_depth * json_data["nb_features_scale"],
                 (3, 3),
                 activation="relu",
                 padding="same",
@@ -402,7 +407,7 @@ def unet_1024_search(path_json):
 
         # Deep CONV
         deep_conv = Conv2D(
-            2 ** json_data["network_depth"] * json_data["nb_features_scale"],
+            feature_increase_power ** json_data["network_depth"] * json_data["nb_features_scale"],
             (3, 3),
             activation="relu",
             padding="same",
@@ -418,7 +423,7 @@ def unet_1024_search(path_json):
                 local_conc = local_up
 
             local_output = Conv2D(
-                2 ** local_depth * json_data["nb_features_scale"],
+                feature_increase_power ** local_depth * json_data["nb_features_scale"],
                 (3, 3),
                 activation="relu",
                 padding="same",
