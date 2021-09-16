@@ -1,7 +1,5 @@
 import argschema
 import json
-import h5py
-import numpy as np
 from pathlib import Path
 
 from deepinterpolation.cli.schemas import TrainingInputSchema
