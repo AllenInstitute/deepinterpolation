@@ -1,7 +1,6 @@
 import argschema
 import marshmallow as mm
 import datetime
-
 from marshmallow import ValidationError
 
 
@@ -55,7 +54,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     total_samples = argschema.fields.Int(
         required=False,
         default=-1,
-        description="-1 defaults to all samples in input data set.")
+        description="-1 defaults to all samples between start_frame and end_frame.")
 
 
 class MlflowRegistrySchema(argschema.schemas.DefaultSchema):
@@ -123,7 +122,7 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
     )
     output_file = argschema.fields.OutputFile(
         required=True,
-        description="where the infernce output will get written.")
+        description="where the inference output will get written.")
     save_raw = argschema.fields.Bool(
         required=False,
         default=True,
@@ -163,3 +162,116 @@ class InferenceInputSchema(argschema.ArgSchema):
         # To remove when updating CLI with pre/post processing modules
         data['generator_params']['randomize'] = 0
         return data
+
+
+class TrainingSchema(argschema.schemas.DefaultSchema):
+    type = argschema.fields.String(
+        required=False,
+        default="training",
+        description=("type and name sent to ClassLoader for object "
+                     "instantiation"))
+    name = argschema.fields.String(
+        required=False,
+        default="core_trainer",
+        description=("type and name sent to ClassLoader for object "
+                     "instantiation"))
+
+    output_path = argschema.fields.String(
+        required=True,
+        description="A folder where the training outputs will get written.")
+
+    nb_times_through_data = argschema.fields.Int(
+        required=False,
+        default=1,
+        description="Setting this to more than 1 will make the training use \
+            individual samples multiple time during training, thereby \
+            increasing your training samples. Larger repetition of the same\
+            samples could cause noise overfitting")
+
+    learning_rate = argschema.fields.Int(
+        required=False,
+        default=0.0001,
+        description="base learning rate used by the optimizer")
+
+    loss = argschema.fields.String(
+        required=False,
+        default="mean_squared_loss",
+        description="loss function used for training and validation.")
+
+    model_string = argschema.fields.Int(
+        required=False,
+        default="",
+        description="Text string used to save the final model file and all\
+            intermediary checkpoint models. Filename is constructed from other\
+            fields if empty using <network_name>_<loss>_<run_uid>.")
+
+    caching_validation = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description="Whether to cache the validation data in memory \
+            for training. On some system, this could accelerate training as it\
+            reduces the need for IO. On some system, the additional memory\
+            requirement could cause memory issues.")
+
+    multi_gpus = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description="Set to True to use multi-gpus code when multi-gpus are \
+            available and set up on the machine and environment. \
+            Single GPU or CPU code is used if set to False.")
+
+    apply_learning_decay = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description="whether to use a learning scheduler during training.\
+            If set to True, the learning rate will be halved every \
+            <epochs_drop>")
+
+    epochs_drop = argschema.fields.Int(
+        required=False,
+        default=5,
+        description="Used when apply_learning_decay is set to True. Will half\
+            the learning rate every epoch_drop. One epoch is defined using\
+            steps_per_epoch.")
+
+
+class NetworkSchema(argschema.schemas.DefaultSchema):
+    type = argschema.fields.String(
+        required=False,
+        default="network",
+        description=("type of object instantiation"))
+    name = argschema.fields.String(
+        required=True,
+        default="unet_single_1024",
+        description=("callback of the neuronal network architecture to build.\
+            All available architectures are visible in the \
+            network_collection.py file as part of the deepinterpolation \
+            module. More architectures callbacks can be added to this file \
+            if necessary.")
+    )
+
+
+class TrainingInputSchema(argschema.ArgSchema):
+    log_level = argschema.fields.LogLevel(default="INFO")
+    run_uid = argschema.fields.Str(
+        required=False,
+        default=datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"),
+        description="unique identifier")
+    training_params = argschema.fields.Nested(
+        TrainingSchema,
+        default={})
+    generator_params = argschema.fields.Nested(
+        GeneratorSchema,
+        default={})
+    test_generator_params = argschema.fields.Nested(
+        GeneratorSchema,
+        default={})
+    network_params = argschema.fields.Nested(
+        NetworkSchema,
+        default={})
+    output_full_args = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description=("whether to output the full set of args to a json. "
+                     "this will show the args sent to the underlying classes "
+                     "including defaults."))
