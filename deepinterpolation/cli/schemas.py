@@ -54,7 +54,8 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     total_samples = argschema.fields.Int(
         required=False,
         default=-1,
-        description="-1 defaults to all samples between start_frame and end_frame.")
+        description="-1 defaults to all samples between start_frame\
+            and end_frame.")
 
 
 class MlflowRegistrySchema(argschema.schemas.DefaultSchema):
