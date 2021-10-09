@@ -12,13 +12,36 @@ class Training(argschema.ArgSchemaParser):
     def run(self):
         self.logger.name = type(self).__name__
 
-        outdir = Path(self.args['training_params']['output_file']).parent
+        outdir = Path(self.args['training_params']['output_path'])
         if self.args["output_full_args"]:
             full_args_path = outdir / "training_full_args.json"
             with open(full_args_path, "w") as f:
                 json.dump(self.args, f, indent=2)
             self.logger.info(f"wrote {full_args_path}")
         uid = self.args['run_uid']
+
+        # We create the output model filename if empty
+        if self.args['training_params']["model_string"] == "":
+            self.args['training_params']["model_string"] = (
+                self.args["network_params"]["name"] + "_" +
+                self.args["training_params"]["loss"]
+            )
+
+        # We pass on the uid
+        self.args["training_params"]["run_uid"] = uid
+
+        # We pass on folder
+        self.args["training_params"]["output_dir"] = self.args['training_params']['output_path']
+
+        # We convert to old schema
+        self.args['training_params']['nb_gpus'] = 2 * \
+            int(self.args['training_params']['multi_gpus'])
+
+        # Forward parameters to the training agent
+        self.args['training_params']['steps_per_epoch'] = \
+            self.args['generator_params']['steps_per_epoch']
+        self.args['training_params']['batch_size'] = \
+            self.args['generator_params']['batch_size']
 
         # save the json parameters to 2 different files
         training_json_path = outdir / f"{uid}_training.json"
@@ -63,6 +86,9 @@ class Training(argschema.ArgSchemaParser):
 
         self.logger.info("created objects for training")
         training_class.run()
+
+        self.logger.info("training job finished - finalizing output model")
+        training_class.finalize()
 
 
 if __name__ == "__main__":  # pragma: nocover

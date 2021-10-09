@@ -171,6 +171,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         default="training",
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
+
     name = argschema.fields.String(
         required=False,
         default="core_trainer",
@@ -189,22 +190,22 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
             increasing your training samples. Larger repetition of the same\
             samples could cause noise overfitting")
 
-    learning_rate = argschema.fields.Int(
+    learning_rate = argschema.fields.Float(
         required=False,
         default=0.0001,
         description="base learning rate used by the optimizer")
 
     loss = argschema.fields.String(
         required=False,
-        default="mean_squared_loss",
+        default="mean_squared_error",
         description="loss function used for training and validation.")
 
-    model_string = argschema.fields.Int(
+    model_string = argschema.fields.String(
         required=False,
         default="",
         description="Text string used to save the final model file and all\
             intermediary checkpoint models. Filename is constructed from other\
-            fields if empty using <network_name>_<loss>_<run_uid>.")
+            fields if empty, using <network_name>_<loss>.")
 
     caching_validation = argschema.fields.Bool(
         required=False,
@@ -231,9 +232,15 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
     epochs_drop = argschema.fields.Int(
         required=False,
         default=5,
-        description="Used when apply_learning_decay is set to True. Will half\
-            the learning rate every epoch_drop. One epoch is defined using\
-            steps_per_epoch.")
+        description="Number of epochs. Used when apply_learning_decay is \
+            set to True. Will half the learning rate every epoch_drop. \
+            One epoch is defined usingsteps_per_epoch.")
+
+    period_save = argschema.fields.Int(
+        required=False,
+        default=5,
+        description="Period in number of epochs to periodically save model \
+            checkpoints.")
 
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
