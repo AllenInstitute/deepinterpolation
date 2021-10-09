@@ -31,7 +31,8 @@ class Training(argschema.ArgSchemaParser):
         self.args["training_params"]["run_uid"] = uid
 
         # We pass on folder
-        self.args["training_params"]["output_dir"] = self.args['training_params']['output_path']
+        self.args["training_params"]["output_dir"] = \
+            self.args['training_params']['output_path']
 
         # We convert to old schema
         self.args['training_params']['nb_gpus'] = 2 * \

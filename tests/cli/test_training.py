@@ -52,7 +52,8 @@ class MockTraining():
     """for mocked tests, training only needs to produce a file
     """
 
-    def __init__(self, data_generator, data_test_generator, data_network, training_json_path):
+    def __init__(self, data_generator, data_test_generator, data_network,
+                 training_json_path):
         self.training_json_path = training_json_path
 
     def run(self):
@@ -89,7 +90,8 @@ class MockClassLoader():
             return MockTraining(args[0], args[1], args[2], args[3])
 
 
-def test_training_cli(generator_args, training_args, network_args, monkeypatch):
+def test_training_cli(generator_args, training_args, network_args,
+                      monkeypatch):
     """this tests that the training CLI validates the schemas
     and executes its logic. Calls to generator, network and training
     are minimally mocked.
