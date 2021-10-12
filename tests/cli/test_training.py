@@ -142,7 +142,7 @@ def test_integration_cli_ephys_inference(tmp_path):
 
     generator_param["batch_size"] = 1
     generator_param["start_frame"] = 100
-    generator_param["end_frame"] = 102 # -1 to go until the end.
+    generator_param["end_frame"] = 102  # -1 to go until the end.
     generator_param[
         "randomize"
     ] = 1
@@ -165,7 +165,7 @@ def test_integration_cli_ephys_inference(tmp_path):
 
     generator_test_param["batch_size"] = 1
     generator_test_param["start_frame"] = 0
-    generator_test_param["end_frame"] = 2 # -1 to go until the end.
+    generator_test_param["end_frame"] = 2  # -1 to go until the end.
     generator_test_param[
         "randomize"
     ] = 1
