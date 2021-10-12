@@ -119,6 +119,8 @@ def test_training_cli(generator_args, training_args, network_args,
 def test_integration_cli_ephys_inference(tmp_path):
 
     generator_param = {}
+    generator_test_param = {}
+
     training_param = {}
     network_param = {}
 
@@ -128,7 +130,7 @@ def test_integration_cli_ephys_inference(tmp_path):
     generator_param["pre_post_omission"] = 1
     generator_param[
         "steps_per_epoch"
-    ] = 10
+    ] = 2
 
     generator_param["train_path"] = os.path.join(
         Path(__file__).parent.absolute(),
@@ -138,10 +140,33 @@ def test_integration_cli_ephys_inference(tmp_path):
         "ephys_tiny_continuous.dat2",
     )
 
-    generator_param["batch_size"] = 100
+    generator_param["batch_size"] = 1
     generator_param["start_frame"] = 100
-    generator_param["end_frame"] = 200  # -1 to go until the end.
+    generator_param["end_frame"] = 102 # -1 to go until the end.
     generator_param[
+        "randomize"
+    ] = 1
+
+    generator_test_param["type"] = "generator"
+    generator_test_param["name"] = "EphysGenerator"
+    generator_test_param["pre_post_frame"] = 30
+    generator_test_param["pre_post_omission"] = 1
+    generator_test_param[
+        "steps_per_epoch"
+    ] = 2
+
+    generator_test_param["train_path"] = os.path.join(
+        Path(__file__).parent.absolute(),
+        "..",
+        "..",
+        "sample_data",
+        "ephys_tiny_continuous.dat2",
+    )
+
+    generator_test_param["batch_size"] = 1
+    generator_test_param["start_frame"] = 0
+    generator_test_param["end_frame"] = 2 # -1 to go until the end.
+    generator_test_param[
         "randomize"
     ] = 1
 
@@ -158,7 +183,7 @@ def test_integration_cli_ephys_inference(tmp_path):
         "run_uid": "test_uid",
         "training_params": training_param,
         "generator_params": generator_param,
-        "test_generator_params": generator_param,
+        "test_generator_params": generator_test_param,
         "network_params": network_param,
         "output_full_args": True
     }
