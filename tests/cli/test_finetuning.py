@@ -21,7 +21,7 @@ def training_args(tmpdir, request):
             "sample_data",
             filename
         )
-    args["output_path"] = str(tmpdir)
+    args["output_dir"] = str(tmpdir)
     args["model_string"] = "test_model_string"
     args["model_source"] = {"local_path": local_path}
 
@@ -61,7 +61,7 @@ class MockTraining():
         with open(self.training_json_path, "r") as f:
             j = json.load(f)
 
-        local_model_path = os.path.join(j["output_path"], j['run_uid']
+        local_model_path = os.path.join(j["output_dir"], j['run_uid']
                                         + "_" + j['model_string']
                                         + "_transfer_model.h5")
 
@@ -108,7 +108,7 @@ def test_finetuning_cli(generator_args, training_args,
     training = cli.FineTuning(input_data=args, args=[])
     training.run()
 
-    model_path = os.path.join(args["training_params"]["output_path"],
+    model_path = os.path.join(args["training_params"]["output_dir"],
                               args["run_uid"] + "_" +
                               args["training_params"]["model_string"]
                               + "_transfer_model.h5")
@@ -171,7 +171,7 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
 
     training_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
-    training_param["output_path"] = str(tmp_path)
+    training_param["output_dir"] = str(tmp_path)
 
     # Replace this path to where you stored your model
     filename = \
@@ -199,7 +199,7 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     finetuning = cli.FineTuning(input_data=args, args=[])
     finetuning.run()
 
-    model_path = os.path.join(args["training_params"]["output_path"],
+    model_path = os.path.join(args["training_params"]["output_dir"],
                               args["run_uid"] + "_" +
                               training_param["model_string"]
                               + "_transfer_model.h5")

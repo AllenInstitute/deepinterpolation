@@ -12,7 +12,7 @@ class FineTuning(argschema.ArgSchemaParser):
     def run(self):
         self.logger.name = type(self).__name__
 
-        outdir = Path(self.args['training_params']['output_path'])
+        outdir = Path(self.args['training_params']['output_dir'])
         if self.args["output_full_args"]:
             full_args_path = outdir / "training_full_args.json"
             with open(full_args_path, "w") as f:
@@ -31,10 +31,6 @@ class FineTuning(argschema.ArgSchemaParser):
         
         # We pass on the uid
         self.args["training_params"]["run_uid"] = uid
-
-        # We pass on folder
-        self.args["training_params"]["output_dir"] = \
-            self.args['training_params']['output_path']
 
         # We convert to old schema
         self.args['training_params']['nb_gpus'] = 2 * \

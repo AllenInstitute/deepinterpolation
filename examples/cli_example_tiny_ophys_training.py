@@ -70,7 +70,7 @@ training_param["type"] = "trainer"
 training_param["name"] = "core_trainer"
 training_param["learning_rate"] = 0.0001
 training_param["loss"] = "mean_squared_error"
-training_param["output_path"] = "/Users/jeromel/Desktop/tmp"
+training_param["output_dir"] = "/Users/jeromel/Desktop/tmp"
 
 training_param["model_string"] = (
     network_param["name"]
@@ -89,7 +89,7 @@ args = {
     "output_full_args": True
 }
 
-input_json = os.path.join(training_param["output_path"],
+input_json = os.path.join(training_param["output_dir"],
                           "input_training_ophys_tiny.json")
 
 with open(input_json, 'w') as file_handle:

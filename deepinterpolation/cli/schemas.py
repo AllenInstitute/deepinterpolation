@@ -178,7 +178,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
 
-    output_path = argschema.fields.OutputDir(
+    output_dir = argschema.fields.OutputDir(
         required=True,
         description="A folder where the training outputs will get written.")
 
@@ -186,7 +186,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=1,
         description="Setting this to more than 1 will make the training use \
-            individual samples multiple time during training, thereby \
+            individual samples multiple times during training, thereby \
             increasing your training samples. Larger repetition of the same\
             samples could cause noise overfitting")
 
@@ -214,7 +214,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=False,
         description="Whether to cache the validation data in memory \
-            for training. On some system, this could accelerate training as it\
+            for training. On some systems, this could accelerate training as it\
             reduces the need for IO. On some system, the additional memory\
             requirement could cause memory issues.")
 
@@ -236,8 +236,8 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=5,
         description="Number of epochs. Used when apply_learning_decay is \
-            set to True. Will half the learning rate every epoch_drop. \
-            One epoch is defined usingsteps_per_epoch.")
+            set to True. Will halve the learning rate every epoch_drop. \
+            One epoch is defined using steps_per_epoch.")
 
     period_save = argschema.fields.Int(
         required=False,
@@ -264,7 +264,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
 
-    output_path = argschema.fields.OutputDir(
+    output_dir = argschema.fields.OutputDir(
         required=True,
         description="A folder where the training outputs will get written.")
 
@@ -272,7 +272,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=1,
         description="Setting this to more than 1 will make the training use \
-            individual samples multiple time during training, thereby \
+            individual samples multiple times during training, thereby \
             increasing your training samples. Larger repetition of the same\
             samples could cause noise overfitting")
 
@@ -289,9 +289,9 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
     model_string = argschema.fields.String(
         required=False,
         default="",
-        description="Text string used to save the final model file and all\
-            intermediary checkpoint models. Filename is constructed from other\
-            fields if empty, using <network_name>_<loss>.")
+        description="Text string used to construct the final model filename\
+            and all intermediary checkpoint models. Filename is constructed\
+            from other fields if empty, using <network_name>_<loss>.")
 
     caching_validation = argschema.fields.Bool(
         required=False,
@@ -320,7 +320,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         default=5,
         description="Number of epochs. Used when apply_learning_decay is \
             set to True. Will half the learning rate every epoch_drop. \
-            One epoch is defined usingsteps_per_epoch.")
+            One epoch is defined using steps_per_epoch.")
 
     period_save = argschema.fields.Int(
         required=False,

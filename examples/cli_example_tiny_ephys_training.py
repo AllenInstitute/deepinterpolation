@@ -78,7 +78,7 @@ training_param["model_string"] = (
     + "_"
     + run_uid
 )
-training_param["output_path"] = "/Users/jeromel/Desktop/tmp"
+training_param["output_dir"] = "/Users/jeromel/Desktop/tmp"
 
 args = {
     "run_uid": run_uid,
@@ -89,7 +89,7 @@ args = {
     "output_full_args": True
 }
 
-input_json = os.path.join(training_param["output_path"],
+input_json = os.path.join(training_param["output_dir"],
                           "input_training_ephys_tiny.json")
 
 with open(input_json, 'w') as file_handle:

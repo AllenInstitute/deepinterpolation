@@ -11,7 +11,7 @@ import deepinterpolation.cli.training as cli
 def training_args(tmpdir, request):
     args = {}
 
-    args["output_path"] = str(tmpdir)
+    args["output_dir"] = str(tmpdir)
     args["model_string"] = "test_model_string"
 
     yield args
@@ -60,7 +60,7 @@ class MockTraining():
         with open(self.training_json_path, "r") as f:
             j = json.load(f)
 
-        local_model_path = os.path.join(j["output_path"], j['run_uid']
+        local_model_path = os.path.join(j["output_dir"], j['run_uid']
                                         + "_" + j['model_string']
                                         + "_model.h5")
 
@@ -108,7 +108,7 @@ def test_training_cli(generator_args, training_args, network_args,
     training = cli.Training(input_data=args, args=[])
     training.run()
 
-    model_path = os.path.join(args["training_params"]["output_path"],
+    model_path = os.path.join(args["training_params"]["output_dir"],
                               args["run_uid"] + "_" +
                               args["training_params"]["model_string"]
                               + "_model.h5")
@@ -174,7 +174,7 @@ def test_integration_cli_ephys_inference(tmp_path):
     training_param["name"] = "core_trainer"
     training_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
-    training_param["output_path"] = str(tmp_path)
+    training_param["output_dir"] = str(tmp_path)
 
     network_param["type"] = "network"
     network_param["name"] = "unet_single_ephys_1024"
@@ -191,7 +191,7 @@ def test_integration_cli_ephys_inference(tmp_path):
     training = cli.Training(input_data=args, args=[])
     training.run()
 
-    model_path = os.path.join(args["training_params"]["output_path"],
+    model_path = os.path.join(args["training_params"]["output_dir"],
                               args["run_uid"] + "_" +
                               training_param["model_string"]
                               + "_model.h5")
