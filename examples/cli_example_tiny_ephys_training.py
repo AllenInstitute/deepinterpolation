@@ -14,14 +14,18 @@ generator_param = {}
 network_param = {}
 generator_test_param = {}
 
-# An epoch is defined as the number of batches pulled from the dataset. Because our datasets are VERY large. Often, we cannot
-# go through the entirity of the data so we define an epoch slightly differently than is usual.
+# An epoch is defined as the number of batches pulled from the dataset.
+# Because our datasets are VERY large. Often, we cannot
+# go through the entirity of the data so we define an epoch
+# slightly differently than is usual.
 steps_per_epoch = 10
 
-# Those are parameters used for the Validation test generator. Here the test is done on the beginning of the data but
+# Those are parameters used for the Validation test generator.
+# Here the test is done on the beginning of the data but
 # this can be a separate file
 generator_test_param["type"] = "generator"  # type of collection
-generator_test_param["name"] = "EphysGenerator"  # Name of object in the collection
+# Name of object in the collection
+generator_test_param["name"] = "EphysGenerator"
 generator_test_param[
     "pre_post_frame"
 ] = 30  # Number of frame provided before and after the predicted frame
@@ -37,9 +41,8 @@ generator_test_param["end_frame"] = 1000
 generator_test_param[
     "pre_post_omission"
 ] = 1  # Number of frame omitted before and after the predicted frame
-generator_test_param[
-    "steps_per_epoch"
-] = -1  # No step necessary for testing as epochs are not relevant. -1 deactivate it.
+generator_test_param["steps_per_epoch"] = -1  
+# No step necessary for testing as epochs are not relevant. -1 deactivate it.
 
 # Those are parameters used for the main data generator
 generator_param["type"] = "generator"
@@ -86,7 +89,8 @@ args = {
     "output_full_args": True
 }
 
-input_json = os.path.join(training_param["output_path"], "input_training_ephys_tiny.json")
+input_json = os.path.join(training_param["output_path"],
+                          "input_training_ephys_tiny.json")
 
 with open(input_json, 'w') as file_handle:
     json.dump(args, file_handle)

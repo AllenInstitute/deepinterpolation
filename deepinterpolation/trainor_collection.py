@@ -11,7 +11,7 @@ import math
 import matplotlib.pylab as plt
 from tensorflow.keras.models import load_model
 from packaging import version
-
+import warnings
 
 def create_decay_callback(initial_learning_rate, epochs_drop):
     """ This is a helper function to return a configured
@@ -386,7 +386,8 @@ class transfer_trainer(core_trainer):
         self.apply_learning_decay = self.json_data["apply_learning_decay"]
 
         if self.apply_learning_decay == 1:
-            self.initial_learning_rate = self.json_data["initial_learning_rate"]
+            self.initial_learning_rate = \
+                self.json_data["initial_learning_rate"]
             self.epochs_drop = self.json_data["epochs_drop"]
 
         self.nb_times_through_data = self.json_data["nb_times_through_data"]

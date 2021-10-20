@@ -249,7 +249,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         default="transfer_trainer",
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
-    
+
     model_source = argschema.fields.Nested(
         ModelSourceSchema,
         description="Path to model if loading locally, or mlflow registry"
@@ -324,6 +324,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         default=5,
         description="Period in number of epochs to periodically save model \
             checkpoints.")
+
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(

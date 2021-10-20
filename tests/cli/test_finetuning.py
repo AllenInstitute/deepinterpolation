@@ -10,7 +10,7 @@ import deepinterpolation.cli.fine_tuning as cli
 @pytest.fixture
 def training_args(tmpdir, request):
     args = {}
-    
+
     filename = \
         "2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5"
     local_path = \
@@ -23,8 +23,8 @@ def training_args(tmpdir, request):
         )
     args["output_path"] = str(tmpdir)
     args["model_string"] = "test_model_string"
-    args["model_source"] = {"local_path":local_path}
-    
+    args["model_source"] = {"local_path": local_path}
+
     yield args
 
 
@@ -53,7 +53,7 @@ class MockTraining():
     """for mocked tests, training only needs to produce a file
     """
 
-    def __init__(self, data_generator, data_test_generator, 
+    def __init__(self, data_generator, data_test_generator,
                  training_json_path):
         self.training_json_path = training_json_path
 
@@ -92,7 +92,7 @@ class MockClassLoader():
 
 
 def test_finetuning_cli(generator_args, training_args,
-                      monkeypatch):
+                        monkeypatch):
     """this tests that the training CLI validates the schemas
     and executes its logic. Calls to generator, network and training
     are minimally mocked.
@@ -168,7 +168,7 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     generator_test_param[
         "randomize"
     ] = 1
-    
+
     training_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
     training_param["output_path"] = str(tmp_path)
