@@ -198,7 +198,10 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
     loss = argschema.fields.String(
         required=False,
         default="mean_squared_error",
-        description="loss function used for training and validation.")
+        description="loss function used for training and validation. Loss \
+            functions recognized by tensorflow are recognized : \
+            https://www.tensorflow.org/api_docs/python/tf/keras/losses. \
+            Additional losses can be added to the loss_collection.py file.")
 
     model_string = argschema.fields.String(
         required=False,
