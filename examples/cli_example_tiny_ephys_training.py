@@ -95,7 +95,7 @@ input_json = os.path.join(training_param["output_path"],
 with open(input_json, 'w') as file_handle:
     json.dump(args, file_handle)
 
-module_cmd = ["python", "-m", "deepinterpolation.cli.training","--input_json", 
+module_cmd = ["python", "-m", "deepinterpolation.cli.training", "--input_json",
               input_json]
 
 subprocess.check_call(module_cmd)

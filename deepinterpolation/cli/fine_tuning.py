@@ -25,7 +25,7 @@ class FineTuning(argschema.ArgSchemaParser):
             self.args['training_params']["model_string"] = (
                 self.args["training_params"]["loss"]
             )
-            
+
         # We pass on the uid
         self.args["training_params"]["run_uid"] = uid
 
