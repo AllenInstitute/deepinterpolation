@@ -1,6 +1,6 @@
 import json
 import datetime
-import os 
+import os
 import pathlib
 import subprocess
 
@@ -41,7 +41,7 @@ generator_test_param["end_frame"] = 1000
 generator_test_param[
     "pre_post_omission"
 ] = 1  # Number of frame omitted before and after the predicted frame
-generator_test_param["steps_per_epoch"] = -1  
+generator_test_param["steps_per_epoch"] = -1
 # No step necessary for testing as epochs are not relevant. -1 deactivate it.
 
 # Those are parameters used for the main data generator
@@ -95,7 +95,7 @@ input_json = os.path.join(training_param["output_path"],
 with open(input_json, 'w') as file_handle:
     json.dump(args, file_handle)
 
-module_cmd = ["python", "-m", "deepinterpolation.cli.training",
-                "--input_json", input_json]
+module_cmd = ["python", "-m", "deepinterpolation.cli.training","--input_json",
+              input_json]
 
 subprocess.check_call(module_cmd)
