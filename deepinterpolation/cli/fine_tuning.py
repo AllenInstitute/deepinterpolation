@@ -25,7 +25,10 @@ class FineTuning(argschema.ArgSchemaParser):
             self.args['training_params']["model_string"] = (
                 self.args["training_params"]["loss"]
             )
-
+        
+        # TODO: The following lines will be remove once we deprecate the legacy
+        # parameter tracking system
+        
         # We pass on the uid
         self.args["training_params"]["run_uid"] = uid
 

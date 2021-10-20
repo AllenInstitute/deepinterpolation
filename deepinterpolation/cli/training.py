@@ -26,7 +26,10 @@ class Training(argschema.ArgSchemaParser):
                 self.args["network_params"]["name"] + "_" +
                 self.args["training_params"]["loss"]
             )
-
+        
+        # TODO: The following lines will be remove once we deprecate the legacy
+        # parameter tracking system
+        
         # We pass on the uid
         self.args["training_params"]["run_uid"] = uid
 

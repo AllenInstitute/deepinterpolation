@@ -178,7 +178,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
 
-    output_path = argschema.fields.String(
+    output_path = argschema.fields.OutputDir(
         required=True,
         description="A folder where the training outputs will get written.")
 
@@ -261,7 +261,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         description=("type and name sent to ClassLoader for object "
                      "instantiation"))
 
-    output_path = argschema.fields.String(
+    output_path = argschema.fields.OutputDir(
         required=True,
         description="A folder where the training outputs will get written.")
 
