@@ -23,9 +23,8 @@ class FineTuning(argschema.ArgSchemaParser):
 
         # We create the output model filename if empty
         if self.args["training_params"]["model_string"] == "":
-            self.args["training_params"]["model_string"] = self.args["training_params"][
-                "loss"
-            ]
+            self.args["training_params"]["model_string"] = \
+                self.args["training_params"]["loss"]
 
         # TODO: The following lines will be remove once we deprecate the legacy
         # parameter tracking system
@@ -39,12 +38,11 @@ class FineTuning(argschema.ArgSchemaParser):
         )
 
         # Forward parameters to the training agent
-        self.args["training_params"]["steps_per_epoch"] = self.args["generator_params"][
-            "steps_per_epoch"
-        ]
-        self.args["training_params"]["batch_size"] = self.args["generator_params"][
-            "batch_size"
-        ]
+        self.args["training_params"]["steps_per_epoch"] = \
+            self.args["generator_params"]["steps_per_epoch"]
+            
+        self.args["training_params"]["batch_size"] = \
+            self.args["generator_params"]["batch_size"]
 
         # save the json parameters to 2 different files
         training_json_path = outdir / f"{uid}_training.json"

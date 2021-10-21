@@ -15,7 +15,8 @@ def get_list_of_networks():
     """Helper function to get the list of networks architecture available
     currently in the module. 
     """
-    list_architecture = inspect.getmembers(network_collection, inspect.isfunction)
+    list_architecture = inspect.getmembers(network_collection,
+                                           inspect.isfunction)
     curated_list = [indiv_arch[0] for indiv_arch in list_architecture]
     excluded_list = ["Input", "dot", "load_model"]
     curated_list = [
@@ -113,7 +114,8 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
                 for interpolation."
         ),
     )
-    pre_post_omission = argschema.fields.Int(required=False, default=0, description="")
+    pre_post_omission = argschema.fields.Int(required=False, default=0,
+                                             description="")
     train_path = argschema.fields.InputFile(
         required=True, description="training data input path"
     )
@@ -140,7 +142,8 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         default=0,
         description="integer as bool. useful in training, not inference.",
     )
-    steps_per_epoch = argschema.fields.Int(required=False, default=100, description="")
+    steps_per_epoch = argschema.fields.Int(required=False, default=100,
+                                           description="")
     total_samples = argschema.fields.Int(
         required=False,
         default=-1,
@@ -205,13 +208,19 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default="inferrence",
         validate=OneOf(["inferrence"]),
-        description=("type and name sent to ClassLoader for object instantiation"),
+        description=(
+            "type and name sent to ClassLoader for object \
+            instantiation"
+        ),
     )
     name = argschema.fields.String(
         required=False,
         default="core_inferrence",
         validate=OneOf(get_list_of_inferrences()),
-        description=("type and name sent to ClassLoader for object instantiation"),
+        description=(
+            "type and name sent to ClassLoader for object \
+            instantiation"
+        ),
     )
 
     model_source = argschema.fields.Nested(
@@ -335,8 +344,8 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=False,
         description="Whether to cache the validation data in memory \
-            for training. On some systems, this could accelerate training as it\
-            reduces the need for IO. On some system, the additional memory\
+            for training. On some systems, this could accelerate training as \
+            it reduces the need for IO. On some system, the additional memory\
             requirement could cause memory issues.",
     )
 
@@ -377,7 +386,10 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         required=False,
         default="transfer_trainer",
         validate=OneOf(get_list_of_trainors()),
-        description=("type and name sent to ClassLoader for object instantiation"),
+        description=(
+            "type and name sent to ClassLoader for object \
+            instantiation"
+        ),
     )
 
     model_source = argschema.fields.Nested(
@@ -388,7 +400,10 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
         default="trainer",
-        description=("type and name sent to ClassLoader for object instantiation"),
+        description=(
+            "type and name sent to ClassLoader for object \
+            instantiation"
+        ),
     )
 
     output_dir = argschema.fields.OutputDir(
@@ -468,7 +483,8 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
-        required=False, default="network", description=("type of object instantiation")
+        required=False, default="network", 
+        description=("type of object instantiation")
     )
     name = argschema.fields.String(
         required=True,
@@ -493,7 +509,8 @@ class TrainingInputSchema(argschema.ArgSchema):
     )
     training_params = argschema.fields.Nested(TrainingSchema, default={})
     generator_params = argschema.fields.Nested(GeneratorSchema, default={})
-    test_generator_params = argschema.fields.Nested(GeneratorSchema, default={})
+    test_generator_params = argschema.fields.Nested(GeneratorSchema,
+                                                    default={})
     network_params = argschema.fields.Nested(NetworkSchema, default={})
     output_full_args = argschema.fields.Bool(
         required=False,

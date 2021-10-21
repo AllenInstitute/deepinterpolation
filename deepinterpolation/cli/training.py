@@ -1,7 +1,6 @@
+from pathlib import Path
 import argschema
 import json
-from pathlib import Path
-
 from deepinterpolation.cli.schemas import TrainingInputSchema
 from deepinterpolation.generic import ClassLoader
 
@@ -40,12 +39,10 @@ class Training(argschema.ArgSchemaParser):
         )
 
         # Forward parameters to the training agent
-        self.args["training_params"]["steps_per_epoch"] = self.args["generator_params"][
-            "steps_per_epoch"
-        ]
-        self.args["training_params"]["batch_size"] = self.args["generator_params"][
-            "batch_size"
-        ]
+        self.args["training_params"]["steps_per_epoch"] = \
+            self.args["generator_params"]["steps_per_epoch"]
+        self.args["training_params"]["batch_size"] = \
+            self.args["generator_params"]["batch_size"]
 
         # save the json parameters to 2 different files
         training_json_path = outdir / f"{uid}_training.json"
@@ -82,7 +79,8 @@ class Training(argschema.ArgSchemaParser):
         training_obj = ClassLoader(training_json_path)
 
         training_class = training_obj.find_and_build()(
-            data_generator, data_test_generator, data_network, training_json_path
+            data_generator, data_test_generator, data_network,
+            training_json_path
         )
 
         self.logger.info("created objects for training")
