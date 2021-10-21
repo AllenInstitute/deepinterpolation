@@ -4,16 +4,76 @@ import datetime
 from marshmallow import ValidationError
 import inspect
 from deepinterpolation import network_collection
+from deepinterpolation import generator_collection
+from deepinterpolation import trainor_collection
+from deepinterpolation import inferrence_collection
+
 from marshmallow.validate import OneOf
 
 
-def get_list_of_architectures():
-    """Helper function to get the list of architectures available
+def get_list_of_networks():
+    """Helper function to get the list of networks architecture available
     currently in the module. 
     """
     list_architecture = inspect.getmembers(network_collection, inspect.isfunction)
     curated_list = [indiv_arch[0] for indiv_arch in list_architecture]
     excluded_list = ["Input", "dot", "load_model"]
+    curated_list = [
+        indiv_arch
+        for i, indiv_arch in enumerate(curated_list)
+        if indiv_arch not in excluded_list
+    ]
+
+    return curated_list
+
+
+def get_list_of_generators():
+    """Helper function to get the list of generators available
+    currently in the module. 
+    """
+    list_generator = inspect.getmembers(generator_collection, inspect.isclass)
+    curated_list = [indiv_arch[0] for indiv_arch in list_generator]
+    excluded_list = ["MaxRetryException", "JsonLoader"]
+    curated_list = [
+        indiv_arch
+        for i, indiv_arch in enumerate(curated_list)
+        if indiv_arch not in excluded_list
+    ]
+
+    return curated_list
+
+
+def get_list_of_trainors():
+    """Helper function to get the list of generators available
+    currently in the module. 
+    """
+    list_trainors = inspect.getmembers(trainor_collection, inspect.isclass)
+    curated_list = [indiv_arch[0] for indiv_arch in list_trainors]
+    excluded_list = [
+        "LearningRateScheduler",
+        "JsonLoader",
+        "Model",
+        "ModelCheckpoint",
+        "OnEpochEnd",
+        "RMSprop",
+    ]
+    curated_list = [
+        indiv_arch
+        for i, indiv_arch in enumerate(curated_list)
+        if indiv_arch not in excluded_list
+    ]
+
+    return curated_list
+
+
+def get_list_of_inferrences():
+    """Helper function to get the list of inferrences available
+    currently in the module. 
+    """
+    list_infers = inspect.getmembers(inferrence_collection, inspect.isclass)
+    curated_list = [indiv_arch[0] for indiv_arch in list_infers]
+    excluded_list = ["JsonLoader"]
+
     curated_list = [
         indiv_arch
         for i, indiv_arch in enumerate(curated_list)
@@ -32,20 +92,25 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
         default="generator",
+        validate=OneOf(["generator"]),
         description="sent to ClassLoader to instantiate a generator class.",
     )
     name = argschema.fields.String(
         required=False,
-        default="",
+        default="SingleTifGenerator",
+        validate=OneOf(get_list_of_generators()),
         description=(
-            "used in conjunction with above to instantiate object " "via ClassLoader"
+            "Specify a data generator available in the generator_collection.py\
+            . Choose according to your data format"
         ),
     )
+
     pre_post_frame = argschema.fields.Int(
         required=False,
         default=30,
         description=(
-            "number of frames considered before and after a frame " "for interpolation."
+            "number of frames considered before and after a frame \
+                for interpolation."
         ),
     )
     pre_post_omission = argschema.fields.Int(required=False, default=0, description="")
@@ -131,7 +196,7 @@ class ModelSourceSchema(argschema.schemas.DefaultSchema):
 
         if not path_given and not mlflow_params_given:
             raise ValidationError(
-                "One of local_path or mlflow_registry " "should be supplied"
+                "One of local_path or mlflow_registry should be supplied"
             )
 
 
@@ -139,20 +204,27 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
         default="inferrence",
-        description=("type and name sent to ClassLoader for object " "instantiation"),
+        validate=OneOf(["inferrence"]),
+        description=("type and name sent to ClassLoader for object instantiation"),
     )
     name = argschema.fields.String(
         required=False,
         default="core_inferrence",
-        description=("type and name sent to ClassLoader for object " "instantiation"),
+        validate=OneOf(get_list_of_inferrences()),
+        description=("type and name sent to ClassLoader for object instantiation"),
     )
+
     model_source = argschema.fields.Nested(
         ModelSourceSchema,
         description="Path to model if loading locally, or mlflow registry",
     )
+
     output_file = argschema.fields.OutputFile(
-        required=True, description="where the inference output will get written."
+        required=True,
+        description="where the inference output will \
+            get written.",
     )
+
     save_raw = argschema.fields.Bool(
         required=False,
         default=True,
@@ -162,6 +234,7 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             "soon."
         ),
     )
+
     rescale = argschema.fields.Bool(
         required=False,
         default=False,
@@ -204,13 +277,21 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
         default="trainer",
-        description=("type and name sent to ClassLoader for object " "instantiation"),
+        validate=OneOf(["trainer"]),
+        description=(
+            "type and name sent to ClassLoader for object \
+            instantiation"
+        ),
     )
 
     name = argschema.fields.String(
         required=False,
         default="core_trainer",
-        description=("type and name sent to ClassLoader for object " "instantiation"),
+        validate=OneOf(get_list_of_trainors()),
+        description=(
+            "type and name sent to ClassLoader for object \
+            instantiation"
+        ),
     )
 
     output_dir = argschema.fields.OutputDir(
@@ -295,7 +376,8 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
     name = argschema.fields.String(
         required=False,
         default="transfer_trainer",
-        description=("type and name sent to ClassLoader for object " "instantiation"),
+        validate=OneOf(get_list_of_trainors()),
+        description=("type and name sent to ClassLoader for object instantiation"),
     )
 
     model_source = argschema.fields.Nested(
@@ -306,7 +388,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
         required=False,
         default="trainer",
-        description=("type and name sent to ClassLoader for object " "instantiation"),
+        description=("type and name sent to ClassLoader for object instantiation"),
     )
 
     output_dir = argschema.fields.OutputDir(
@@ -391,7 +473,7 @@ class NetworkSchema(argschema.schemas.DefaultSchema):
     name = argschema.fields.String(
         required=True,
         default="unet_single_1024",
-        validate=OneOf(get_list_of_architectures()),
+        validate=OneOf(get_list_of_networks()),
         description=(
             "callback of the neuronal network architecture to build.\
             All available architectures are visible in the \
