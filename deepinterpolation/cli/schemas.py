@@ -13,7 +13,7 @@ from marshmallow.validate import OneOf
 
 def get_list_of_networks():
     """Helper function to get the list of networks architecture available
-    currently in the module. 
+    currently in the module.
     """
     list_architecture = inspect.getmembers(network_collection,
                                            inspect.isfunction)
@@ -30,7 +30,7 @@ def get_list_of_networks():
 
 def get_list_of_generators():
     """Helper function to get the list of generators available
-    currently in the module. 
+    currently in the module.
     """
     list_generator = inspect.getmembers(generator_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_generator]
@@ -46,7 +46,7 @@ def get_list_of_generators():
 
 def get_list_of_trainors():
     """Helper function to get the list of generators available
-    currently in the module. 
+    currently in the module.
     """
     list_trainors = inspect.getmembers(trainor_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_trainors]
@@ -69,7 +69,7 @@ def get_list_of_trainors():
 
 def get_list_of_inferrences():
     """Helper function to get the list of inferrences available
-    currently in the module. 
+    currently in the module.
     """
     list_infers = inspect.getmembers(inferrence_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_infers]
@@ -483,7 +483,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
     type = argschema.fields.String(
-        required=False, default="network", 
+        required=False, default="network",
         description=("type of object instantiation")
     )
     name = argschema.fields.String(
@@ -532,7 +532,8 @@ class FineTuningInputSchema(argschema.ArgSchema):
     )
     training_params = argschema.fields.Nested(FineTuningSchema, default={})
     generator_params = argschema.fields.Nested(GeneratorSchema, default={})
-    test_generator_params = argschema.fields.Nested(GeneratorSchema, default={})
+    test_generator_params = argschema.fields.Nested(GeneratorSchema,
+                                                    default={})
     output_full_args = argschema.fields.Bool(
         required=False,
         default=False,

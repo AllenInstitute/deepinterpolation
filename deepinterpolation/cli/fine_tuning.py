@@ -40,7 +40,7 @@ class FineTuning(argschema.ArgSchemaParser):
         # Forward parameters to the training agent
         self.args["training_params"]["steps_per_epoch"] = \
             self.args["generator_params"]["steps_per_epoch"]
-            
+
         self.args["training_params"]["batch_size"] = \
             self.args["generator_params"]["batch_size"]
 
