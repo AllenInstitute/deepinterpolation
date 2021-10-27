@@ -23,7 +23,6 @@ steps_per_epoch = 5
 # Those are parameters used for the Validation test generator.
 # Here the test is done on the beginning of the data but
 # this can be a separate file
-generator_test_param["type"] = "generator"  # type of collection
 generator_test_param["name"] = "SingleTifGenerator"
 # Name of object in the collection
 generator_test_param[
@@ -45,7 +44,6 @@ generator_test_param["steps_per_epoch"] = -1
 # No step necessary for testing as epochs are not relevant. -1 deactivate it.
 
 # Those are parameters used for the main data generator
-generator_param["type"] = "generator"
 generator_param["steps_per_epoch"] = steps_per_epoch
 generator_param["name"] = "SingleTifGenerator"
 generator_param["pre_post_frame"] = 30
@@ -61,16 +59,14 @@ generator_param["end_frame"] = 100
 generator_param["pre_post_omission"] = 0
 
 # Those are parameters used for the network topology
-network_param["type"] = "network"
 network_param["name"] = "unet_single_1024"
 # Name of network topology in the collection
 
 # Those are parameters used for the training process
-training_param["type"] = "trainer"
 training_param["name"] = "core_trainer"
 training_param["learning_rate"] = 0.0001
 training_param["loss"] = "mean_squared_error"
-training_param["output_dir"] = "/Users/jeromel/Desktop/tmp"
+training_param["output_dir"] = os.path.dirname(__file__)
 
 training_param["model_string"] = (
     network_param["name"]
@@ -89,7 +85,7 @@ args = {
     "output_full_args": True
 }
 
-input_json = os.path.join(training_param["output_dir"],
+input_json = os.path.join(os.path.dirname(__file__),
                           "input_training_ophys_tiny.json")
 
 with open(input_json, 'w') as file_handle:
