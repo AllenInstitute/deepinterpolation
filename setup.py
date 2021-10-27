@@ -14,7 +14,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="deepinterpolation",
-    version="0.1.2",
+    version="0.1.3",
     description=("implemenent deep interpolation to denoise data by "
                  "removing independent noise"),
     long_description=readme,
