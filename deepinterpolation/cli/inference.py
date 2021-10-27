@@ -67,7 +67,7 @@ class Inference(argschema.ArgSchemaParser):
         # This is used to send to the legacy parameter tracking system
         # to specify each sub-object type.
         self.args["generator_params"]["type"] = "generator"
-        self.args["inference_params"]["type"] =  "inferrence"
+        self.args["inference_params"]["type"] = "inferrence"
 
         # save the json parameters to 2 different files
         inference_json_path = outdir / f"{uid}_inference.json"
