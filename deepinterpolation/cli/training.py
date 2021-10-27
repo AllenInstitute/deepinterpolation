@@ -44,6 +44,13 @@ class Training(argschema.ArgSchemaParser):
         self.args["training_params"]["batch_size"] = \
             self.args["generator_params"]["batch_size"]
 
+        # This is used to send to the legacy parameter tracking system
+        # to specify each sub-object type. 
+        self.args["generator_params"]["type"] = "generator"
+        self.args["test_generator_params"]["type"] =  "generator"
+        self.args["training_params"]["type"] = "trainer"
+        self.args["network_params"]["type"] = "network"
+        
         # save the json parameters to 2 different files
         training_json_path = outdir / f"{uid}_training.json"
         with open(training_json_path, "w") as f:

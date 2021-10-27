@@ -111,7 +111,6 @@ def test_integration_cli_ephys_inference(tmp_path):
     generator_param = {}
     inferrence_param = {}
 
-    generator_param["type"] = "generator"
     generator_param["name"] = "EphysGenerator"
     generator_param["pre_post_frame"] = 30
     generator_param["pre_post_omission"] = 1
@@ -134,7 +133,6 @@ def test_integration_cli_ephys_inference(tmp_path):
         "randomize"
     ] = 0
 
-    inferrence_param["type"] = "inferrence"
     inferrence_param["name"] = "core_inferrence"
 
     # Replace this path to where you stored your model

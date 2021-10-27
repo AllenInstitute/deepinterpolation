@@ -13,7 +13,7 @@ from marshmallow.validate import OneOf
 
 def get_list_of_networks():
     """Helper function to get the list of networks architecture available
-    currently in the module.
+    currently in the package.
     """
     list_architecture = inspect.getmembers(network_collection,
                                            inspect.isfunction)
@@ -30,7 +30,7 @@ def get_list_of_networks():
 
 def get_list_of_generators():
     """Helper function to get the list of generators available
-    currently in the module.
+    currently in the package.
     """
     list_generator = inspect.getmembers(generator_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_generator]
@@ -45,8 +45,8 @@ def get_list_of_generators():
 
 
 def get_list_of_trainors():
-    """Helper function to get the list of generators available
-    currently in the module.
+    """Helper function to get the list of trainors available
+    currently in the package.
     """
     list_trainors = inspect.getmembers(trainor_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_trainors]
@@ -60,7 +60,7 @@ def get_list_of_trainors():
     ]
     curated_list = [
         indiv_arch
-        for i, indiv_arch in enumerate(curated_list)
+        for indiv_arch in curated_list
         if indiv_arch not in excluded_list
     ]
 
@@ -69,7 +69,7 @@ def get_list_of_trainors():
 
 def get_list_of_inferrences():
     """Helper function to get the list of inferrences available
-    currently in the module.
+    currently in the package.
     """
     list_infers = inspect.getmembers(inferrence_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_infers]
@@ -77,7 +77,7 @@ def get_list_of_inferrences():
 
     curated_list = [
         indiv_arch
-        for i, indiv_arch in enumerate(curated_list)
+        for indiv_arch in curated_list
         if indiv_arch not in excluded_list
     ]
 
@@ -90,12 +90,6 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     and test generator.
     """
 
-    type = argschema.fields.String(
-        required=False,
-        default="generator",
-        validate=OneOf(["generator"]),
-        description="sent to ClassLoader to instantiate a generator class.",
-    )
     name = argschema.fields.String(
         required=False,
         default="SingleTifGenerator",
@@ -204,22 +198,15 @@ class ModelSourceSchema(argschema.schemas.DefaultSchema):
 
 
 class InferenceSchema(argschema.schemas.DefaultSchema):
-    type = argschema.fields.String(
-        required=False,
-        default="inferrence",
-        validate=OneOf(["inferrence"]),
-        description=(
-            "type and name sent to ClassLoader for object \
-            instantiation"
-        ),
-    )
     name = argschema.fields.String(
         required=False,
         default="core_inferrence",
         validate=OneOf(get_list_of_inferrences()),
         description=(
-            "type and name sent to ClassLoader for object \
-            instantiation"
+            "Inferrence class to use. All available classes are visible in the \
+            inferrence_collection.py file as part of the deepinterpolation \
+            package. More classes can be added to this file to modify\
+            details of the inferrence behavior."
         ),
     )
 
@@ -283,23 +270,15 @@ class InferenceInputSchema(argschema.ArgSchema):
 
 
 class TrainingSchema(argschema.schemas.DefaultSchema):
-    type = argschema.fields.String(
-        required=False,
-        default="trainer",
-        validate=OneOf(["trainer"]),
-        description=(
-            "type and name sent to ClassLoader for object \
-            instantiation"
-        ),
-    )
-
     name = argschema.fields.String(
         required=False,
         default="core_trainer",
         validate=OneOf(get_list_of_trainors()),
         description=(
-            "type and name sent to ClassLoader for object \
-            instantiation"
+            "Training class to use. All available classes are visible in the \
+            trainor_collection.py file as part of the deepinterpolation \
+            package. More classes can be added to this file to modify\
+            details of the training behavior."
         ),
     )
 
@@ -387,23 +366,16 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         default="transfer_trainer",
         validate=OneOf(get_list_of_trainors()),
         description=(
-            "type and name sent to ClassLoader for object \
-            instantiation"
+            "Training class to use. All available classes are visible in the \
+            trainor_collection.py file as part of the deepinterpolation \
+            package. More classes can be added to this file to modify\
+            details of the training behavior."
         ),
     )
 
     model_source = argschema.fields.Nested(
         ModelSourceSchema,
         description="Path to model if loading locally, or mlflow registry",
-    )
-
-    type = argschema.fields.String(
-        required=False,
-        default="trainer",
-        description=(
-            "type and name sent to ClassLoader for object \
-            instantiation"
-        ),
     )
 
     output_dir = argschema.fields.OutputDir(
@@ -429,7 +401,10 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
     loss = argschema.fields.String(
         required=False,
         default="mean_squared_error",
-        description="loss function used for training and validation.",
+        description="loss function used for training and validation. Loss \
+            functions recognized by tensorflow are recognized : \
+            https://www.tensorflow.org/api_docs/python/tf/keras/losses. \
+            Additional losses can be added to the loss_collection.py file.",
     )
 
     model_string = argschema.fields.String(
@@ -482,10 +457,6 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
 
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
-    type = argschema.fields.String(
-        required=False, default="network",
-        description=("type of object instantiation")
-    )
     name = argschema.fields.String(
         required=True,
         default="unet_single_1024",
@@ -494,7 +465,7 @@ class NetworkSchema(argschema.schemas.DefaultSchema):
             "callback of the neuronal network architecture to build.\
             All available architectures are visible in the \
             network_collection.py file as part of the deepinterpolation \
-            module. More architectures callbacks can be added to this file \
+            package. More architectures callbacks can be added to this file \
             if necessary."
         ),
     )

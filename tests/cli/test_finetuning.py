@@ -123,7 +123,6 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
 
     training_param = {}
 
-    generator_param["type"] = "generator"
     generator_param["name"] = "EphysGenerator"
     generator_param["pre_post_frame"] = 30
     generator_param["pre_post_omission"] = 1
@@ -146,7 +145,6 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
         "randomize"
     ] = 1
 
-    generator_test_param["type"] = "generator"
     generator_test_param["name"] = "EphysGenerator"
     generator_test_param["pre_post_frame"] = 30
     generator_test_param["pre_post_omission"] = 1

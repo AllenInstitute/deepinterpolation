@@ -34,7 +34,6 @@ def network_args():
     args = {}
     # make some dummy files so the schema validation is satisfied
     args["name"] = "unet_single_1024"
-    args["type"] = "network"
 
     yield args
 
@@ -124,7 +123,6 @@ def test_integration_cli_ephys_inference(tmp_path):
     training_param = {}
     network_param = {}
 
-    generator_param["type"] = "generator"
     generator_param["name"] = "EphysGenerator"
     generator_param["pre_post_frame"] = 30
     generator_param["pre_post_omission"] = 1
@@ -147,7 +145,6 @@ def test_integration_cli_ephys_inference(tmp_path):
         "randomize"
     ] = 1
 
-    generator_test_param["type"] = "generator"
     generator_test_param["name"] = "EphysGenerator"
     generator_test_param["pre_post_frame"] = 30
     generator_test_param["pre_post_omission"] = 1
@@ -170,13 +167,11 @@ def test_integration_cli_ephys_inference(tmp_path):
         "randomize"
     ] = 1
 
-    training_param["type"] = "trainer"
     training_param["name"] = "core_trainer"
     training_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
     training_param["output_dir"] = str(tmp_path)
 
-    network_param["type"] = "network"
     network_param["name"] = "unet_single_ephys_1024"
 
     args = {

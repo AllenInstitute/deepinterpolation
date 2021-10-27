@@ -64,6 +64,11 @@ class Inference(argschema.ArgSchemaParser):
             self.logger.info(f"wrote {full_args_path}")
         uid = self.args['run_uid']
 
+        # This is used to send to the legacy parameter tracking system
+        # to specify each sub-object type. 
+        self.args["generator_params"]["type"] = "generator"
+        self.args["inference_params"]["type"] =  "inferrence"
+        
         # save the json parameters to 2 different files
         inference_json_path = outdir / f"{uid}_inference.json"
         with open(inference_json_path, "w") as f:
