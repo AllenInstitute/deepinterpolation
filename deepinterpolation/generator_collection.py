@@ -994,8 +994,8 @@ class SingleTifGenerator(DeepGenerator):
                 + self.end_frame - self.start_frame
             )
         elif self.total_frame_per_movie < self.end_frame:
-            self.img_per_movie = self.total_frame_per_movie
-            + 1 - self.start_frame
+            self.img_per_movie = self.total_frame_per_movie \
+                + 1 - self.start_frame
         else:
             self.img_per_movie = self.end_frame + 1 - self.start_frame
 
