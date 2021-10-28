@@ -36,7 +36,7 @@ class fmri_inferrence:
             self.output_datatype = self.json_data["output_datatype"]
         else:
             self.output_datatype = 'float32'
-            
+
         self.model_path = self.json_data["model_path"]
 
         self.model = load_model(self.model_path)
@@ -133,6 +133,9 @@ class core_inferrence:
 
         self.output_file = self.json_data["output_file"]
 
+        # The following settings are used to keep backward compatilibity
+        # when not using the CLI. We expect to remove when all uses 
+        # are migrated to the CLI. 
         if "save_raw" in self.json_data.keys():
             self.save_raw = self.json_data["save_raw"]
         else:
@@ -142,12 +145,17 @@ class core_inferrence:
             self.rescale = self.json_data["rescale"]
         else:
             self.rescale = True
-            
+
         if "output_datatype" in self.json_data.keys():
             self.output_datatype = self.json_data["output_datatype"]
         else:
             self.output_datatype = 'float32'
-            
+
+        if "output_padding" in self.json_data.keys():
+            self.output_padding = self.json_data["output_padding"]
+        else:
+            self.output_padding = False
+
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()

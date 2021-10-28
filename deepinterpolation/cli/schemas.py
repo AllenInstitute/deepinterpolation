@@ -227,15 +227,16 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         default=False,
         description=(
             "Whether to save raw data along with the infered in the output \
-            file. This is useful for evaluation and direct comparison. \
-            Output file will take twice hard drive space when set to true."
+            file. It will be saved as a 'raw' field in the hdf5 file. \
+            This is useful for evaluation and direct comparison. \
+            Output file will take twice hard drive space when set to 'True'."
         ),
     )
 
     output_datatype = argschema.fields.String(
         required=False,
         default="float32",
-        validate=OneOf(['uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8', 
+        validate=OneOf(['uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8',
                     'float32', 'float16']),
         description=(
             "Output data type for inference. Default is float32. It is \
@@ -244,6 +245,18 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             smaller data types will save space at the cost of signal \
             resolution. Make sure to turn on 'rescaling' if that impacts the \
             output data range."
+        ),
+    )
+
+    output_padding = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description=(
+            "Whether to pad the output frames. DeepInterpolation cannot \
+            properly predict the onset and end frames in a long serie as \
+            the pre and post frames are missing at those frames. Setting this \
+            to 'True' will pad the onset and end of the output dataset with \
+            blank frames to keep the dataset of the same size."
         ),
     )
     
