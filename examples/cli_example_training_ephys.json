@@ -7,7 +7,7 @@
     "batch_size": 100,
     "start_frame": 2000,
     "randomize": 0,
-    "train_path": "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/repos/public/deepinterpolation/examples/../sample_data/ephys_tiny_continuous.dat2",
+    "train_path": "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/repos/public/deepinterpolation/sample_data/ephys_tiny_continuous.dat2",
     "end_frame": 3000,
     "pre_post_omission": 1
   },
@@ -20,7 +20,7 @@
     "batch_size": 100,
     "start_frame": 0,
     "randomize": 0,
-    "train_path": "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/repos/public/deepinterpolation/examples/../sample_data/ephys_tiny_continuous.dat2",
+    "train_path": "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/repos/public/deepinterpolation/sample_data/ephys_tiny_continuous.dat2",
     "end_frame": 1000,
     "pre_post_omission": 1
   },
@@ -33,12 +33,11 @@
     "caching_validation": false,
     "output_dir": "/Users/jeromel/Documents/Work documents/Allen Institute/Projects/Deep2P/repos/public/deepinterpolation/examples",
     "name": "core_trainer",
-    "model_string": "unet_single_ephys_1024_mean_absolute_error_2021_10_27_16_41",
+    "model_string": "unet_single_ephys_1024_mean_absolute_error",
     "learning_rate": 0.0001,
     "loss": "mean_absolute_error",
     "multi_gpus": false
   },
-  "run_uid": "2021_10_27_16_41",
   "log_level": "INFO",
   "network_params": {
     "name": "unet_single_ephys_1024"
