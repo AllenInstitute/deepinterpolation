@@ -217,26 +217,28 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
 
     output_file = argschema.fields.OutputFile(
         required=True,
-        description="where the inference output will \
-            get written.",
+        description="Path to where the inference output will \
+            get written. Inference will be saved in an hdf5 file \
+            with a 'data' field",
     )
 
     save_raw = argschema.fields.Bool(
         required=False,
-        default=True,
+        default=False,
         description=(
-            "currently using this to perform global normalization "
-            "on floating point output. Will likely stop doing this "
-            "soon."
+            "Whether to save raw data along with the infered in the output \
+            file. This is useful for evaluation and direct comparison. \
+            Output file will take twice hard drive space when set to true."
         ),
     )
 
     rescale = argschema.fields.Bool(
         required=False,
-        default=False,
+        default=True,
         description=(
-            "currently not using the chunked rescaling as it does "
-            "not handle negative values and convert to uint16."
+            "Whether to bring back infered data to the original data range. \
+            DeepInterpolation networks initially rescale all datasets within \
+            -1 to 1 for training."
         ),
     )
 
