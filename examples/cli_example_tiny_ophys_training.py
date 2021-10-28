@@ -1,12 +1,7 @@
 import json
-import datetime
 import os
 import pathlib
-import subprocess
-
-# This is used for record-keeping
-now = datetime.datetime.now()
-run_uid = now.strftime("%Y_%m_%d_%H_%M")
+from deepinterpolation.cli.training import Training
 
 # Initialize meta-parameters objects
 training_param = {}
@@ -66,18 +61,15 @@ network_param["name"] = "unet_single_1024"
 training_param["name"] = "core_trainer"
 training_param["learning_rate"] = 0.0001
 training_param["loss"] = "mean_squared_error"
-training_param["output_dir"] = os.path.dirname(__file__)
+training_param["output_dir"] = str(pathlib.Path(__file__).parent.absolute())
 
 training_param["model_string"] = (
     network_param["name"]
     + "_"
     + training_param["loss"]
-    + "_"
-    + run_uid
 )
 
 args = {
-    "run_uid": run_uid,
     "training_params": training_param,
     "generator_params": generator_param,
     "test_generator_params": generator_test_param,
@@ -86,12 +78,10 @@ args = {
 }
 
 input_json = os.path.join(os.path.dirname(__file__),
-                          "input_training_ophys_tiny.json")
+                          "cli_example_training_ophys.json")
 
 with open(input_json, 'w') as file_handle:
     json.dump(args, file_handle)
 
-module_cmd = ["python", "-m", "deepinterpolation.cli.training", "--input_json",
-              input_json]
-
-subprocess.check_call(module_cmd)
+trainer = Training(input_data=args, args=[])
+trainer.run()
