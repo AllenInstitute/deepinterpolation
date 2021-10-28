@@ -1,4 +1,3 @@
-import json
 import os
 import pathlib
 from deepinterpolation.cli.training import Training
@@ -76,12 +75,6 @@ args = {
     "network_params": network_param,
     "output_full_args": True
 }
-
-input_json = os.path.join(os.path.dirname(__file__),
-                          "cli_example_training_ophys.json")
-
-with open(input_json, 'w') as file_handle:
-    json.dump(args, file_handle)
 
 trainer = Training(input_data=args, args=[])
 trainer.run()

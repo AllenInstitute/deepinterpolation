@@ -1,7 +1,5 @@
-import json
 import os
 import pathlib
-import subprocess
 from deepinterpolation.cli.training import Training
 
 # Initialize meta-parameters objects
