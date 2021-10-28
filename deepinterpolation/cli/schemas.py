@@ -232,6 +232,21 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         ),
     )
 
+    output_datatype = argschema.fields.String(
+        required=False,
+        default="float32",
+        validate=OneOf(['uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8', 
+                    'float32', 'float16']),
+        description=(
+            "Output data type for inference. Default is float32. It is \
+            important to keep in mind that DeepInterpolation can increase \
+            available bit depth due to the increased Signal to Noise (SNR). \
+            smaller data types will save space at the cost of signal \
+            resolution. Make sure to turn on 'rescaling' if that impacts the \
+            output data range."
+        ),
+    )
+    
     rescale = argschema.fields.Bool(
         required=False,
         default=True,

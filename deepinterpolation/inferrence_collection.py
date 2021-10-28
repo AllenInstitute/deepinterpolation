@@ -32,6 +32,11 @@ class fmri_inferrence:
         else:
             self.single_voxel_output_single = True
 
+        if "output_datatype" in self.json_data.keys():
+            self.output_datatype = self.json_data["output_datatype"]
+        else:
+            self.output_datatype = 'float32'
+            
         self.model_path = self.json_data["model_path"]
 
         self.model = load_model(self.model_path)
@@ -48,7 +53,7 @@ class fmri_inferrence:
                 "data",
                 shape=tuple(self.generator_obj.data_shape),
                 chunks=tuple(chunk_size),
-                dtype="float32",
+                dtype=self.output_datatype,
             )
             # This was used to alter the volume infered and reduce computation
             # time
@@ -66,7 +71,7 @@ class fmri_inferrence:
                     self.generator_obj.pre_post_z * 2 + 1,
                     self.generator_obj.pre_post_t * 2 + 1,
                 ],
-                dtype="float32",
+                dtype=self.output_datatype,
             )
 
             # We are looping across the volume
@@ -137,7 +142,12 @@ class core_inferrence:
             self.rescale = self.json_data["rescale"]
         else:
             self.rescale = True
-
+            
+        if "output_datatype" in self.json_data.keys():
+            self.output_datatype = self.json_data["output_datatype"]
+        else:
+            self.output_datatype = 'float32'
+            
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
@@ -203,7 +213,7 @@ class core_inferrence:
                 "data",
                 shape=tuple(final_shape),
                 chunks=tuple(chunk_size),
-                dtype="float32",
+                dtype=self.output_datatype,
             )
 
             if self.save_raw:
@@ -211,7 +221,7 @@ class core_inferrence:
                     "raw",
                     shape=tuple(final_shape),
                     chunks=tuple(chunk_size),
-                    dtype="float32",
+                    dtype=self.output_datatype,
                 )
 
             for index_dataset in np.arange(0, self.nb_datasets, 1):
