@@ -9,7 +9,7 @@ import tifffile
 import nibabel as nib
 import s3fs
 import glob
-
+import logging
 
 class MaxRetryException(Exception):
     # This is helper class for EmGenerator
@@ -947,7 +947,8 @@ class MultiContinuousTifGenerator(DeepGenerator):
 
 
 class SingleTifGenerator(DeepGenerator):
-    "Generates data for Keras"
+    """This generator is used when dealing with a single tif file storing a 
+    continous movie recording."""
 
     def __init__(self, json_path):
         "Initialization"
@@ -1123,7 +1124,9 @@ class SingleTifGenerator(DeepGenerator):
 
 
 class OphysGenerator(DeepGenerator):
-    "Generates data for Keras"
+    """This generator is used when dealing with a single hdf5 file storing a 
+    continous movie recording into a 'data' field as [time, x, y]"""
+
 
     def __init__(self, json_path):
         "Initialization"
@@ -1294,7 +1297,16 @@ class OphysGenerator(DeepGenerator):
 
 
 class MovieJSONGenerator(DeepGenerator):
-    "Generates data for Keras"
+    """This generator is used when dealing with a large number of hdf5 files
+    referenced into a json file with pre-computed mean and std value. The json
+    file is passed to the generator in place of the movie file themselves.  
+    Each individual hdf5 movie is recorded into a 'data' field 
+    as [time, x, y]. The json files is pre-calculated and have the following
+    fields (replace <...> appropriately): 
+    {"<id>": {"path": <string path to the hdf5 file>, 
+    "frames": <[int frame1, int frame2,...]>, 
+    "mean": <float value>,
+    "std": <float_value>}"""
 
     def __init__(self, json_path):
         "Initialization"

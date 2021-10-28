@@ -7,7 +7,7 @@ from deepinterpolation import network_collection
 from deepinterpolation import generator_collection
 from deepinterpolation import trainor_collection
 from deepinterpolation import inferrence_collection
-
+import logging
 from marshmallow.validate import OneOf
 
 
@@ -34,7 +34,11 @@ def get_list_of_generators():
     """
     list_generator = inspect.getmembers(generator_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_generator]
-    excluded_list = ["MaxRetryException", "JsonLoader"]
+    excluded_list = ["MaxRetryException", "JsonLoader", 
+                     "FmriGenerator", "CollectorGenerator", 
+                     "DeepGenerator"]
+    # Some generators are not compatible with the CLI yet.
+    
     curated_list = [
         indiv_arch
         for i, indiv_arch in enumerate(curated_list)
@@ -95,64 +99,119 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         default="SingleTifGenerator",
         validate=OneOf(get_list_of_generators()),
         description=(
-            "Specify a data generator available in the generator_collection.py\
-            . Choose according to your data format"
+            "The data generator will control how data is read from individual\
+            data files. Specify a data generator available in  \
+            generator_collection.py, depending on your file data format."
         ),
     )
 
-    pre_post_frame = argschema.fields.Int(
+    pre_frame = argschema.fields.Int(
         required=False,
         default=30,
         description=(
-            "number of frames considered before and after a frame \
-                for interpolation."
+            "Number of frames fed to the DeepInterpolation model before a \
+            center frame for interpolation. Omitted frames will not be used \
+            to fetch pre_frames. All pre_frame frame(s) will be fetch before \
+            pre_omission frame(s)." 
         ),
     )
-    pre_post_omission = argschema.fields.Int(required=False, default=0,
-                                             description="")
-    train_path = argschema.fields.InputFile(
-        required=True, description="training data input path"
+
+    post_frame = argschema.fields.Int(
+        required=False,
+        default=30,
+        description=(
+            "Number of frames fed to the DeepInterpolation model after a \
+            center frame for interpolation. Omitted frames will not be used \
+            to fetch post_frames. All post_frame frame(s) will be fetch after \
+            post_mission frame(s)." 
+        ),
     )
+    
+    pre_post_omission = argschema.fields.Int(
+        required=False,
+        default=0,
+        description=
+            "Number of frames omitted before and after a center frame for \
+            DeepInterpolation. Omission will be done on both sides of the \
+            center frame, ie. twice pre_post_omission are omitted.\
+            Omitted frames will not be used to fetch pre_frames and \
+            post_frames."\
+        )
+    
+    data_path = argschema.fields.InputFile(
+        required=True, 
+        description="Path to the file containing data used by \
+            the generator."
+    )
+    
     batch_size = argschema.fields.Int(
         required=False,
         default=5,
-        description="batch size provided to model by generator",
+        description="Batch size provided to the DeepInterpolation model by \
+            the generator.",
     )
+
     start_frame = argschema.fields.Int(
         required=False,
-        default=1000,
-        description="first frame for starting the generator.",
+        default=0,
+        description="First frame used by the generator.",
     )
+
     end_frame = argschema.fields.Int(
         required=False,
         default=-1,
         description=(
-            "last frame for the generator. -1 defaults to "
-            "last frame in input data set."
+            "Last frame used by the generator. -1 defaults to "
+            "last available frame."
         ),
     )
-    randomize = argschema.fields.Int(
+
+    randomize = argschema.fields.Boolean(
         required=False,
-        default=0,
-        description="integer as bool. useful in training, not inference.",
+        default=True,
+        description="Whether to shuffle all selected frames in the generator.\
+        It is recommended to set to 'True' for training and 'False' for \
+        inference."
     )
-    steps_per_epoch = argschema.fields.Int(required=False, default=100,
-                                           description="")
+
     total_samples = argschema.fields.Int(
         required=False,
         default=-1,
-        description="-1 defaults to all samples between start_frame\
-            and end_frame.",
+        description="Total number of frames used between start_frame and \
+            end_frame. -1 defaults to all available samples between start_frame\
+            and end_frame. If total_samples is larger than the number of \
+            available frames, it will automatically be reduced to the maximal \
+            number.",
     )
+    
+    @mm.pre_load
+    def generator_specific_settings(self, data, **kwargs):
+        # This is for backward compatibility
+        if "train_path" in data:
+            logging.warning("train_path has been deprecated and is to be \
+                replaced by data_path as generators can be used for training \
+                and inference. We are forwarding the value but please update \
+                your code.")
+            data["data_path"] = data["train_path"]
 
+        if "pre_post_frame" in data:
+            logging.warning("pre_post_frame has been deprecated and is to be \
+                replaced by pre_frame and post_frame. We are forwarding the \
+                value but please update your code.")
+            data["pre_frame"] = data["pre_post_frame"]
+            data["post_frame"] = data["pre_post_frame"]
 
+        return data
+    
 class MlflowRegistrySchema(argschema.schemas.DefaultSchema):
     tracking_uri = argschema.fields.String(
         required=True, description="MLflow tracking URI"
     )
+
     model_name = argschema.fields.String(
         required=True, description="Model name to fetch"
     )
+
     model_version = argschema.fields.Int(
         required=False,
         description="Model version to fetch. If neither model_version nor "
@@ -292,10 +351,15 @@ class InferenceInputSchema(argschema.ArgSchema):
 
     @mm.post_load
     def inference_specific_settings(self, data, **kwargs):
-        # Commented to allow CLI to work with more than just h5 files
-        # data['generator_params']['name'] = "OphysGenerator"
-        # To remove when updating CLI with pre/post processing modules
-        data["generator_params"]["randomize"] = 0
+        # This is to force randomize to be off if set by mistake
+        if data["generator_params"]["randomize"] == True:
+            logging.info("randomize should be set to False for inference. \
+                        Overriding the parameter")
+            data["generator_params"]["randomize"] = False
+        
+        # To disable rolling samples for inference
+        data["generator_params"]["steps_per_epoch"] = -1
+        
         return data
 
 
@@ -317,13 +381,23 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
         description="A folder where the training outputs will get written.",
     )
 
+    steps_per_epoch = argschema.fields.Int(
+        required=False, 
+        default=100,
+        description="Number of batches per epoch. Here, epochs are not \
+            defined in relation to the total number of batches in the dataset \
+            as our datasets can be very large and it is beneficial to save \
+            models and evaluate validation loss during training. After each \
+            epoch a validation loss is computed and a checkpoint model is \
+            potentialy saved (see period_save).")
+    
     nb_times_through_data = argschema.fields.Int(
         required=False,
         default=1,
         description="Setting this to more than 1 will make the training use \
-            individual samples multiple times during training, thereby \
+            individual batches multiple times during training, thereby \
             increasing your training samples. Larger repetition of the same\
-            samples could cause noise overfitting",
+            batches could cause noise overfitting",
     )
 
     learning_rate = argschema.fields.Float(
@@ -522,7 +596,13 @@ class TrainingInputSchema(argschema.ArgSchema):
             "including defaults."
         ),
     )
-
+    
+    @mm.post_load
+    def training_specific_settings(self, data, **kwargs):
+        # We forward this parameter to the generator
+        data["generator_params"]["steps_per_epoch"] == \
+            data["training_params"]["steps_per_epoch"] 
+        return data
 
 class FineTuningInputSchema(argschema.ArgSchema):
     log_level = argschema.fields.LogLevel(default="INFO")
@@ -544,3 +624,10 @@ class FineTuningInputSchema(argschema.ArgSchema):
             "including defaults."
         ),
     )
+    
+    @mm.post_load
+    def finetuning_specific_settings(self, data, **kwargs):
+        # We forward this parameter to the generator
+        data["generator_params"]["steps_per_epoch"] == \
+            data["training_params"]["steps_per_epoch"] 
+        return data

@@ -38,12 +38,6 @@ class Training(argschema.ArgSchemaParser):
             self.args["training_params"]["multi_gpus"]
         )
 
-        # Forward parameters to the training agent
-        self.args["training_params"]["steps_per_epoch"] = \
-            self.args["generator_params"]["steps_per_epoch"]
-        self.args["training_params"]["batch_size"] = \
-            self.args["generator_params"]["batch_size"]
-
         # This is used to send to the legacy parameter tracking system
         # to specify each sub-object type.
         self.args["generator_params"]["type"] = "generator"
