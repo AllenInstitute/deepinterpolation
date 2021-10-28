@@ -134,8 +134,8 @@ class core_inferrence:
         self.output_file = self.json_data["output_file"]
 
         # The following settings are used to keep backward compatilibity
-        # when not using the CLI. We expect to remove when all uses 
-        # are migrated to the CLI. 
+        # when not using the CLI. We expect to remove when all uses
+        # are migrated to the CLI.
         if "save_raw" in self.json_data.keys():
             self.save_raw = self.json_data["save_raw"]
         else:

@@ -237,7 +237,7 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default="float32",
         validate=OneOf(['uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8',
-                    'float32', 'float16']),
+                        'float32', 'float16']),
         description=(
             "Output data type for inference. Default is float32. It is \
             important to keep in mind that DeepInterpolation can increase \
@@ -259,7 +259,7 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             blank frames to keep the dataset of the same size."
         ),
     )
-    
+
     rescale = argschema.fields.Bool(
         required=False,
         default=True,
