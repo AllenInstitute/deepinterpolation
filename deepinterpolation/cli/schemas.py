@@ -488,7 +488,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         required=True,
         description="A folder where the training outputs will get written.",
     )
-    
+
     steps_per_epoch = argschema.fields.Int(
         required=False,
         default=100,
@@ -624,7 +624,7 @@ class FineTuningInputSchema(argschema.ArgSchema):
         default=datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"),
         description="unique identifier",
     )
-    training_params = argschema.fields.Nested(FineTuningSchema, default={})
+    finetuning_params = argschema.fields.Nested(FineTuningSchema, default={})
     generator_params = argschema.fields.Nested(GeneratorSchema, default={})
     test_generator_params = argschema.fields.Nested(GeneratorSchema,
                                                     default={})
@@ -642,5 +642,5 @@ class FineTuningInputSchema(argschema.ArgSchema):
     def finetuning_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
         data["generator_params"]["steps_per_epoch"] == \
-            data["training_params"]["steps_per_epoch"]
+            data["finetuning_params"]["steps_per_epoch"]
         return data

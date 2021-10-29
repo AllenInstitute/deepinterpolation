@@ -99,7 +99,7 @@ def test_finetuning_cli(generator_args, training_args,
     """
     args = {
         "run_uid": "test_uid",
-        "training_params": training_args,
+        "finetuning_params": training_args,
         "generator_params": generator_args,
         "test_generator_params": generator_args,
         "output_full_args": True
@@ -185,7 +185,7 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
 
     args = {
         "run_uid": "test_uid",
-        "training_params": training_param,
+        "finetuning_params": training_param,
         "generator_params": generator_param,
         "test_generator_params": generator_test_param,
         "output_full_args": True

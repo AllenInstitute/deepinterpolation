@@ -1,7 +1,5 @@
 import argschema
 import json
-import h5py
-import numpy as np
 from pathlib import Path
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
@@ -48,7 +46,8 @@ class Inference(argschema.ArgSchemaParser):
 
         self.logger.info("created objects for inference")
         inferrence_class.run()
-        
+
+
 if __name__ == "__main__":  # pragma: nocover
     infer = Inference()
     infer.run()
