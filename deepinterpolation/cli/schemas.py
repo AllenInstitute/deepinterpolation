@@ -488,6 +488,16 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         required=True,
         description="A folder where the training outputs will get written.",
     )
+    
+    steps_per_epoch = argschema.fields.Int(
+        required=False,
+        default=100,
+        description="Number of batches per epoch. Here, epochs are not \
+            defined in relation to the total number of batches in the dataset \
+            as our datasets can be very large and it is beneficial to save \
+            models and evaluate validation loss during training. After each \
+            epoch a validation loss is computed and a checkpoint model is \
+            potentialy saved (see period_save).")
 
     nb_times_through_data = argschema.fields.Int(
         required=False,

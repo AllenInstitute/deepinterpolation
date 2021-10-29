@@ -128,7 +128,6 @@ def test_integration_cli_ephys_inference(tmp_path):
     generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
 
-
     generator_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",

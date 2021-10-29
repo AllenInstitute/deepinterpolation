@@ -866,7 +866,7 @@ class SingleTifGenerator(DeepGenerator):
         else:
             self.img_per_movie = self.end_frame + 1 - self.start_frame
 
-        average_nb_samples = np.min(self.total_frame_per_movie, 1000)
+        average_nb_samples = np.min([self.total_frame_per_movie, 1000])
 
         local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")
@@ -1064,7 +1064,7 @@ class OphysGenerator(DeepGenerator):
         else:
             self.img_per_movie = self.end_frame + 1 - self.start_frame
 
-        average_nb_samples = np.min(int(raw_data.shape[0]), 1000)
+        average_nb_samples = np.min([int(raw_data.shape[0]), 1000])
 
         local_data = raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")

@@ -162,7 +162,7 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     generator_test_param[
         "randomize"
     ] = 1
-    
+
     training_param["steps_per_epoch"] = 2
     training_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
