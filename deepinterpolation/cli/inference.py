@@ -25,6 +25,10 @@ class Inference(argschema.ArgSchemaParser):
         self.args["generator_params"]["type"] = "generator"
         self.args["inference_params"]["type"] = "inferrence"
 
+        # To be removed once fully transitioned to CLI
+        self.args["generator_params"]["train_path"] = \
+            self.args["generator_params"]["data_path"]
+
         # save the json parameters to 2 different files
         inference_json_path = outdir / f"{uid}_inference.json"
         with open(inference_json_path, "w") as f:
