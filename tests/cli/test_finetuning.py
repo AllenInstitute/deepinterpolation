@@ -121,7 +121,7 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     generator_param = {}
     generator_test_param = {}
 
-    training_param = {}
+    finetuning_param = {}
 
     generator_param["name"] = "EphysGenerator"
     generator_param["pre_frame"] = 30
@@ -163,10 +163,10 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
         "randomize"
     ] = 1
 
-    training_param["steps_per_epoch"] = 2
-    training_param["model_string"] = "test_model_string"
+    finetuning_param["steps_per_epoch"] = 2
+    finetuning_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
-    training_param["output_dir"] = str(tmp_path)
+    finetuning_param["output_dir"] = str(tmp_path)
 
     # Replace this path to where you stored your model
     filename = \
@@ -179,13 +179,13 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
             "sample_data",
             filename
         )
-    training_param["model_source"] = {
+    finetuning_param["model_source"] = {
         "local_path": local_path
     }
 
     args = {
         "run_uid": "test_uid",
-        "finetuning_params": training_param,
+        "finetuning_params": finetuning_param,
         "generator_params": generator_param,
         "test_generator_params": generator_test_param,
         "output_full_args": True
@@ -194,9 +194,9 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     finetuning = cli.FineTuning(input_data=args, args=[])
     finetuning.run()
 
-    model_path = os.path.join(args["training_params"]["output_dir"],
+    model_path = os.path.join(args["finetuning_params"]["output_dir"],
                               args["run_uid"] + "_" +
-                              training_param["model_string"]
+                              finetuning_param["model_string"]
                               + "_transfer_model.h5")
 
     assert Path(model_path).exists()
