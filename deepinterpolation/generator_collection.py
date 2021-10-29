@@ -459,15 +459,15 @@ class SequentialGenerator(DeepGenerator):
     def calculate_list_samples(self, total_frame_per_movie):
         self.img_per_movie = self.end_frame + 1 - self.start_frame
 
-        start_samples = np.max([self.pre_frame 
-            + self.pre_post_omission, self.start_frame]) 
-        end_samples = np.min([self.end_frame, total_frame_per_movie - 1 - 
-            self.post_frame - self.pre_post_omission])
+        start_samples = np.max([self.pre_frame
+                               + self.pre_post_omission, self.start_frame])
+        end_samples = np.min([self.end_frame, total_frame_per_movie - 1 -
+                             self.post_frame - self.pre_post_omission])
 
         if (end_samples - start_samples) < self.batch_size:
-            raise Exception("Not enough frames to construct one "+
-                str(self.batch_size)+" frame(s) batch between "+
-                str(start_samples)+" and "+str(end_samples)+
+            raise Exception("Not enough frames to construct one " +
+                str(self.batch_size) + " frame(s) batch between " +
+                str(start_samples) + " and "+str(end_samples) +
                 " frame number.")
 
         self.list_samples = np.arange(start_samples, end_samples)
