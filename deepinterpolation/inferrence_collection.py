@@ -215,7 +215,7 @@ class core_inferrence:
             self.generator_obj.end_sample
             self.generator_obj.self.start_frame
             self.generator_obj.self.end_frame
-            
+
             final_shape = [self.generator_obj.self.end_frame -
                            self.generator_obj.self.start_frame]
             first_sample = self.generator_obj.start_sample - \
@@ -224,7 +224,7 @@ class core_inferrence:
         else:
             final_shape = [self.nb_datasets * self.batch_size]
             first_sample = 0
-            
+
         final_shape.extend(self.indiv_shape)
 
         chunk_size = [1]
@@ -259,11 +259,11 @@ class core_inferrence:
                     corrected_data = predictions_data * local_std + local_mean
                 else:
                     corrected_data = predictions_data
-                    
+
                 start = first_sample + index_dataset * self.batch_size
                 end = first_sample + index_dataset * self.batch_size \
-                        + local_size
-                
+                      + local_size
+
                 if self.save_raw:
                     if self.rescale:
                         corrected_raw = local_data[1] * local_std + local_mean
