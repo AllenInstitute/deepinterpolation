@@ -262,7 +262,7 @@ class core_inferrence:
 
                 start = first_sample + index_dataset * self.batch_size
                 end = first_sample + index_dataset * self.batch_size \
-                      + local_size
+                    + local_size
 
                 if self.save_raw:
                     if self.rescale:
