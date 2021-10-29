@@ -48,7 +48,7 @@ class FineTuning(argschema.ArgSchemaParser):
             self.args["finetuning_params"]["steps_per_epoch"]
 
         self.args["finetuning_params"]["batch_size"] = \
-            self.args["finetuning_params"]["batch_size"]
+            self.args["generator_params"]["batch_size"]
 
         # This is used to send to the legacy parameter tracking system
         # to specify each sub-object type.
