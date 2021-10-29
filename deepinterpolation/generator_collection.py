@@ -438,9 +438,11 @@ class SequentialGenerator(DeepGenerator):
 
         # Loading limit parameters
         self.start_frame = self.json_data["start_frame"]
-
-        # This is compatible with negative frames
         self.end_frame = self.json_data["end_frame"]
+
+        # start_frame starts at 0
+        # end_frame is compatible with negative frames. -1 is the last
+        # frame.
 
         # We initialize the epoch counter
         self.epoch_index = 0
@@ -459,18 +461,20 @@ class SequentialGenerator(DeepGenerator):
     def calculate_list_samples(self, total_frame_per_movie):
         self.img_per_movie = self.end_frame + 1 - self.start_frame
 
+        # We first cut if start and end frames are too close to the edges.
         start_samples = np.max([self.pre_frame
                                + self.pre_post_omission, self.start_frame])
         end_samples = np.min([self.end_frame, total_frame_per_movie - 1 -
                              self.post_frame - self.pre_post_omission])
 
-        if (end_samples - start_samples) < self.batch_size:
+        if (end_samples - start_samples+1) < self.batch_size:
             raise Exception("Not enough frames to construct one " +
                             str(self.batch_size) + " frame(s) batch between " +
                             str(start_samples) + " and "+str(end_samples) +
                             " frame number.")
 
-        self.list_samples = np.arange(start_samples, end_samples)
+        # +1 to make sure end_samples is included
+        self.list_samples = np.arange(start_samples, end_samples+1)
 
         if self.randomize:
             np.random.shuffle(self.list_samples)
@@ -991,7 +995,7 @@ class MovieJSONGenerator(DeepGenerator):
     {"<id>": {"path": <string path to the hdf5 file>,
     "frames": <[int frame1, int frame2,...]>,
     "mean": <float value>,
-    "std": <float_value>}"""
+    "std": <float_value>}}"""
 
     def __init__(self, json_path):
         "Initialization"

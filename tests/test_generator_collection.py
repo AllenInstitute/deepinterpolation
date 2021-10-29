@@ -10,7 +10,8 @@ def test_generator_tif_creation(tmp_path):
     # We are reusing the data generator for training here.
     generator_param["type"] = "generator"
     generator_param["name"] = "SingleTifGenerator"
-    generator_param["pre_post_frame"] = 30
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 0
     generator_param[
         "steps_per_epoch"
@@ -37,7 +38,7 @@ def test_generator_tif_creation(tmp_path):
     generator_obj = ClassLoader(path_generator)
     data_generator = generator_obj.find_and_build()(path_generator)
 
-    assert len(data_generator) == 7
+    assert len(data_generator) == 8
 
 
 def test_generator_ephys_creation(tmp_path):
@@ -45,7 +46,8 @@ def test_generator_ephys_creation(tmp_path):
 
     generator_param["type"] = "generator"
     generator_param["name"] = "EphysGenerator"
-    generator_param["pre_post_frame"] = 30
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
     generator_param[
         "steps_per_epoch"
