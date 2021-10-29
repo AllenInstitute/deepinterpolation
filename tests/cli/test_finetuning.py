@@ -157,8 +157,8 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     )
 
     generator_test_param["batch_size"] = 1
-    generator_test_param["start_frame"] = 0
-    generator_test_param["end_frame"] = 2  # -1 to go until the end.
+    generator_test_param["start_frame"] = 103
+    generator_test_param["end_frame"] = 106  # -1 to go until the end.
     generator_test_param[
         "randomize"
     ] = 1

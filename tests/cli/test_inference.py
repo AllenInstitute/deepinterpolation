@@ -124,7 +124,7 @@ def test_integration_cli_ephys_inference(tmp_path):
         "ephys_tiny_continuous.dat2",
     )
 
-    generator_param["batch_size"] = 100
+    generator_param["batch_size"] = 50
     generator_param["start_frame"] = 100
     generator_param["end_frame"] = 200  # -1 to go until the end.
     generator_param[
