@@ -36,7 +36,7 @@ class FineTuning(argschema.ArgSchemaParser):
         self.args["finetuning_params"]["nb_gpus"] = 2 * int(
             self.args["finetuning_params"]["multi_gpus"]
         )
-        
+
         # To be removed once fully transitioned to CLI
         self.args["generator_params"]["train_path"] = \
             self.args["generator_params"]["data_path"]
