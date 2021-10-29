@@ -72,4 +72,4 @@ def test_generator_ephys_creation(tmp_path):
     generator_obj = ClassLoader(path_generator)
     data_generator = generator_obj.find_and_build()(path_generator)
 
-    assert len(data_generator) == 4996
+    assert len(data_generator) == 4993
