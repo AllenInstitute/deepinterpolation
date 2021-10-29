@@ -92,143 +92,6 @@ class DeepGenerator(keras.utils.Sequence):
         return local_mean, local_std
 
 
-class OnePGenerator(DeepGenerator):
-    """
-    This generator deliver data provided from an hdf5 file made
-    from one photon miniscope data.
-
-    Parameters:
-    str: json_path: path to the json parameter file
-
-    Returns:
-    None
-    """
-
-    def __init__(self, json_path):
-
-        super().__init__(json_path)
-
-        self.raw_data_file = self.json_data["train_path"]
-
-        # For backward compatibility
-        if "pre_post_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_post_frame"]
-            self.post_frame = self.json_data["pre_post_frame"]
-        else:
-            self.pre_frame = self.json_data["pre_frame"]
-            self.post_frame = self.json_data["post_frame"]
-
-        self.start_frame = self.json_data["start_frame"]
-
-        # This is compatible with negative frames
-        self.end_frame = self.json_data["end_frame"]
-
-        self.raw_data = h5py.File(self.raw_data_file, "r")["1"]
-        self.movie_size = self.raw_data.shape
-
-        if self.end_frame < 0:
-            self.img_per_movie = (
-                int(self.raw_data.shape[0]) + 1 +
-                self.end_frame - self.start_frame
-            )
-        else:
-            self.img_per_movie = self.end_frame + 1 - self.start_frame
-
-        self.local_raw_data = self.raw_data[:, :, :]
-
-        list_nan = ~(np.isfinite(self.local_raw_data))
-        self.local_raw_data[list_nan] = 0
-
-        average_nb_samples = 50
-
-        self.list_samples = np.arange(
-            self.pre_frame + self.start_frame,
-            self.start_frame + self.img_per_movie - self.post_frame,
-        )
-
-        np.random.shuffle(self.list_samples)
-        local_data = self.local_raw_data[0:average_nb_samples, :, :].flatten()
-
-        self.local_mean = np.mean(local_data)
-        self.local_std = np.std(local_data)
-
-        self.batch_size = self.json_data["batch_size"]
-
-    def __len__(self):
-        "Denotes the total number of batches"
-        return int(np.floor(float(len(self.list_samples)) / self.batch_size))
-
-    def __getitem__(self, index):
-        # Generate indexes of the batch
-        if (index + 1) * self.batch_size > self.img_per_movie:
-            indexes = np.arange(index * self.batch_size, self.img_per_movie)
-        else:
-            indexes = np.arange(index * self.batch_size,
-                                (index + 1) * self.batch_size)
-
-        shuffle_indexes = self.list_samples[indexes]
-        input_full = np.zeros(
-            [
-                self.batch_size,
-                self.movie_size[1],
-                self.movie_size[2],
-                self.pre_frame + self.post_frame,
-            ]
-        )
-        output_full = np.zeros(
-            [self.batch_size, self.movie_size[1], self.movie_size[2], 1]
-        )
-
-        for batch_index, frame_index in enumerate(shuffle_indexes):
-            X, Y = self.__data_generation__(frame_index)
-
-            input_full[batch_index, :, :, :] = X
-            output_full[batch_index, :, :, :] = Y
-
-        return input_full, output_full
-
-    def __data_generation__(self, index_frame):
-        "Generates data containing batch_size samples"
-        # local_raw_data = h5py.File(self.raw_data_file, 'r')['1']
-
-        input_full = np.zeros(
-            [1,
-             self.movie_size[1],
-             self.movie_size[2],
-             self.pre_frame + self.post_frame]
-        )
-        output_full = np.zeros([1,
-                                self.movie_size[1],
-                                self.movie_size[2], 1])
-
-        input_index = np.arange(
-            index_frame - self.pre_frame,
-            index_frame + self.post_frame + 1
-        )
-        input_index = input_index[input_index != index_frame]
-
-        data_img_input = self.local_raw_data[input_index, :, :]
-        data_img_output = self.local_raw_data[index_frame, :, :]
-
-        data_img_input = np.swapaxes(data_img_input, 1, 2)
-        data_img_input = np.swapaxes(data_img_input, 0, 2)
-
-        img_in_shape = data_img_input.shape
-        img_out_shape = data_img_output.shape
-
-        data_img_input = (
-            data_img_input.astype("float") - self.local_mean
-        ) / self.local_std
-        data_img_output = (
-            data_img_output.astype("float") - self.local_mean
-        ) / self.local_std
-        input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0],
-                    : img_out_shape[1], 0] = data_img_output
-
-        return input_full, output_full
-
-
 class CollectorGenerator(DeepGenerator):
     """This class allows to create a generator of generators
     for the purpose of training across multiple files
@@ -537,7 +400,8 @@ class FmriGenerator(DeepGenerator):
 
 
 class EphysGenerator(DeepGenerator):
-    "Generates data for Keras"
+    """This generator is used when dealing with a single dat file storing a 
+    continous raw neuropixel recording as a (time, 384, 2) int16 array."""
 
     def __init__(self, json_path):
         "Initialization"
@@ -724,8 +588,9 @@ class EphysGenerator(DeepGenerator):
 class MultiContinuousTifGenerator(DeepGenerator):
     """This generator is used when dealing with a continuous movie split
     in multiple blocks of frames each within individual tif files as is
-    typically generated by ScanImage.
-    The filenames will be sorted alphabetically to ensure continuity"""
+    typically generated by ScanImage. The provided path will be a folder 
+    storing all tif files. The filenames must be sorted alphabetically 
+    to ensure continuity"""
 
     def __init__(self, json_path):
         "Initialization"
@@ -1127,7 +992,6 @@ class OphysGenerator(DeepGenerator):
     """This generator is used when dealing with a single hdf5 file storing a 
     continous movie recording into a 'data' field as [time, x, y]"""
 
-
     def __init__(self, json_path):
         "Initialization"
         super().__init__(json_path)
@@ -1156,7 +1020,13 @@ class OphysGenerator(DeepGenerator):
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.start_frame = self.json_data["start_frame"]
         self.epoch_index = 0
-
+        
+        # For backward compatibility
+        if "pre_post_omission" in self.json_data.keys():
+            self.pre_post_omission = self.json_data["pre_post_omission"]
+        else:
+            self.pre_post_omission = 0
+        
         # This is compatible with negative frames
         self.end_frame = self.json_data["end_frame"]
 
@@ -1267,11 +1137,19 @@ class OphysGenerator(DeepGenerator):
 
         input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
         output_full = np.zeros([1, 512, 512, 1])
+
         input_index = np.arange(
-            index_frame - self.pre_frame, index_frame + self.post_frame + 1,
+            index_frame - self.pre_frame - self.pre_post_omission,
+            index_frame + self.post_frame + self.pre_post_omission + 1,
         )
         input_index = input_index[input_index != index_frame]
 
+        for index_padding in np.arange(self.pre_post_omission + 1):
+            input_index = input_index[input_index !=
+                                      index_frame - index_padding]
+            input_index = input_index[input_index !=
+                                      index_frame + index_padding]
+            
         data_img_input = movie_obj["data"][input_index, :, :]
         data_img_output = movie_obj["data"][index_frame, :, :]
 
@@ -1299,7 +1177,8 @@ class OphysGenerator(DeepGenerator):
 class MovieJSONGenerator(DeepGenerator):
     """This generator is used when dealing with a large number of hdf5 files
     referenced into a json file with pre-computed mean and std value. The json
-    file is passed to the generator in place of the movie file themselves.  
+    file is passed to the generator in place of the movie file themselves. Each
+    frame is expected to be smaller than (512,512). 
     Each individual hdf5 movie is recorded into a 'data' field 
     as [time, x, y]. The json files is pre-calculated and have the following
     fields (replace <...> appropriately): 
@@ -1325,6 +1204,12 @@ class MovieJSONGenerator(DeepGenerator):
             self.pre_frame = self.json_data["pre_frame"]
             self.post_frame = self.json_data["post_frame"]
 
+        # For backward compatibility
+        if "pre_post_omission" in self.json_data.keys():
+            self.pre_post_omission = self.json_data["pre_post_omission"]
+        else:
+            self.pre_post_omission = 0
+            
         with open(self.sample_data_path_json, "r") as json_handle:
             self.frame_data_location = json.load(json_handle)
 
@@ -1419,12 +1304,19 @@ class MovieJSONGenerator(DeepGenerator):
             input_full = np.zeros(
                 [1, 512, 512, self.pre_frame + self.post_frame])
             output_full = np.zeros([1, 512, 512, 1])
+
             input_index = np.arange(
-                output_frame - self.pre_frame, output_frame
-                + self.post_frame + 1,
+                output_frame - self.pre_frame - self.pre_post_omission,
+                output_frame + self.post_frame + self.pre_post_omission + 1,
             )
             input_index = input_index[input_index != output_frame]
 
+            for index_padding in np.arange(self.pre_post_omission + 1):
+                input_index = input_index[input_index !=
+                                        output_frame - index_padding]
+                input_index = input_index[input_index !=
+                                        output_frame + index_padding]
+            
             data_img_input = movie_obj["data"][input_index, :, :]
             data_img_output = movie_obj["data"][output_frame, :, :]
 
