@@ -435,7 +435,7 @@ class SequentialGenerator(DeepGenerator):
         # load parameters that are related to training jobs
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
-        
+
         # Loading limit parameters
         self.start_frame = self.json_data["start_frame"]
 
@@ -464,8 +464,8 @@ class SequentialGenerator(DeepGenerator):
         end_samples = self.end_frame - self.post_frame \
             - self.pre_post_omission
 
-        if (end_samples - start_samples) < self.batch_size:
-            raise Exception("Not enough frames to construct one batch.")
+        #if (end_samples - start_samples) < self.batch_size:
+        #    raise Exception("Not enough frames to construct one batch.")
 
         self.list_samples = np.arange(start_samples, end_samples)
 
