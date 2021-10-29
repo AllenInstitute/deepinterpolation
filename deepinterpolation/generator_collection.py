@@ -525,6 +525,12 @@ class EphysGenerator(SequentialGenerator):
 
         # We calculate the mean and std of the data
         average_nb_samples = 200000
+        
+        shape = (self.total_frame_per_movie, int(self.nb_probes / 2), 2)
+        # load it with the correct shape
+        self.raw_data = np.memmap(
+            self.raw_data_file, dtype="int16", shape=shape)
+        
         local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")
         self.local_mean = np.mean(local_data)
