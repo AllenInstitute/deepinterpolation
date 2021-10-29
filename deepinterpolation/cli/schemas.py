@@ -317,7 +317,8 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             properly predict the onset and end frames in a long serie as \
             the pre and post frames are missing at those frames. Setting this \
             to 'True' will pad the onset and end of the output dataset with \
-            blank frames to keep the dataset of the same size."
+            blank frames to keep the dataset of the same size as requested by \
+            start_frame and end_frame in the generator."
         ),
     )
 

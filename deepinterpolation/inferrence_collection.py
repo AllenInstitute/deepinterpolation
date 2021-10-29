@@ -210,7 +210,21 @@ class core_inferrence:
         )
 
     def run(self):
-        final_shape = [self.nb_datasets * self.batch_size]
+        if self.output_padding:
+            self.generator_obj.start_sample
+            self.generator_obj.end_sample
+            self.generator_obj.self.start_frame
+            self.generator_obj.self.end_frame
+            
+            final_shape = [self.generator_obj.self.end_frame -
+                           self.generator_obj.self.start_frame]
+            first_sample = self.generator_obj.start_sample - \
+                self.generator_obj.start_frame
+
+        else:
+            final_shape = [self.nb_datasets * self.batch_size]
+            first_sample = 0
+            
         final_shape.extend(self.indiv_shape)
 
         chunk_size = [1]
@@ -245,21 +259,17 @@ class core_inferrence:
                     corrected_data = predictions_data * local_std + local_mean
                 else:
                     corrected_data = predictions_data
-
+                    
+                start = first_sample + index_dataset * self.batch_size
+                end = first_sample + index_dataset * self.batch_size \
+                        + local_size
+                
                 if self.save_raw:
                     if self.rescale:
                         corrected_raw = local_data[1] * local_std + local_mean
                     else:
                         corrected_raw = local_data[1]
 
-                    raw_out[
-                        index_dataset
-                        * self.batch_size:index_dataset
-                        * self.batch_size
-                        + local_size,
-                        :,
-                    ] = corrected_raw
+                    raw_out[start:end, :] = corrected_raw
 
-                start = index_dataset * self.batch_size
-                end = index_dataset * self.batch_size + local_size
                 dset_out[start:end, :] = corrected_data
