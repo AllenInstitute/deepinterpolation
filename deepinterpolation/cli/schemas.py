@@ -190,15 +190,14 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         # This is for backward compatibility
         if "train_path" in data:
             logging.warning("train_path has been deprecated and is to be \
-replaced by data_path as generators can be used for training \
-and inference. We are forwarding the value but please update \
-your code.")
+replaced by data_path as generators can be used for training and inference. \
+We are forwarding the value but please update your code.")
             data["data_path"] = data["train_path"]
             del data['train_path']
         if "pre_post_frame" in data:
             logging.warning("pre_post_frame has been deprecated and is to be \
-replaced by pre_frame and post_frame. We are forwarding the \
-value but please update your code.")
+replaced by pre_frame and post_frame. We are forwarding the value but please \
+update your code.")
             data["pre_frame"] = data["pre_post_frame"]
             data["post_frame"] = data["pre_post_frame"]
             del data['pre_post_frame']
@@ -614,6 +613,7 @@ class TrainingInputSchema(argschema.ArgSchema):
         # We forward this parameter to the generator
         data["generator_params"]["steps_per_epoch"] = \
             data["training_params"]["steps_per_epoch"]
+        data["test_generator_params"]["steps_per_epoch"] = -1
         return data
 
 
@@ -643,4 +643,6 @@ class FineTuningInputSchema(argschema.ArgSchema):
         # We forward this parameter to the generator
         data["generator_params"]["steps_per_epoch"] = \
             data["finetuning_params"]["steps_per_epoch"]
+        data["test_generator_params"]["steps_per_epoch"] = -1
+
         return data
