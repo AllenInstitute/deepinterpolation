@@ -9,7 +9,7 @@ import tifffile
 import nibabel as nib
 import s3fs
 import glob
-import logging
+
 
 class MaxRetryException(Exception):
     # This is helper class for EmGenerator
@@ -812,9 +812,9 @@ class MultiContinuousTifGenerator(DeepGenerator):
 
 
 class SingleTifGenerator(DeepGenerator):
-    """This generator is used when dealing with a single tif file storing a 
-    continous movie recording. Each frame can be arbitrary (x,y) size but 
-    should be consistent through training. a maximum of 1000 frames are pulled 
+    """This generator is used when dealing with a single tif file storing a
+    continous movie recording. Each frame can be arbitrary (x,y) size but
+    should be consistent through training. a maximum of 1000 frames are pulled
     from the beginning of the movie to estimate mean and std."""
 
     def __init__(self, json_path):
@@ -991,10 +991,10 @@ class SingleTifGenerator(DeepGenerator):
 
 
 class OphysGenerator(DeepGenerator):
-    """This generator is used when dealing with a single hdf5 file storing a 
+    """This generator is used when dealing with a single hdf5 file storing a
     continous movie recording into a 'data' field as [time, x, y]. Each
     frame is expected to be smaller than (512,512)."""
-    
+
     def __init__(self, json_path):
         "Initialization"
         super().__init__(json_path)
@@ -1152,7 +1152,7 @@ class OphysGenerator(DeepGenerator):
                                       index_frame - index_padding]
             input_index = input_index[input_index !=
                                       index_frame + index_padding]
-            
+
         data_img_input = movie_obj["data"][input_index, :, :]
         data_img_output = movie_obj["data"][index_frame, :, :]
 
@@ -1316,10 +1316,10 @@ class MovieJSONGenerator(DeepGenerator):
 
             for index_padding in np.arange(self.pre_post_omission + 1):
                 input_index = input_index[input_index !=
-                                        output_frame - index_padding]
+                                          output_frame - index_padding]
                 input_index = input_index[input_index !=
-                                        output_frame + index_padding]
-            
+                                          output_frame + index_padding]
+
             data_img_input = movie_obj["data"][input_index, :, :]
             data_img_output = movie_obj["data"][output_frame, :, :]
 
