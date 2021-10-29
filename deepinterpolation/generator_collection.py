@@ -466,9 +466,9 @@ class SequentialGenerator(DeepGenerator):
 
         if (end_samples - start_samples) < self.batch_size:
             raise Exception("Not enough frames to construct one " +
-                str(self.batch_size) + " frame(s) batch between " +
-                str(start_samples) + " and "+str(end_samples) +
-                " frame number.")
+                            str(self.batch_size) + " frame(s) batch between " +
+                            str(start_samples) + " and "+str(end_samples) +
+                            " frame number.")
 
         self.list_samples = np.arange(start_samples, end_samples)
 
