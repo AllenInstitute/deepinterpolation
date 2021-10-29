@@ -813,7 +813,9 @@ class MultiContinuousTifGenerator(DeepGenerator):
 
 class SingleTifGenerator(DeepGenerator):
     """This generator is used when dealing with a single tif file storing a 
-    continous movie recording."""
+    continous movie recording. Each frame can be arbitrary (x,y) size but 
+    should be consistent through training. a maximum of 1000 frames are pulled 
+    from the beginning of the movie to estimate mean and std."""
 
     def __init__(self, json_path):
         "Initialization"
@@ -864,7 +866,7 @@ class SingleTifGenerator(DeepGenerator):
         else:
             self.img_per_movie = self.end_frame + 1 - self.start_frame
 
-        average_nb_samples = 1000
+        average_nb_samples = np.min(self.total_frame_per_movie, 1000)
 
         local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")
@@ -990,8 +992,9 @@ class SingleTifGenerator(DeepGenerator):
 
 class OphysGenerator(DeepGenerator):
     """This generator is used when dealing with a single hdf5 file storing a 
-    continous movie recording into a 'data' field as [time, x, y]"""
-
+    continous movie recording into a 'data' field as [time, x, y]. Each
+    frame is expected to be smaller than (512,512)."""
+    
     def __init__(self, json_path):
         "Initialization"
         super().__init__(json_path)
