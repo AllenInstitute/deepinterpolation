@@ -612,7 +612,7 @@ class TrainingInputSchema(argschema.ArgSchema):
     @mm.post_load
     def training_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
-        data["generator_params"]["steps_per_epoch"] == \
+        data["generator_params"]["steps_per_epoch"] = \
             data["training_params"]["steps_per_epoch"]
         return data
 
@@ -641,6 +641,6 @@ class FineTuningInputSchema(argschema.ArgSchema):
     @mm.post_load
     def finetuning_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
-        data["generator_params"]["steps_per_epoch"] == \
+        data["generator_params"]["steps_per_epoch"] = \
             data["finetuning_params"]["steps_per_epoch"]
         return data
