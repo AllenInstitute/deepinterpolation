@@ -98,14 +98,14 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         required=False,
         default="SingleTifGenerator",
         validate=OneOf(get_list_of_generators()),
-        description= (
+        description=(
             "The data generator will control how data is read from individual\
             data files. Specify a data generator available in  \
             generator_collection.py, depending on your file data format."
         ),
     )
 
-    pre_frame=argschema.fields.Int(
+    pre_frame = argschema.fields.Int(
         required=False,
         default=30,
         description=(
@@ -116,7 +116,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         ),
     )
 
-    post_frame=argschema.fields.Int(
+    post_frame = argschema.fields.Int(
         required=False,
         default=30,
         description=(
@@ -127,7 +127,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         ),
     )
 
-    pre_post_omission=argschema.fields.Int(
+    pre_post_omission = argschema.fields.Int(
         required=False,
         default=0,
         description="Number of frames omitted before and after a center frame for \
@@ -137,7 +137,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             post_frames."\
         )
     
-    data_path=argschema.fields.String(
+    data_path = argschema.fields.String(
         required=True, 
         description="Path to the file containing data used by \
             the generator. Usually this will be a full filepath. In some \
@@ -145,20 +145,20 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             MultiContinuousTifGenerator)"
     )
     
-    batch_size=argschema.fields.Int(
+    batch_size = argschema.fields.Int(
         required=False,
         default=5,
         description="Batch size provided to the DeepInterpolation model by \
             the generator.",
     )
 
-    start_frame=argschema.fields.Int(
+    start_frame = argschema.fields.Int(
         required=False,
         default=0,
         description="First frame used by the generator.",
     )
 
-    end_frame=argschema.fields.Int(
+    end_frame = argschema.fields.Int(
         required=False,
         default=-1,
         description=(
@@ -167,7 +167,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         ),
     )
 
-    randomize=argschema.fields.Boolean(
+    randomize = argschema.fields.Boolean(
         required=False,
         default=True,
         description="Whether to shuffle all selected frames in the generator.\
@@ -175,7 +175,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         inference."
     )
 
-    total_samples=argschema.fields.Int(
+    total_samples = argschema.fields.Int(
         required=False,
         default=-1,
         description="Total number of frames used between start_frame and \
@@ -205,21 +205,21 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         return data
     
 class MlflowRegistrySchema(argschema.schemas.DefaultSchema):
-    tracking_uri=argschema.fields.String(
+    tracking_uri = argschema.fields.String(
         required=True, description="MLflow tracking URI"
     )
 
-    model_name=argschema.fields.String(
+    model_name = argschema.fields.String(
         required=True, description="Model name to fetch"
     )
 
-    model_version=argschema.fields.Int(
+    model_version = argschema.fields.Int(
         required=False,
         description="Model version to fetch. If neither model_version nor "
         "model_stage are provided, will try to fetch the latest "
         "model without a stage",
     )
-    model_stage=argschema.fields.String(
+    model_stage = argschema.fields.String(
         required=False,
         description="Model stage to fetch.If neither model_version nor "
         "model_stage are provided, will try to fetch the latest "
@@ -228,14 +228,14 @@ class MlflowRegistrySchema(argschema.schemas.DefaultSchema):
 
 
 class ModelSourceSchema(argschema.schemas.DefaultSchema):
-    mlflow_registry=argschema.fields.Nested(
+    mlflow_registry = argschema.fields.Nested(
         MlflowRegistrySchema,
         required=False,
         description="MLflow registry, if the model should be loaded from "
         "mlflow. If this is provided, then local_path should "
         "not be.",
     )
-    local_path=argschema.fields.InputFile(
+    local_path = argschema.fields.InputFile(
         required=False,
         description="Local path to model source. "
         "If this is provided then mlflow_registry should not be.",
