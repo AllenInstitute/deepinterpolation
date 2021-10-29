@@ -34,11 +34,11 @@ def get_list_of_generators():
     """
     list_generator = inspect.getmembers(generator_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_generator]
-    excluded_list = ["MaxRetryException", "JsonLoader", 
-                     "FmriGenerator", "CollectorGenerator", 
+    excluded_list = ["MaxRetryException", "JsonLoader",
+                     "FmriGenerator", "CollectorGenerator",
                      "DeepGenerator"]
     # Some generators are not compatible with the CLI yet.
-    
+
     curated_list = [
         indiv_arch
         for i, indiv_arch in enumerate(curated_list)
@@ -95,10 +95,10 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     """
 
     name = argschema.fields.String(
-        required=False,
-        default="SingleTifGenerator",
-        validate=OneOf(get_list_of_generators()),
-        description=(
+        required = False,
+        default = "SingleTifGenerator",
+        validate = OneOf(get_list_of_generators()),
+        description = (
             "The data generator will control how data is read from individual\
             data files. Specify a data generator available in  \
             generator_collection.py, depending on your file data format."
@@ -106,78 +106,79 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     )
 
     pre_frame = argschema.fields.Int(
-        required=False,
-        default=30,
-        description=(
+        required = False,
+        default = 30,
+        description = (
             "Number of frames fed to the DeepInterpolation model before a \
             center frame for interpolation. Omitted frames will not be used \
             to fetch pre_frames. All pre_frame frame(s) will be fetch before \
-            pre_omission frame(s)." 
+            pre_omission frame(s)."
         ),
     )
 
     post_frame = argschema.fields.Int(
-        required=False,
-        default=30,
-        description=(
+        required = False,
+        default = 30,
+        description = (
             "Number of frames fed to the DeepInterpolation model after a \
             center frame for interpolation. Omitted frames will not be used \
             to fetch post_frames. All post_frame frame(s) will be fetch after \
-            post_mission frame(s)." 
+            post_mission frame(s)."
         ),
     )
-    
+
     pre_post_omission = argschema.fields.Int(
-        required=False,
-        default=0,
-        description=
-            "Number of frames omitted before and after a center frame for \
+        required = False,
+        default = 0,
+        description = "Number of frames omitted before and after a center frame for \
             DeepInterpolation. Omission will be done on both sides of the \
             center frame, ie. twice pre_post_omission are omitted.\
             Omitted frames will not be used to fetch pre_frames and \
             post_frames."\
         )
     
-    data_path = argschema.fields.InputFile(
-        required=True, 
-        description="Path to the file containing data used by \
-            the generator."
+    data_path = argschema.fields.String(
+        required =True, 
+        description = "Path to the file containing data used by \
+            the generator. Usually this will be a full filepath. In some \
+            cases, this can point to a folder (with \
+            MultiContinuousTifGenerator)"
     )
     
     batch_size = argschema.fields.Int(
-        required=False,
-        default=5,
-        description="Batch size provided to the DeepInterpolation model by \
+        required = False,
+        default = 5,
+        description = "Batch size provided to the DeepInterpolation model by \
             the generator.",
     )
 
     start_frame = argschema.fields.Int(
-        required=False,
-        default=0,
-        description="First frame used by the generator.",
+        required = False,
+        default = 0,
+        description = "First frame used by the generator.",
     )
 
     end_frame = argschema.fields.Int(
-        required=False,
-        default=-1,
-        description=(
+        required = False,
+        default = -1,
+        description = (
             "Last frame used by the generator. -1 defaults to "
             "last available frame."
         ),
     )
 
     randomize = argschema.fields.Boolean(
-        required=False,
-        default=True,
+        required = False,
+        default = True,
         description="Whether to shuffle all selected frames in the generator.\
         It is recommended to set to 'True' for training and 'False' for \
         inference."
     )
 
     total_samples = argschema.fields.Int(
-        required=False,
-        default=-1,
-        description="Total number of frames used between start_frame and \
+        required = False,
+        default = -1,
+        description = "Total number of frames used between start_frame and \
             end_frame. -1 defaults to all available samples between start_frame\
             and end_frame. If total_samples is larger than the number of \
             available frames, it will automatically be reduced to the maximal \
@@ -629,5 +630,5 @@ class FineTuningInputSchema(argschema.ArgSchema):
     def finetuning_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
         data["generator_params"]["steps_per_epoch"] == \
-            data["training_params"]["steps_per_epoch"] 
+            data["training_params"]["steps_per_epoch"]
         return data
