@@ -25,8 +25,8 @@ def test_ephys_training(tmp_path):
         "ephys_tiny_continuous.dat2",
     )
     generator_test_param["batch_size"] = 10
-    generator_test_param["start_frame"] = 0
-    generator_test_param["end_frame"] = 100
+    generator_test_param["start_frame"] = 30
+    generator_test_param["end_frame"] = 60
     generator_test_param[
         "pre_post_omission"
     ] = 1  # Number of frame omitted before and after the predicted frame
@@ -46,7 +46,7 @@ def test_ephys_training(tmp_path):
     )
     generator_param["batch_size"] = 10
     generator_param["start_frame"] = 1050
-    generator_param["end_frame"] = 1200
+    generator_param["end_frame"] = 1030
     generator_param["pre_post_omission"] = 1
 
     # Those are parameters used for the network topology
