@@ -35,7 +35,7 @@ def generator_args(tmpdir):
     with h5py.File(train_path, "w") as f:
         f.create_dataset("data", data=[1, 2, 3])
     args = {
-        "train_path": str(train_path)
+        "data_path": str(train_path)
     }
     yield args
 
@@ -108,9 +108,9 @@ def test_finetuning_cli(generator_args, training_args,
     training = cli.FineTuning(input_data=args, args=[])
     training.run()
 
-    model_path = os.path.join(args["training_params"]["output_dir"],
+    model_path = os.path.join(args["finetuning_params"]["output_dir"],
                               args["run_uid"] + "_" +
-                              args["training_params"]["model_string"]
+                              args["finetuning_params"]["model_string"]
                               + "_transfer_model.h5")
 
     assert Path(model_path).exists()

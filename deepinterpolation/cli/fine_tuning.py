@@ -54,10 +54,10 @@ class FineTuning(argschema.ArgSchemaParser):
         # to specify each sub-object type.
         self.args["generator_params"]["type"] = "generator"
         self.args["test_generator_params"]["type"] = "generator"
-        self.args["training_params"]["type"] = "trainer"
+        self.args["finetuning_params"]["type"] = "trainer"
 
         # save the json parameters to 2 different files
-        finetuning_json_path = outdir / f"{uid}_training.json"
+        finetuning_json_path = outdir / f"{uid}_finetuning.json"
         with open(finetuning_json_path, "w") as f:
             json.dump(self.args["finetuning_params"], f, indent=2)
         self.logger.info(f"wrote {finetuning_json_path}")
