@@ -1,14 +1,13 @@
-# Class to generate data for training
-import numpy as np
 import json
-import h5py
 import os
+import numpy as np
+import h5py
 import tensorflow.keras as keras
-from deepinterpolation.generic import JsonLoader
 import tifffile
 import nibabel as nib
 import s3fs
 import glob
+from deepinterpolation.generic import JsonLoader
 
 
 class MaxRetryException(Exception):
@@ -398,17 +397,18 @@ class FmriGenerator(DeepGenerator):
 
         return input_full, output_full
 
+
 class SequentialGenerator(DeepGenerator):
-    """This generator stores shared code across generators that have a 
-    continous temporal direction upon which start_frame, end_frame, 
-    pre_frame,... are used to to generate a list of samples. It is an abstract 
-    class that is meant to be extended with details of how datasets 
+    """This generator stores shared code across generators that have a
+    continous temporal direction upon which start_frame, end_frame,
+    pre_frame,... are used to to generate a list of samples. It is an abstract
+    class that is meant to be extended with details of how datasets
     are loaded."""
-    
+
     def __init__(self, json_path):
         "Initialization"
         super().__init__(json_path)
-        
+
         # We first store the relevant parameters
         if "pre_post_frame" in self.json_data.keys():
             self.pre_frame = self.json_data["pre_post_frame"]
@@ -416,12 +416,12 @@ class SequentialGenerator(DeepGenerator):
         else:
             self.pre_frame = self.json_data["pre_frame"]
             self.post_frame = self.json_data["post_frame"]
-            
+
         if "total_samples" in self.json_data.keys():
             self.total_samples = self.json_data["total_samples"]
         else:
             self.total_samples = -1
-        
+
         if "randomize" in self.json_data.keys():
             self.randomize = self.json_data["randomize"]
         else:
@@ -431,22 +431,22 @@ class SequentialGenerator(DeepGenerator):
             self.pre_post_omission = self.json_data["pre_post_omission"]
         else:
             self.pre_post_omission = 0
-        
+
         # load parameters that are related to training jobs
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
 
         # This is compatible with negative frames
         self.end_frame = self.json_data["end_frame"]
-        
-        # We initialize the epoch counter 
+
+        # We initialize the epoch counter
         self.epoch_index = 0
-        
+
     def update_end_frame(self, total_frame_per_movie):
         """Update end_frame based on the total number of frames available.
         This allows for truncating the end of the movie when end_frame is
         negative."""
-        
+
         # This is to handle selecting the end of the movie
         if self.end_frame < 0:
             self.end_frame = total_frame_per_movie+self.end_frame
@@ -455,15 +455,15 @@ class SequentialGenerator(DeepGenerator):
 
     def calculate_list_samples(self):
         self.img_per_movie = self.end_frame + 1 - self.start_frame
-        
+
         start_samples = self.start_frame + self.pre_frame \
             + self.pre_post_omission
         end_samples = self.end_frame - self.post_frame \
             - self.pre_post_omission
-            
+
         if (end_samples - start_samples) < self.batch_size:
             raise Exception("Not enough frames to construct one batch.")
-        
+
         self.list_samples = np.arange(start_samples, end_samples)
 
         if self.randomize:
@@ -487,8 +487,8 @@ class SequentialGenerator(DeepGenerator):
     def __len__(self):
         "Denotes the total number of batches"
         return int(np.floor(float(len(self.list_samples)) / self.batch_size))
-    
-    def generate_batch_indexes(self, index):   
+
+    def generate_batch_indexes(self, index):
         # This is to ensure we are going through
         # the entire data when steps_per_epoch<self.__len__
         if self.steps_per_epoch > 0:
@@ -499,10 +499,10 @@ class SequentialGenerator(DeepGenerator):
                                 (index + 1) * self.batch_size)
 
         shuffle_indexes = self.list_samples[indexes]
-        
+
         return shuffle_indexes
-        
-class EphysGenerator(SequentialGenerator):    
+
+class EphysGenerator(SequentialGenerator):
     """This generator is used when dealing with a single dat file storing a
     continous raw neuropixel recording as a (time, 384, 2) int16 array."""
 
@@ -525,9 +525,9 @@ class EphysGenerator(SequentialGenerator):
         local_data = local_data.astype("float32")
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
-        
+
         shape = (self.total_frame_per_movie, int(self.nb_probes / 2), 2)
-        
+
         # load it with the correct shape
         self.raw_data = np.memmap(
             self.raw_data_file, dtype="int16", shape=shape)
@@ -618,7 +618,6 @@ class MultiContinuousTifGenerator(SequentialGenerator):
             self.raw_data_file = self.json_data["train_path"]
         else:
             self.raw_data_file = self.json_data["movie_path"]
-
 
         self.list_tif_files = glob.glob(
             os.path.join(self.raw_data_file, '*.tif'))
@@ -766,7 +765,7 @@ class SingleTifGenerator(SequentialGenerator):
         super().__init__(json_path)
 
         self.raw_data_file = self.json_data["train_path"]
-     
+
         with tifffile.TiffFile(self.raw_data_file) as tif:
             self.raw_data = tif.asarray()
 
