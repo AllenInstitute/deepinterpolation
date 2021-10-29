@@ -462,9 +462,10 @@ class SequentialGenerator(DeepGenerator):
 
         # We first cut if start and end frames are too close to the edges.
         self.start_sample = np.max([self.pre_frame
-                               + self.pre_post_omission, self.start_frame])
+                                    + self.pre_post_omission,
+                                    self.start_frame])
         self.end_sample = np.min([self.end_frame, total_frame_per_movie - 1 -
-                             self.post_frame - self.pre_post_omission])
+                                  self.post_frame - self.pre_post_omission])
 
         if (self.end_sample - self.start_sample+1) < self.batch_size:
             raise Exception("Not enough frames to construct one " +
