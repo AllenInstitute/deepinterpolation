@@ -124,13 +124,11 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     training_param = {}
 
     generator_param["name"] = "EphysGenerator"
-    generator_param["pre_post_frame"] = 30
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
-    generator_param[
-        "steps_per_epoch"
-    ] = 2
 
-    generator_param["train_path"] = os.path.join(
+    generator_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
@@ -146,13 +144,11 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     ] = 1
 
     generator_test_param["name"] = "EphysGenerator"
-    generator_test_param["pre_post_frame"] = 30
+    generator_test_param["pre_frame"] = 30
+    generator_test_param["post_frame"] = 30
     generator_test_param["pre_post_omission"] = 1
-    generator_test_param[
-        "steps_per_epoch"
-    ] = 2
 
-    generator_test_param["train_path"] = os.path.join(
+    generator_test_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
@@ -166,7 +162,8 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     generator_test_param[
         "randomize"
     ] = 1
-
+    
+    training_param["steps_per_epoch"] = 2
     training_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
     training_param["output_dir"] = str(tmp_path)

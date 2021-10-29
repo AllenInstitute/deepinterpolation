@@ -35,11 +35,11 @@ def inference_args(tmpdir, request):
 @pytest.fixture
 def generator_args(tmpdir):
     # make some dummy files so the schema validation is satisfied
-    train_path = tmpdir / "train_data.h5"
-    with h5py.File(train_path, "w") as f:
+    data_path = tmpdir / "train_data.h5"
+    with h5py.File(data_path, "w") as f:
         f.create_dataset("data", data=[1, 2, 3])
     args = {
-        "train_path": str(train_path)
+        "data_path": str(data_path)
     }
     yield args
 
@@ -112,13 +112,11 @@ def test_integration_cli_ephys_inference(tmp_path):
     inferrence_param = {}
 
     generator_param["name"] = "EphysGenerator"
-    generator_param["pre_post_frame"] = 30
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
-    generator_param[
-        "steps_per_epoch"
-    ] = -1
 
-    generator_param["train_path"] = os.path.join(
+    generator_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
