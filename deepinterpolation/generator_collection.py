@@ -475,7 +475,7 @@ class SequentialGenerator(DeepGenerator):
             self.list_samples = self.list_samples[0: self.total_samples]
 
     def on_epoch_end(self):
-        """We only increase index if steps_per_epoch is set to positive value. 
+        """We only increase index if steps_per_epoch is set to positive value.
         -1 will force the generator to not iterate at the end of each epoch."""
         if self.steps_per_epoch > 0:
             if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
@@ -496,11 +496,12 @@ class SequentialGenerator(DeepGenerator):
 
         # Generate indexes of the batch
         indexes = np.arange(index * self.batch_size,
-                                (index + 1) * self.batch_size)
+                            (index + 1) * self.batch_size)
 
         shuffle_indexes = self.list_samples[indexes]
 
         return shuffle_indexes
+
 
 class EphysGenerator(SequentialGenerator):
     """This generator is used when dealing with a single dat file storing a
@@ -516,7 +517,7 @@ class EphysGenerator(SequentialGenerator):
         self.raw_data = np.memmap(self.raw_data_file, dtype="int16")
         self.total_frame_per_movie = int(self.raw_data.size / self.nb_probes)
 
-        self.update_end_frame(self, self.total_frame_per_movie)
+        self.update_end_frame(self.total_frame_per_movie)
         self.calculate_list_samples()
 
         # We calculate the mean and std of the data
@@ -637,9 +638,9 @@ class MultiContinuousTifGenerator(SequentialGenerator):
 
         self.list_bounds = np.array(self.list_bounds)
 
-        self.update_end_frame(self, self.total_frame_per_movie)
+        self.update_end_frame(self.total_frame_per_movie)
         self.calculate_list_samples()
-        
+
         average_nb_samples = 1000
 
         local_data = self.get_raw_frames_from_list(
@@ -771,7 +772,7 @@ class SingleTifGenerator(SequentialGenerator):
 
         self.total_frame_per_movie = self.raw_data.shape[0]
 
-        self.update_end_frame(self, self.total_frame_per_movie)
+        self.update_end_frame(self.total_frame_per_movie)
         self.calculate_list_samples()
 
         average_nb_samples = np.min([self.total_frame_per_movie, 1000])
@@ -890,7 +891,7 @@ class OphysGenerator(SequentialGenerator):
 
         self.total_frame_per_movie = int(raw_data.shape[0])
 
-        self.update_end_frame(self, self.total_frame_per_movie)
+        self.update_end_frame(self.total_frame_per_movie)
         self.calculate_list_samples()
 
         average_nb_samples = np.min([int(raw_data.shape[0]), 1000])
