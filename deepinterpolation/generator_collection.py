@@ -435,6 +435,9 @@ class SequentialGenerator(DeepGenerator):
         # load parameters that are related to training jobs
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
+        
+        # Loading limit parameters
+        self.start_frame = self.json_data["start_frame"]
 
         # This is compatible with negative frames
         self.end_frame = self.json_data["end_frame"]
