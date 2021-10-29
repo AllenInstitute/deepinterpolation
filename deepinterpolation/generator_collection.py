@@ -461,19 +461,20 @@ class SequentialGenerator(DeepGenerator):
     def calculate_list_samples(self, total_frame_per_movie):
 
         # We first cut if start and end frames are too close to the edges.
-        start_samples = np.max([self.pre_frame
+        self.start_sample = np.max([self.pre_frame
                                + self.pre_post_omission, self.start_frame])
-        end_samples = np.min([self.end_frame, total_frame_per_movie - 1 -
+        self.end_sample = np.min([self.end_frame, total_frame_per_movie - 1 -
                              self.post_frame - self.pre_post_omission])
 
-        if (end_samples - start_samples+1) < self.batch_size:
+        if (self.end_sample - self.start_sample+1) < self.batch_size:
             raise Exception("Not enough frames to construct one " +
                             str(self.batch_size) + " frame(s) batch between " +
-                            str(start_samples) + " and "+str(end_samples) +
+                            str(self.start_sample) +
+                            " and "+str(self.end_sample) +
                             " frame number.")
 
         # +1 to make sure end_samples is included
-        self.list_samples = np.arange(start_samples, end_samples+1)
+        self.list_samples = np.arange(self.start_sample, self.end_sample+1)
 
         if self.randomize:
             np.random.shuffle(self.list_samples)
