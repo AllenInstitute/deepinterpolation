@@ -459,7 +459,6 @@ class SequentialGenerator(DeepGenerator):
             self.end_frame = total_frame_per_movie-1
 
     def calculate_list_samples(self, total_frame_per_movie):
-        self.img_per_movie = self.end_frame + 1 - self.start_frame
 
         # We first cut if start and end frames are too close to the edges.
         start_samples = np.max([self.pre_frame
