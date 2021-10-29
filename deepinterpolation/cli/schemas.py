@@ -94,7 +94,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     and test generator.
     """
 
-    name=argschema.fields.String(
+    name = argschema.fields.String(
         required=False,
         default="SingleTifGenerator",
         validate=OneOf(get_list_of_generators()),
@@ -134,17 +134,17 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             DeepInterpolation. Omission will be done on both sides of the \
             center frame, ie. twice pre_post_omission are omitted.\
             Omitted frames will not be used to fetch pre_frames and \
-            post_frames."\
+            post_frames."
         )
-    
+
     data_path = argschema.fields.String(
-        required=True, 
+        required=True,
         description="Path to the file containing data used by \
             the generator. Usually this will be a full filepath. In some \
             cases, this can point to a folder (with \
             MultiContinuousTifGenerator)"
     )
-    
+
     batch_size = argschema.fields.Int(
         required=False,
         default=5,
@@ -179,12 +179,12 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=-1,
         description="Total number of frames used between start_frame and \
-            end_frame. -1 defaults to all available samples between start_frame\
-            and end_frame. If total_samples is larger than the number of \
-            available frames, it will automatically be reduced to the maximal \
-            number.",
+            end_frame. -1 defaults to all available samples between \
+            start_frame and end_frame. If total_samples is larger than the \
+            number of available frames, it will automatically be reduced to \
+            the maximal number."
     )
-    
+
     @mm.pre_load
     def generator_specific_settings(self, data, **kwargs):
         # This is for backward compatibility
@@ -203,7 +203,8 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             data["post_frame"] = data["pre_post_frame"]
 
         return data
-    
+
+
 class MlflowRegistrySchema(argschema.schemas.DefaultSchema):
     tracking_uri = argschema.fields.String(
         required=True, description="MLflow tracking URI"
@@ -353,14 +354,14 @@ class InferenceInputSchema(argschema.ArgSchema):
     @mm.post_load
     def inference_specific_settings(self, data, **kwargs):
         # This is to force randomize to be off if set by mistake
-        if data["generator_params"]["randomize"] == True:
+        if data["generator_params"]["randomize"]:
             logging.info("randomize should be set to False for inference. \
                         Overriding the parameter")
             data["generator_params"]["randomize"] = False
-        
+
         # To disable rolling samples for inference
         data["generator_params"]["steps_per_epoch"] = -1
-        
+
         return data
 
 
@@ -383,7 +384,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
     )
 
     steps_per_epoch = argschema.fields.Int(
-        required=False, 
+        required=False,
         default=100,
         description="Number of batches per epoch. Here, epochs are not \
             defined in relation to the total number of batches in the dataset \
@@ -391,7 +392,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
             models and evaluate validation loss during training. After each \
             epoch a validation loss is computed and a checkpoint model is \
             potentialy saved (see period_save).")
-    
+
     nb_times_through_data = argschema.fields.Int(
         required=False,
         default=1,
@@ -597,13 +598,14 @@ class TrainingInputSchema(argschema.ArgSchema):
             "including defaults."
         ),
     )
-    
+
     @mm.post_load
     def training_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
         data["generator_params"]["steps_per_epoch"] == \
-            data["training_params"]["steps_per_epoch"] 
+            data["training_params"]["steps_per_epoch"]
         return data
+
 
 class FineTuningInputSchema(argschema.ArgSchema):
     log_level = argschema.fields.LogLevel(default="INFO")
@@ -625,7 +627,7 @@ class FineTuningInputSchema(argschema.ArgSchema):
             "including defaults."
         ),
     )
-    
+
     @mm.post_load
     def finetuning_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
