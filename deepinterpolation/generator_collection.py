@@ -398,8 +398,111 @@ class FmriGenerator(DeepGenerator):
 
         return input_full, output_full
 
+class SequentialGenerator(DeepGenerator):
+    """This generator stores shared code across generators that have a 
+    continous temporal direction upon which start_frame, end_frame, 
+    pre_frame,... are used to to generate a list of samples. It is an abstract 
+    class that is meant to be extended with details of how datasets 
+    are loaded."""
+    
+    def __init__(self, json_path):
+        "Initialization"
+        super().__init__(json_path)
+        
+        # We first store the relevant parameters
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+            
+        if "total_samples" in self.json_data.keys():
+            self.total_samples = self.json_data["total_samples"]
+        else:
+            self.total_samples = -1
+        
+        if "randomize" in self.json_data.keys():
+            self.randomize = self.json_data["randomize"]
+        else:
+            self.randomize = 1
 
-class EphysGenerator(DeepGenerator):
+        if "pre_post_omission" in self.json_data.keys():
+            self.pre_post_omission = self.json_data["pre_post_omission"]
+        else:
+            self.pre_post_omission = 0
+        
+        # load parameters that are related to training jobs
+        self.batch_size = self.json_data["batch_size"]
+        self.steps_per_epoch = self.json_data["steps_per_epoch"]
+
+        # This is compatible with negative frames
+        self.end_frame = self.json_data["end_frame"]
+        
+        # We initialize the epoch counter 
+        self.epoch_index = 0
+        
+    def update_end_frame(self, total_frame_per_movie):
+        """Update end_frame based on the total number of frames available.
+        This allows for truncating the end of the movie when end_frame is
+        negative."""
+        
+        # This is to handle selecting the end of the movie
+        if self.end_frame < 0:
+            self.end_frame = total_frame_per_movie+self.end_frame
+        elif self.total_frame_per_movie <= self.end_frame:
+            self.end_frame = total_frame_per_movie-1
+
+    def calculate_list_samples(self):
+        self.img_per_movie = self.end_frame + 1 - self.start_frame
+        
+        start_samples = self.start_frame + self.pre_frame \
+            + self.pre_post_omission
+        end_samples = self.end_frame - self.post_frame \
+            - self.pre_post_omission
+            
+        if (end_samples - start_samples) < self.batch_size:
+            raise Exception("Not enough frames to construct one batch.")
+        
+        self.list_samples = np.arange(start_samples, end_samples)
+
+        if self.randomize:
+            np.random.shuffle(self.list_samples)
+
+        # We cut the number of samples if asked to
+        if (self.total_samples > 0
+                and self.total_samples < len(self.list_samples)):
+            self.list_samples = self.list_samples[0: self.total_samples]
+
+    def on_epoch_end(self):
+        """We only increase index if steps_per_epoch is set to positive value. 
+        -1 will force the generator to not iterate at the end of each epoch."""
+        if self.steps_per_epoch > 0:
+            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+                self.epoch_index = self.epoch_index + 1
+            else:
+                # if we reach the end of the data, we roll over
+                self.epoch_index = 0
+
+    def __len__(self):
+        "Denotes the total number of batches"
+        return int(np.floor(float(len(self.list_samples)) / self.batch_size))
+    
+    def generate_batch_indexes(self, index):   
+        # This is to ensure we are going through
+        # the entire data when steps_per_epoch<self.__len__
+        if self.steps_per_epoch > 0:
+            index = index + self.steps_per_epoch * self.epoch_index
+
+        # Generate indexes of the batch
+        indexes = np.arange(index * self.batch_size,
+                                (index + 1) * self.batch_size)
+
+        shuffle_indexes = self.list_samples[indexes]
+        
+        return shuffle_indexes
+        
+class EphysGenerator(SequentialGenerator):    
     """This generator is used when dealing with a single dat file storing a
     continous raw neuropixel recording as a (time, 384, 2) int16 array."""
 
@@ -408,118 +511,32 @@ class EphysGenerator(DeepGenerator):
         super().__init__(json_path)
 
         self.raw_data_file = self.json_data["train_path"]
-        self.batch_size = self.json_data["batch_size"]
-
-        if "pre_post_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_post_frame"]
-            self.post_frame = self.json_data["pre_post_frame"]
-        else:
-            self.pre_frame = self.json_data["pre_frame"]
-            self.post_frame = self.json_data["post_frame"]
-
-        self.pre_post_omission = self.json_data["pre_post_omission"]
-        self.start_frame = self.json_data["start_frame"]
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
-
-        # This is used to limit the total number of samples
-        # -1 means to take all and is the default fall back
-
-        if "total_samples" in self.json_data.keys():
-            self.total_samples = self.json_data["total_samples"]
-        else:
-            self.total_samples = -1
-
-        # This is compatible with negative frames
-        self.end_frame = self.json_data["end_frame"]
-
         self.nb_probes = 384
 
         self.raw_data = np.memmap(self.raw_data_file, dtype="int16")
-
-        if self.end_frame < 0:
-            self.img_per_movie = (
-                int(self.raw_data.size / self.nb_probes)
-                + 1
-                + self.end_frame
-                - self.start_frame
-                - self.post_frame
-                - self.pre_post_omission
-            )
-        elif int(self.raw_data.size / self.nb_probes) < self.end_frame:
-            self.img_per_movie = (
-                int(self.raw_data.size / self.nb_probes)
-                - self.start_frame
-                - self.post_frame
-                - self.pre_post_omission
-            )
-        else:
-            self.img_per_movie = self.end_frame + 1 - self.start_frame
-
         self.total_frame_per_movie = int(self.raw_data.size / self.nb_probes)
 
+        self.update_end_frame(self, self.total_frame_per_movie)
+        self.calculate_list_samples()
+
+        # We calculate the mean and std of the data
         average_nb_samples = 200000
-
-        shape = (self.total_frame_per_movie, int(self.nb_probes / 2), 2)
-        # load it with the correct shape
-        self.raw_data = np.memmap(
-            self.raw_data_file, dtype="int16", shape=shape)
-
-        # Older reshape code, to remove when stable
-        # Reshape in number of traces
-        # self.raw_data = np.reshape(self.raw_data
-        #   , (self.total_frame_per_movie,
-        #   self.nb_probes))
-
-        # Reshape following probes location
-        # self.raw_data = np.reshape(self.raw_data, (self.total_frame_per_movie
-        #                                           int(self.nb_probes/2), 2)
-
         local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
-        self.epoch_index = 0
-        self.list_samples = np.arange(
-            self.start_frame, self.start_frame + self.img_per_movie
-        )
-        if "randomize" in self.json_data.keys():
-            if self.json_data["randomize"] == 1:
-                np.random.shuffle(self.list_samples)
-
-        # We cut the number of samples if asked to
-        if (self.total_samples > 0
-                and self.total_samples < len(self.list_samples)):
-            self.list_samples = self.list_samples[0: self.total_samples]
-
-    def __len__(self):
-        "Denotes the total number of batches"
-        return int(np.floor(float(len(self.list_samples)) / self.batch_size))
-
-    def on_epoch_end(self):
-        # We only increase index if steps_per_epoch
-        # is set to positive value. -1 will force the generator
-        # to not iterate at the end of each epoch
-        if self.steps_per_epoch > 0:
-            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
-                self.epoch_index = self.epoch_index + 1
-            else:
-                # if we reach the end of the data, we roll over
-                self.epoch_index = 0
+        
+        shape = (self.total_frame_per_movie, int(self.nb_probes / 2), 2)
+        
+        # load it with the correct shape
+        self.raw_data = np.memmap(
+            self.raw_data_file, dtype="int16", shape=shape)
 
     def __getitem__(self, index):
         # This is to ensure we are going through
         # the entire data when steps_per_epoch<self.__len__
-        if self.steps_per_epoch > 0:
-            index = index + self.steps_per_epoch * self.epoch_index
+        shuffle_indexes = self.generate_batch_indexes(index)
 
-        # Generate indexes of the batch
-        if (index + 1) * self.batch_size > self.total_frame_per_movie:
-            indexes = np.arange(index * self.batch_size, self.img_per_movie)
-        else:
-            indexes = np.arange(index * self.batch_size,
-                                (index + 1) * self.batch_size)
-
-        shuffle_indexes = self.list_samples[indexes]
         input_full = np.zeros(
             [self.batch_size, int(self.nb_probes), 2,
              self.pre_frame + self.post_frame],
@@ -585,7 +602,7 @@ class EphysGenerator(DeepGenerator):
         return input_full, output_full
 
 
-class MultiContinuousTifGenerator(DeepGenerator):
+class MultiContinuousTifGenerator(SequentialGenerator):
     """This generator is used when dealing with a continuous movie split
     in multiple blocks of frames each within individual tif files as is
     typically generated by ScanImage. The provided path will be a folder
@@ -602,33 +619,6 @@ class MultiContinuousTifGenerator(DeepGenerator):
         else:
             self.raw_data_file = self.json_data["movie_path"]
 
-        self.batch_size = self.json_data["batch_size"]
-        self.pre_frame = self.json_data["pre_frame"]
-        self.post_frame = self.json_data["post_frame"]
-
-        # For backward compatibility
-        if "pre_post_omission" in self.json_data.keys():
-            self.pre_post_omission = self.json_data["pre_post_omission"]
-        else:
-            self.pre_post_omission = 0
-
-        self.start_frame = self.json_data["start_frame"]
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
-
-        if "randomize" in self.json_data.keys():
-            self.randomize = self.json_data["randomize"]
-        else:
-            self.randomize = 1
-
-        # This is used to limit the total number of samples
-        # -1 means to take all and is the default fall back
-        if "total_samples" in self.json_data.keys():
-            self.total_samples = self.json_data["total_samples"]
-        else:
-            self.total_samples = -1
-
-        # This is compatible with negative frames
-        self.end_frame = self.json_data["end_frame"]
 
         self.list_tif_files = glob.glob(
             os.path.join(self.raw_data_file, '*.tif'))
@@ -648,17 +638,9 @@ class MultiContinuousTifGenerator(DeepGenerator):
 
         self.list_bounds = np.array(self.list_bounds)
 
-        if self.end_frame < 0:
-            self.img_per_movie = (
-                self.total_frame_per_movie + 1
-                + self.end_frame - self.start_frame
-            )
-        elif self.total_frame_per_movie < self.end_frame:
-            self.img_per_movie = self.total_frame_per_movie
-            + 1 - self.start_frame
-        else:
-            self.img_per_movie = self.end_frame + 1 - self.start_frame
-
+        self.update_end_frame(self, self.total_frame_per_movie)
+        self.calculate_list_samples()
+        
         average_nb_samples = 1000
 
         local_data = self.get_raw_frames_from_list(
@@ -667,37 +649,6 @@ class MultiContinuousTifGenerator(DeepGenerator):
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
         self.epoch_index = 0
-
-        self.list_samples = np.arange(
-            self.pre_frame + self.pre_post_omission + self.start_frame,
-            self.start_frame
-            + self.img_per_movie
-            - self.post_frame
-            - self.pre_post_omission,
-        )
-
-        if self.randomize:
-            np.random.shuffle(self.list_samples)
-
-        # We cut the number of samples if asked to
-        if (self.total_samples > 0
-                and self.total_samples < len(self.list_samples)):
-            self.list_samples = self.list_samples[0: self.total_samples]
-
-    def __len__(self):
-        "Denotes the total number of batches"
-        return int(np.floor(float(len(self.list_samples)) / self.batch_size))
-
-    def on_epoch_end(self):
-        # We only increase index if steps_per_epoch is set
-        # to positive value. -1 will force the generator
-        # to not iterate at the end of each epoch
-        if self.steps_per_epoch > 0:
-            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
-                self.epoch_index = self.epoch_index + 1
-            else:
-                # if we reach the end of the data, we roll over
-                self.epoch_index = 0
 
     def get_list_frame_and_index(self, frame_index):
         list_index = np.where((self.list_bounds-frame_index) <= 0)[0][-1]
@@ -727,14 +678,7 @@ class MultiContinuousTifGenerator(DeepGenerator):
         return data_img_input
 
     def __getitem__(self, index):
-        if self.steps_per_epoch > 0:
-            index = index + self.steps_per_epoch * self.epoch_index
-
-        # Generate indexes of the batch
-        indexes = np.arange(index * self.batch_size,
-                            (index + 1) * self.batch_size)
-
-        shuffle_indexes = self.list_samples[indexes]
+        shuffle_indexes = self.generate_batch_indexes(index)
 
         input_full = np.zeros(
             [
@@ -811,7 +755,7 @@ class MultiContinuousTifGenerator(DeepGenerator):
         return input_full, output_full
 
 
-class SingleTifGenerator(DeepGenerator):
+class SingleTifGenerator(SequentialGenerator):
     """This generator is used when dealing with a single tif file storing a
     continous movie recording. Each frame can be arbitrary (x,y) size but
     should be consistent through training. a maximum of 1000 frames are pulled
@@ -822,98 +766,24 @@ class SingleTifGenerator(DeepGenerator):
         super().__init__(json_path)
 
         self.raw_data_file = self.json_data["train_path"]
-        self.batch_size = self.json_data["batch_size"]
-
-        if "pre_post_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_post_frame"]
-            self.post_frame = self.json_data["pre_post_frame"]
-        else:
-            self.pre_frame = self.json_data["pre_frame"]
-            self.post_frame = self.json_data["post_frame"]
-
-        self.pre_post_omission = self.json_data["pre_post_omission"]
-        self.start_frame = self.json_data["start_frame"]
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
-
-        if "randomize" in self.json_data.keys():
-            self.randomize = self.json_data["randomize"]
-        else:
-            self.randomize = 1
-
-        # This is used to limit the total number of samples
-        # -1 means to take all and is the default fall back
-        if "total_samples" in self.json_data.keys():
-            self.total_samples = self.json_data["total_samples"]
-        else:
-            self.total_samples = -1
-
-        # This is compatible with negative frames
-        self.end_frame = self.json_data["end_frame"]
-
+     
         with tifffile.TiffFile(self.raw_data_file) as tif:
             self.raw_data = tif.asarray()
 
         self.total_frame_per_movie = self.raw_data.shape[0]
 
-        if self.end_frame < 0:
-            self.img_per_movie = (
-                self.total_frame_per_movie + 1
-                + self.end_frame - self.start_frame
-            )
-        elif self.total_frame_per_movie < self.end_frame:
-            self.img_per_movie = self.total_frame_per_movie \
-                + 1 - self.start_frame
-        else:
-            self.img_per_movie = self.end_frame + 1 - self.start_frame
+        self.update_end_frame(self, self.total_frame_per_movie)
+        self.calculate_list_samples()
 
         average_nb_samples = np.min([self.total_frame_per_movie, 1000])
-
         local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
         self.epoch_index = 0
 
-        self.list_samples = np.arange(
-            self.pre_frame + self.pre_post_omission + self.start_frame,
-            self.start_frame
-            + self.img_per_movie
-            - self.post_frame
-            - self.pre_post_omission,
-        )
-
-        if self.randomize:
-            np.random.shuffle(self.list_samples)
-
-        # We cut the number of samples if asked to
-        if (self.total_samples > 0
-                and self.total_samples < len(self.list_samples)):
-            self.list_samples = self.list_samples[0: self.total_samples]
-
-    def __len__(self):
-        "Denotes the total number of batches"
-        return int(np.floor(float(len(self.list_samples)) / self.batch_size))
-
-    def on_epoch_end(self):
-        # We only increase index if steps_per_epoch is set
-        # to positive value. -1 will force the generator
-        # to not iterate at the end of each epoch
-        if self.steps_per_epoch > 0:
-            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
-                self.epoch_index = self.epoch_index + 1
-            else:
-                # if we reach the end of the data, we roll over
-                self.epoch_index = 0
-
     def __getitem__(self, index):
-        if self.steps_per_epoch > 0:
-            index = index + self.steps_per_epoch * self.epoch_index
-
-        # Generate indexes of the batch
-        indexes = np.arange(index * self.batch_size,
-                            (index + 1) * self.batch_size)
-
-        shuffle_indexes = self.list_samples[indexes]
+        shuffle_indexes = self.generate_batch_indexes(index)
 
         input_full = np.zeros(
             [
@@ -990,7 +860,7 @@ class SingleTifGenerator(DeepGenerator):
         return input_full, output_full
 
 
-class OphysGenerator(DeepGenerator):
+class OphysGenerator(SequentialGenerator):
     """This generator is used when dealing with a single hdf5 file storing a
     continous movie recording into a 'data' field as [time, x, y]. Each
     frame is expected to be smaller than (512,512)."""
@@ -1012,34 +882,6 @@ class OphysGenerator(DeepGenerator):
 
         self.batch_size = self.json_data["batch_size"]
 
-        # For backward compatibility
-        if "pre_post_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_post_frame"]
-            self.post_frame = self.json_data["pre_post_frame"]
-        else:
-            self.pre_frame = self.json_data["pre_frame"]
-            self.post_frame = self.json_data["post_frame"]
-
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
-        self.start_frame = self.json_data["start_frame"]
-        self.epoch_index = 0
-
-        # For backward compatibility
-        if "pre_post_omission" in self.json_data.keys():
-            self.pre_post_omission = self.json_data["pre_post_omission"]
-        else:
-            self.pre_post_omission = 0
-
-        # This is compatible with negative frames
-        self.end_frame = self.json_data["end_frame"]
-
-        # This is used to limit the total number of samples
-        # -1 means to take all and is the default fall back
-        if "total_samples" in self.json_data.keys():
-            self.total_samples = self.json_data["total_samples"]
-        else:
-            self.total_samples = -1
-
         if self.from_s3:
             s3_filesystem = s3fs.S3FileSystem()
             raw_data = h5py.File(
@@ -1049,69 +891,18 @@ class OphysGenerator(DeepGenerator):
 
         self.total_frame_per_movie = int(raw_data.shape[0])
 
-        if self.end_frame < 0:
-            self.img_per_movie = (
-                self.total_frame_per_movie
-                + 1
-                + self.end_frame
-                - self.start_frame
-                - self.post_frame
-            )
-        elif self.total_frame_per_movie < self.end_frame:
-            self.img_per_movie = (
-                self.total_frame_per_movie - self.start_frame - self.post_frame
-            )
-        else:
-            self.img_per_movie = self.end_frame + 1 - self.start_frame
+        self.update_end_frame(self, self.total_frame_per_movie)
+        self.calculate_list_samples()
 
         average_nb_samples = np.min([int(raw_data.shape[0]), 1000])
-
         local_data = raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")
 
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
 
-        self.list_samples = np.arange(
-            self.start_frame, self.start_frame + self.img_per_movie
-        )
-
-        if "randomize" in self.json_data.keys():
-            self.randomize = self.json_data["randomize"]
-        else:
-            self.randomize = 1
-
-        if self.randomize:
-            np.random.shuffle(self.list_samples)
-
-        # We cut the number of samples if asked to
-        if (self.total_samples > 0
-                and self.total_samples < len(self.list_samples)):
-            self.list_samples = self.list_samples[0: self.total_samples]
-
-    def __len__(self):
-        "Denotes the total number of batches"
-        return int(np.floor(float(len(self.list_samples)) / self.batch_size))
-
-    def on_epoch_end(self):
-        # We only increase index if steps_per_epoch
-        # is set to positive value. -1 will force the generator
-        # to not iterate at the end of each epoch
-        if self.steps_per_epoch > 0:
-            self.epoch_index = self.epoch_index + 1
-
     def __getitem__(self, index):
-        if self.steps_per_epoch > 0:
-            index = index + self.steps_per_epoch * self.epoch_index
-
-        # Generate indexes of the batch
-        if (index + 1) * self.batch_size > self.total_frame_per_movie:
-            indexes = np.arange(index * self.batch_size, self.img_per_movie)
-        else:
-            indexes = np.arange(index * self.batch_size,
-                                (index + 1) * self.batch_size)
-
-        shuffle_indexes = self.list_samples[indexes]
+        shuffle_indexes = self.generate_batch_indexes(index)
 
         input_full = np.zeros(
             [self.batch_size, 512, 512, self.pre_frame + self.post_frame],

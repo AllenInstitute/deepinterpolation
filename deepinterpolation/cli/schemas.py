@@ -36,7 +36,7 @@ def get_list_of_generators():
     curated_list = [indiv_arch[0] for indiv_arch in list_generator]
     excluded_list = ["MaxRetryException", "JsonLoader",
                      "FmriGenerator", "CollectorGenerator",
-                     "DeepGenerator"]
+                     "DeepGenerator", "SequentialGenerator"]
     # Some generators are not compatible with the CLI yet.
 
     curated_list = [
@@ -155,15 +155,16 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     start_frame = argschema.fields.Int(
         required=False,
         default=0,
-        description="First frame used by the generator.",
+        description="First frame used by the generator. First frame is 0.",
     )
 
     end_frame = argschema.fields.Int(
         required=False,
         default=-1,
         description=(
-            "Last frame used by the generator. -1 defaults to "
-            "last available frame."
+            "Last frame used by the generator. -1 defaults to the \
+            last available frame. Negative values smaller than -1 \
+            increasingly truncates the end of the dataset. 0 is not permitted."
         ),
     )
 
@@ -302,7 +303,7 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             "Output data type for inference. Default is float32. It is \
             important to keep in mind that DeepInterpolation can increase \
             available bit depth due to the increased Signal to Noise (SNR). \
-            smaller data types will save space at the cost of signal \
+            Smaller data types will save space at the cost of signal \
             resolution. Make sure to turn on 'rescaling' if that impacts the \
             output data range."
         ),
