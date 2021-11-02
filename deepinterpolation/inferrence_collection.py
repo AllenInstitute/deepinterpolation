@@ -6,6 +6,9 @@ from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 
+import tensorflow.compat.v1.logging
+import os
+
 
 class fmri_inferrence:
     # This inferrence is specific to fMRI which is raster scanning for
@@ -121,6 +124,57 @@ class fmri_inferrence:
                             ]
 
 
+def load_model_worker(json_data):
+    try:
+        local_model_path = __get_local_model_path(json_data)
+        model = __load_local_model(path=local_model_path)
+    except KeyError:
+        model = __load_model_from_mlflow(json_data)
+    return model
+
+def __get_local_model_path(json_data):
+    try:
+        model_path = json_data['model_path']
+        warnings.warn('Loading model from model_path will be deprecated '
+                      'in a future release')
+    except KeyError:
+        model_path = json_data['model_source']['local_path']
+    return model_path
+
+def __load_local_model(path: str):
+    model = load_model(
+        path,
+        custom_objects={
+            "annealed_loss": lc.loss_selector("annealed_loss")},
+    )
+    return model
+
+def __load_model_from_mlflow(json_data):
+
+    mlflow_registry_params = \
+        json_data['model_source']['mlflow_registry']
+
+    model_name = mlflow_registry_params['model_name']
+    model_version = mlflow_registry_params.get('model_version')
+    model_stage = mlflow_registry_params.get('model_stage')
+
+    mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
+
+    if model_version is not None:
+        model_uri = f"models:/{model_name}/{model_version}"
+    elif model_stage:
+        model_uri = f"models:/{model_name}/{model_stage}"
+    else:
+        # Gets the latest version without any stage
+        model_uri = f"models:/{model_name}/None"
+
+    model = mlflow.keras.load_model(
+        model_uri=model_uri
+    )
+
+    return model
+
+
 class core_inferrence:
     # This is the generic inferrence class
     def __init__(self, inferrence_json_path, generator_obj):
@@ -160,55 +214,6 @@ class core_inferrence:
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
 
-        self.__load_model()
-
-    def __load_model(self):
-        try:
-            local_model_path = self.__get_local_model_path()
-            self.__load_local_model(path=local_model_path)
-        except KeyError:
-            self.__load_model_from_mlflow()
-
-    def __get_local_model_path(self):
-        try:
-            model_path = self.json_data['model_path']
-            warnings.warn('Loading model from model_path will be deprecated '
-                          'in a future release')
-        except KeyError:
-            model_path = self.json_data['model_source']['local_path']
-        return model_path
-
-    def __load_local_model(self, path: str):
-        self.model = load_model(
-            path,
-            custom_objects={
-                "annealed_loss": lc.loss_selector("annealed_loss")},
-        )
-
-    def __load_model_from_mlflow(self):
-        import mlflow
-
-        mlflow_registry_params = \
-            self.json_data['model_source']['mlflow_registry']
-
-        model_name = mlflow_registry_params['model_name']
-        model_version = mlflow_registry_params.get('model_version')
-        model_stage = mlflow_registry_params.get('model_stage')
-
-        mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
-
-        if model_version is not None:
-            model_uri = f"models:/{model_name}/{model_version}"
-        elif model_stage:
-            model_uri = f"models:/{model_name}/{model_stage}"
-        else:
-            # Gets the latest version without any stage
-            model_uri = f"models:/{model_name}/None"
-
-        self.model = mlflow.keras.load_model(
-            model_uri=model_uri
-        )
-
     def run(self):
         if self.output_padding:
             final_shape = [self.generator_obj.end_frame -
@@ -243,7 +248,9 @@ class core_inferrence:
             for index_dataset in np.arange(0, self.nb_datasets, 1):
                 local_data = self.generator_obj.__getitem__(index_dataset)
 
-                predictions_data = self.model.predict(local_data[0])
+                model = load_model_worker(self.json_data)
+
+                predictions_data = model.predict(local_data[0])
 
                 local_mean, local_std = \
                     self.generator_obj.__get_norm_parameters__(index_dataset)
