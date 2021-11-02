@@ -334,6 +334,15 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         ),
     )
 
+    n_parallel_workers = argschema.fields.Integer(
+        required=False,
+        default=8,
+        description=(
+            "Number of parallel workers to use when farming out "
+            "inference work"
+        )
+    )
+
 
 class InferenceInputSchema(argschema.ArgSchema):
     log_level = argschema.fields.LogLevel(default="INFO")
