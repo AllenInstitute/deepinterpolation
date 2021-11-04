@@ -5,7 +5,8 @@ from deepinterpolation.cli.inference import Inference
 generator_param = {}
 inference_param = {}
 
-# We are reusing the data generator for training here. Some parameters like steps_per_epoch are irrelevant but currently needs to be provided
+# We are reusing the data generator for training here. Some parameters like
+# steps_per_epoch are irrelevant but currently needs to be provided
 generator_param["name"] = "EphysGenerator"
 generator_param["pre_post_frame"] = 30
 generator_param["pre_post_omission"] = 1

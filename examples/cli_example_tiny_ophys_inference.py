@@ -16,11 +16,11 @@ generator_param["data_path"] = os.path.join(
     "..",
     "sample_data",
     "ophys_tiny_761605196.tif",
-) 
+)
 # Note the CLI has changed train_path to data_path to take into account
 # the use of generators for inference
 
-generator_param["batch_size"] = 1 # Increasing this number will facilitate
+generator_param["batch_size"] = 1  # Increasing this number will facilitate
 # parallelisation of inference but will cost more memory.
 generator_param["start_frame"] = 0
 generator_param["end_frame"] = 99  # -1 to go until the end.
@@ -47,7 +47,7 @@ inference_param[
 inference_param["output_padding"] = False
 
 # this is an optional parameter to bring back output data to a given
-# precision. Read the CLI documentation for more details. 
+# precision. Read the CLI documentation for more details.
 # this is available through 'python -m deepinterpolation.cli.inference --help'
 inference_param["output_datatype"] = 'uint16'
 

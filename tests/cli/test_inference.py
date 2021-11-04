@@ -3,8 +3,6 @@ import h5py
 import json
 from pathlib import Path
 import os
-import numpy as np
-
 import deepinterpolation.cli.inference as inf_cli
 
 
@@ -147,11 +145,9 @@ def test_integration_cli_ephys_inference_padding(tmp_path):
     }
 
     inferrence_param["output_padding"] = True
-    
+
     # Replace this path to where you want to store your output file
-    inferrence_param[
-        "output_file"
-    ] = os.path.join(
+    inferrence_param["output_file"] = os.path.join(
         tmp_path,
         "ephys_tiny_continuous_deep_interpolation.h5"
     )
@@ -164,16 +160,17 @@ def test_integration_cli_ephys_inference_padding(tmp_path):
 
     inference = inf_cli.Inference(input_data=args, args=[])
     inference.run()
-    
+
     path_output = args["inference_params"]["output_file"]
 
     assert Path(path_output).exists()
-    
+
     with h5py.File(path_output, 'r') as h5_handle:
         nb_frame = h5_handle['data'].shape[0]
-        
+
     assert nb_frame == (generator_param["end_frame"] -
                         generator_param["start_frame"])
+
 
 def test_integration_cli_ephys_inference_no_padding(tmp_path):
 
@@ -215,11 +212,9 @@ def test_integration_cli_ephys_inference_no_padding(tmp_path):
     }
 
     inferrence_param["output_padding"] = False
-    
+
     # Replace this path to where you want to store your output file
-    inferrence_param[
-        "output_file"
-    ] = os.path.join(
+    inferrence_param["output_file"] = os.path.join(
         tmp_path,
         "ephys_tiny_continuous_deep_interpolation.h5"
     )
@@ -232,12 +227,13 @@ def test_integration_cli_ephys_inference_no_padding(tmp_path):
 
     inference = inf_cli.Inference(input_data=args, args=[])
     inference.run()
-    
+
     path_output = args["inference_params"]["output_file"]
 
     assert Path(path_output).exists()
-    
+
     with h5py.File(path_output, 'r') as h5_handle:
         nb_frame = h5_handle['data'].shape[0]
-        
+
     assert nb_frame == 50
+    
