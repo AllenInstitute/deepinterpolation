@@ -215,7 +215,6 @@ class core_inferrence:
                            self.generator_obj.start_frame]
             first_sample = self.generator_obj.start_sample - \
                 self.generator_obj.start_frame
-
         else:
             final_shape = [self.nb_datasets * self.batch_size]
             first_sample = 0
