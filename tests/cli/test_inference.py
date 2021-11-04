@@ -236,4 +236,3 @@ def test_integration_cli_ephys_inference_no_padding(tmp_path):
         nb_frame = h5_handle['data'].shape[0]
 
     assert nb_frame == 50
-    
