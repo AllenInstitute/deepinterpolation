@@ -455,7 +455,7 @@ class SequentialGenerator(DeepGenerator):
         # This is to handle selecting the end of the movie
         if self.end_frame < 0:
             self.end_frame = total_frame_per_movie+self.end_frame
-        elif self.total_frame_per_movie <= self.end_frame:
+        elif total_frame_per_movie <= self.end_frame:
             self.end_frame = total_frame_per_movie-1
 
     def calculate_list_samples(self, total_frame_per_movie):

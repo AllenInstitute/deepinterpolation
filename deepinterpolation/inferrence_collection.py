@@ -211,13 +211,8 @@ class core_inferrence:
 
     def run(self):
         if self.output_padding:
-            self.generator_obj.start_sample
-            self.generator_obj.end_sample
-            self.generator_obj.self.start_frame
-            self.generator_obj.self.end_frame
-
-            final_shape = [self.generator_obj.self.end_frame -
-                           self.generator_obj.self.start_frame]
+            final_shape = [self.generator_obj.end_frame -
+                           self.generator_obj.start_frame]
             first_sample = self.generator_obj.start_sample - \
                 self.generator_obj.start_frame
 
