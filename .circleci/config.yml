@@ -28,7 +28,7 @@ jobs:
             echo ${CHANGED_PYFILES} | xargs -r flake8 --count
           name: Lint
 
-  raw_packreq_test:
+  raw_packrequirement_test:
     executor: py37_executor
     steps:
       - checkout
@@ -44,7 +44,8 @@ jobs:
             bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
           name: Test
 
-  tf25_test:
+ 
+  tensorflow_latest_test:
     executor: py37_executor
     steps:
       - checkout
@@ -52,41 +53,7 @@ jobs:
           command: |
             pip install .
             pip install -r test_requirements.txt
-            pip install tensorflow==2.5
-          name: Install
-
-      - run:
-          command: |
-            python -m pytest --cov deepinterpolation --cov-report xml
-            bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
-          name: Test
-
-  tf23_test:
-    executor: py37_executor
-    steps:
-      - checkout
-      - run:
-          command: |
-            pip install .
-            pip install -r test_requirements.txt
-            pip install tensorflow==2.3
-          name: Install
-
-      - run:
-          command: |
-            python -m pytest --cov deepinterpolation --cov-report xml
-            bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
-          name: Test
-
-  tf26_test:
-    executor: py37_executor
-    steps:
-      - checkout
-      - run:
-          command: |
-            pip install .
-            pip install -r test_requirements.txt
-            pip install tensorflow==2.6
+            pip install tensorflow --upgrade
           name: Install
 
       - run:
@@ -123,13 +90,11 @@ workflows:
   main:
     jobs:
       - lint
-      - raw_packreq_test
-      - tf23_test
-      - tf25_test
-      - tf26_test
+      - raw_packrequirement_test
+      - tensorflow_latest_test
       - docker:
           requires:
-            - raw_packreq_test
+            - raw_packrequirement_test
           filters:
             branches:
               only:
