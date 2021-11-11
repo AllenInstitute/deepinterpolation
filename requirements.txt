@@ -1,4 +1,4 @@
-tensorflow
+tensorflow==2.4
 nibabel
 h5py==2.10.0
 matplotlib
