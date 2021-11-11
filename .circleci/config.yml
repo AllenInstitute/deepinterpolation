@@ -129,7 +129,7 @@ workflows:
       - tf_latest_test
       - docker:
           requires:
-            - py37_test
+            - raw_packreq_test
           filters:
             branches:
               only:
