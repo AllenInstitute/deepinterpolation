@@ -61,7 +61,7 @@ jobs:
             bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
           name: Test
 
-  tf24_test:
+  tf23_test:
     executor: py37_executor
     steps:
       - checkout
@@ -69,7 +69,7 @@ jobs:
           command: |
             pip install .
             pip install -r test_requirements.txt
-            pip install tensorflow==2.4
+            pip install tensorflow==2.3
           name: Install
 
       - run:
