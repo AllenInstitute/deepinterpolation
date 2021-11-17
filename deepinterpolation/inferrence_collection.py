@@ -219,10 +219,10 @@ class core_inferrence:
             final_shape = [self.nb_datasets * self.batch_size]
             first_sample = 0
 
-        final_shape.extend(self.indiv_shape)
+        final_shape.extend(self.indiv_shape[:-1])
 
         chunk_size = [1]
-        chunk_size.extend(self.indiv_shape)
+        chunk_size.extend(self.indiv_shape[:-1])
 
         with h5py.File(self.output_file, "w") as file_handle:
             dset_out = file_handle.create_dataset(
@@ -264,6 +264,7 @@ class core_inferrence:
                     else:
                         corrected_raw = local_data[1]
 
-                    raw_out[start:end, :] = corrected_raw
-
-                dset_out[start:end, :] = corrected_data
+                    raw_out[start:end, :] = np.squeeze(corrected_raw,-1)
+                    
+                # We squeeze to remove the feature dimension from tensorflow
+                dset_out[start:end, :] = np.squeeze(corrected_data,-1)
