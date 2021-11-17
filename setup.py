@@ -16,7 +16,7 @@ setup(
     name="deepinterpolation",
     version="0.1.3",
     description="Implemenent DeepInterpolation to denoise data by removing \
-independent noise",    
+independent noise",
     long_description_content_type='text/x-rst',
     long_description=readme,
     author="Jerome Lecoq",

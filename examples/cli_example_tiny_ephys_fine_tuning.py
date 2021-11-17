@@ -63,7 +63,7 @@ finetuning_params["model_source"] = {
 
 # An epoch is defined as the number of batches pulled from the dataset.
 # Because our datasets are VERY large. Often, we cannot
-# go through the entirity of the data so we define an epoch
+# go through the entirety of the data so we define an epoch
 # slightly differently than is usual.
 steps_per_epoch = 10
 finetuning_params["steps_per_epoch"] = steps_per_epoch

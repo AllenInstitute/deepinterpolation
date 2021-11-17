@@ -102,7 +102,7 @@ class CollectorGenerator(DeepGenerator):
         self.generator_list = generator_list
         self.nb_generator = len(self.generator_list)
         self.batch_size = self.generator_list[0].batch_size
-        self.steps_per_epoch =self.generator_list[0].steps_per_epoch
+        self.steps_per_epoch = self.generator_list[0].steps_per_epoch
         self.epoch_index = 0
 
         self.assign_indexes()
@@ -134,7 +134,7 @@ class CollectorGenerator(DeepGenerator):
         # Generate indexes of the batch
         if self.steps_per_epoch > 0:
             index = index + self.steps_per_epoch * self.epoch_index
-            
+
         local_index = self.list_samples[index]
 
         local_generator = self.generator_list[local_index["generator"]]
@@ -151,8 +151,8 @@ class CollectorGenerator(DeepGenerator):
         else:
             # if we reach the end of the data, we roll over
             self.epoch_index = 0
-            
-            
+
+
 class FmriGenerator(DeepGenerator):
     def __init__(self, json_path):
         super().__init__(json_path)
@@ -413,8 +413,8 @@ class FmriGenerator(DeepGenerator):
 class SequentialGenerator(DeepGenerator):
     """This generator stores shared code across generators that have a
     continous temporal direction upon which start_frame, end_frame,
-    pre_frame,... are used to to generate a list of samples. It is an 
-    intermediary class that is meant to be extended with details of 
+    pre_frame,... are used to to generate a list of samples. It is an
+    intermediary class that is meant to be extended with details of
     how datasets are loaded."""
 
     def __init__(self, json_path):
