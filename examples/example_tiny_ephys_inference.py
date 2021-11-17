@@ -14,7 +14,7 @@ if __name__ == '__main__':
     generator_param["pre_post_omission"] = 1
     generator_param[
         "steps_per_epoch"
-    ] = -1  
+    ] = -1
     # No steps necessary for inference as epochs are not relevant.
     # -1 deactivate it.
 
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     generator_param["end_frame"] = 200  # -1 to go until the end.
     generator_param[
         "randomize"
-    ] = 0  
+    ] = 0
     # This is important to keep the order and avoid the
     # randomization used during training
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     try:
         os.mkdir(jobdir)
-    except:
+    except Exception:
         print("folder already exists")
 
     path_generator = os.path.join(jobdir, "generator.json")

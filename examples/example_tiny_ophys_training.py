@@ -1,10 +1,6 @@
-import deepinterpolation as de
-import sys
-from shutil import copyfile
 import os
 from deepinterpolation.generic import JsonSaver, ClassLoader
 import datetime
-from typing import Any, Dict
 import pathlib
 
 if __name__ == '__main__':
@@ -115,7 +111,7 @@ if __name__ == '__main__':
 
     try:
         os.mkdir(jobdir)
-    except:
+    except Exception:
         print("folder already exists")
 
     # Here we create all json files that are fed to the training.
