@@ -18,14 +18,18 @@ if __name__ == '__main__':
     network_param = {}
     generator_test_param = {}
 
-    # An epoch is defined as the number of batches pulled from the dataset. Because our datasets are VERY large. Often, we cannot
-    # go through the entirity of the data so we define an epoch slightly differently than is usual.
+    # An epoch is defined as the number of batches pulled from the dataset.
+    # Because our datasets are VERY large. Often, we cannot
+    # go through the entirity of the data so we define an epoch slightly
+    # differently than is usual.
     steps_per_epoch = 10
 
-    # Those are parameters used for the Validation test generator. Here the test is done on the beginning of the data but
+    # Those are parameters used for the Validation test generator.
+    # Here the test is done on the beginning of the data but
     # this can be a separate file
     generator_test_param["type"] = "generator"  # type of collection
-    generator_test_param["name"] = "EphysGenerator"  # Name of object in the collection
+    generator_test_param["name"] = "EphysGenerator"  
+    # Name of object in the collection
     generator_test_param[
         "pre_post_frame"
     ] = 30  # Number of frame provided before and after the predicted frame
@@ -43,7 +47,9 @@ if __name__ == '__main__':
     ] = 1  # Number of frame omitted before and after the predicted frame
     generator_test_param[
         "steps_per_epoch"
-    ] = -1  # No step necessary for testing as epochs are not relevant. -1 deactivate it.
+    ] = -1  
+    # No step necessary for testing as epochs are not relevant.
+    # -1 deactivate it.
 
     # Those are parameters used for the main data generator
     generator_param["type"] = "generator"
@@ -69,26 +75,34 @@ if __name__ == '__main__':
     # Change this path to any model you wish to improve
     training_param[
         "model_path"
-    ] = r"/Users/jeromel/test/transfer_mean_absolute_error_2020_11_12_18_05_2020_11_12_18_05/2020_11_12_18_05_transfer_mean_absolute_error_2020_11_12_18_05_model.h5"
+    ] = r"/Users/jeromel/test/transfer_mean_absolute_error_2020_11_12_18_05_\
+        2020_11_12_18_05/2020_11_12_18_05_transfer_mean_absolute_error_2020_\
+        11_12_18_05_model.h5"
     training_param["batch_size"] = generator_test_param["batch_size"]
     training_param["steps_per_epoch"] = steps_per_epoch
     training_param[
         "period_save"
-    ] = 25  # network model is potentially saved during training between a regular nb epochs
+    ] = 25  
+    # network model is potentially saved during training
+    # between a regular nb epochs
     training_param["nb_gpus"] = 0
     training_param["apply_learning_decay"] = 0
     training_param[
         "nb_times_through_data"
-    ] = 1  # if you want to cycle through the entire data. Two many iterations will cause noise overfitting
+    ] = 1  
+    # if you want to cycle through the entire data.
+    # Two many iterations will cause noise overfitting
     training_param["learning_rate"] = 0.0001
     training_param["pre_post_frame"] = generator_test_param["pre_post_frame"]
     training_param["loss"] = "mean_absolute_error"
     training_param[
         "nb_workers"
-    ] = 16  # this is to enable multiple threads for data generator loading. Useful when this is slower than training
+    ] = 16  # this is to enable multiple threads for data generator loading.
+    # Useful when this is slower than training
 
     training_param["model_string"] = (
-        "transfer" + "_" + training_param["loss"] + "_" + training_param["run_uid"]
+        "transfer" + "_" + training_param["loss"] 
+        + "_" + training_param["run_uid"]
     )
 
     # Where do you store ongoing training progress
@@ -102,7 +116,8 @@ if __name__ == '__main__':
     except:
         print("folder already exists")
 
-    # Here we create all json files that are fed to the training. This is used for recording purposes as well as input to the
+    # Here we create all json files that are fed to the training.
+    # This is used for recording purposes as well as input to the
     # training process
     path_training = os.path.join(jobdir, "training.json")
     json_obj = JsonSaver(training_param)
@@ -123,7 +138,8 @@ if __name__ == '__main__':
     # We find the training obj in the collection using the json file
     trainer_obj = ClassLoader(path_training)
 
-    # We build the generators object. This will, among other things, calculate normalizing parameters.
+    # We build the generators object. This will, among other things,
+    # calculate normalizing parameters.
     train_generator = generator_obj.find_and_build()(path_generator)
     test_generator = generator_test_obj.find_and_build()(path_test_generator)
 

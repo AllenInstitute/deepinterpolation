@@ -36,7 +36,8 @@ if __name__ == '__main__':
         "pre_post_omission"
     ] = 1  # Number of frame omitted before and after the predicted frame
     generator_test_param["steps_per_epoch"] = -1
-    # No step necessary for testing as epochs are not relevant. -1 deactivate it.
+    # No step necessary for testing as epochs are not relevant.
+    # -1 deactivate it.
 
     # Those are parameters used for the main data generator
     generator_param["steps_per_epoch"] = steps_per_epoch
@@ -67,7 +68,8 @@ if __name__ == '__main__':
         + "_"
         + training_param["loss"]
     )
-    training_param["output_dir"] = str(pathlib.Path(__file__).parent.absolute())
+    training_param["output_dir"] = str(pathlib.Path(__file__)
+                                       .parent.absolute())
 
     args = {
         "training_params": training_param,
