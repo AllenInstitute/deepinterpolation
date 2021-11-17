@@ -33,7 +33,6 @@ if __name__ == '__main__':
     # This is important to keep the order
     # and avoid the randomization used during training
 
-
     inferrence_param["type"] = "inferrence"
     inferrence_param["name"] = "core_inferrence"
 

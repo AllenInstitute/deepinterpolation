@@ -25,7 +25,7 @@ if __name__ == '__main__':
     # Here the test is done on the beginning of the data but
     # this can be a separate file
     generator_test_param["type"] = "generator"  # type of collection
-    generator_test_param["name"] = "EphysGenerator"  
+    generator_test_param["name"] = "EphysGenerator"
     # Name of object in the collection
     generator_test_param[
         "pre_post_frame"
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     ] = 1  # Number of frame omitted before and after the predicted frame
     generator_test_param[
         "steps_per_epoch"
-    ] = -1  
+    ] = -1
     # No step necessary for testing as epochs are not relevant.
     # -1 deactivate it.
 
@@ -78,14 +78,14 @@ if __name__ == '__main__':
     training_param["steps_per_epoch"] = steps_per_epoch
     training_param[
         "period_save"
-    ] = 25  
+    ] = 25
     # network model is potentially saved during training
     # between a regular nb epochs
     training_param["nb_gpus"] = 0
     training_param["apply_learning_decay"] = 0
     training_param[
         "nb_times_through_data"
-    ] = 1  
+    ] = 1
     # if you want to cycle through the entire data.
     # Two many iterations will cause noise overfitting
     training_param["learning_rate"] = 0.0001
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     training_param["loss"] = "mean_absolute_error"
     training_param[
         "nb_workers"
-    ] = 16  
+    ] = 16
     # this is to enable multiple threads for data generator loading.
     # Useful when this is slower than training
 
