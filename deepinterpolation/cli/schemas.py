@@ -358,8 +358,9 @@ class InferenceInputSchema(argschema.ArgSchema):
     def inference_specific_settings(self, data, **kwargs):
         # This is to force randomize to be off if set by mistake
         if data["generator_params"]["randomize"]:
-            logging.error("randomize should be set to False for inference.")
-            raise ValueError('randomize should be set to False for inference.')
+            logging.info("randomize should be set to False for inference. \
+                        Overriding the parameter")
+            data["generator_params"]["randomize"] = False
 
         # To disable rolling samples for inference
         data["generator_params"]["steps_per_epoch"] = -1
