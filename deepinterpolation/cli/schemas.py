@@ -164,7 +164,10 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         description=(
             "Last frame used by the generator. -1 defaults to the \
             last available frame. Negative values smaller than -1 \
-            increasingly truncates the end of the dataset. 0 is not permitted."
+            increasingly truncates the end of the dataset. 0 is not permitted.\
+            Note: if end_frame = 2000, frame 2000 will be included \
+            if there is sufficient post_frame frames available after frame \
+            2000."
         ),
     )
 
@@ -355,9 +358,8 @@ class InferenceInputSchema(argschema.ArgSchema):
     def inference_specific_settings(self, data, **kwargs):
         # This is to force randomize to be off if set by mistake
         if data["generator_params"]["randomize"]:
-            logging.info("randomize should be set to False for inference. \
-                        Overriding the parameter")
-            data["generator_params"]["randomize"] = False
+            logging.error("randomize should be set to False for inference.")
+            raise ValueError('randomize should be set to False for inference.')
 
         # To disable rolling samples for inference
         data["generator_params"]["steps_per_epoch"] = -1
