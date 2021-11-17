@@ -437,7 +437,7 @@ class SequentialGenerator(DeepGenerator):
         if "randomize" in self.json_data.keys():
             self.randomize = self.json_data["randomize"]
         else:
-            self.randomize = 1
+            self.randomize = True
 
         if "pre_post_omission" in self.json_data.keys():
             self.pre_post_omission = self.json_data["pre_post_omission"]
@@ -733,9 +733,9 @@ class MultiContinuousTifGenerator(SequentialGenerator):
         return input_full, output_full
 
     def __data_generation__(self, index_frame):
-        # X : (n_samples, *dim, n_channels)
         "Generates data containing batch_size samples"
 
+        # X : (n_samples, *dim, n_channels)
         input_full = np.zeros(
             [
                 1,
@@ -838,8 +838,9 @@ class SingleTifGenerator(SequentialGenerator):
         return input_full, output_full
 
     def __data_generation__(self, index_frame):
-        # X : (n_samples, *dim, n_channels)
         "Generates data containing batch_size samples"
+
+        # X : (n_samples, *dim, n_channels)
 
         input_full = np.zeros(
             [
@@ -1098,8 +1099,9 @@ class MovieJSONGenerator(DeepGenerator):
         return local_mean, local_std
 
     def __data_generation__(self, index_frame):
-        # X : (n_samples, *dim, n_channels)
         "Generates data containing batch_size samples"
+
+        # X : (n_samples, *dim, n_channels)
         try:
             local_lims, local_img = self.get_lims_id_sample_from_index(
                 index_frame)
