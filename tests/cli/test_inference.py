@@ -3,7 +3,6 @@ import h5py
 import json
 from pathlib import Path
 import os
-
 import deepinterpolation.cli.inference as inf_cli
 
 
@@ -35,11 +34,11 @@ def inference_args(tmpdir, request):
 @pytest.fixture
 def generator_args(tmpdir):
     # make some dummy files so the schema validation is satisfied
-    train_path = tmpdir / "train_data.h5"
-    with h5py.File(train_path, "w") as f:
+    data_path = tmpdir / "train_data.h5"
+    with h5py.File(data_path, "w") as f:
         f.create_dataset("data", data=[1, 2, 3])
     args = {
-        "train_path": str(train_path)
+        "data_path": str(data_path)
     }
     yield args
 
@@ -106,19 +105,17 @@ def test_inference_cli(generator_args, inference_args, monkeypatch):
     assert Path(args["inference_params"]["output_file"]).exists()
 
 
-def test_integration_cli_ephys_inference(tmp_path):
+def test_integration_cli_ephys_inference_padding(tmp_path):
 
     generator_param = {}
     inferrence_param = {}
 
     generator_param["name"] = "EphysGenerator"
-    generator_param["pre_post_frame"] = 30
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
-    generator_param[
-        "steps_per_epoch"
-    ] = -1
 
-    generator_param["train_path"] = os.path.join(
+    generator_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
@@ -126,12 +123,9 @@ def test_integration_cli_ephys_inference(tmp_path):
         "ephys_tiny_continuous.dat2",
     )
 
-    generator_param["batch_size"] = 100
-    generator_param["start_frame"] = 100
-    generator_param["end_frame"] = 200  # -1 to go until the end.
-    generator_param[
-        "randomize"
-    ] = 0
+    generator_param["batch_size"] = 50
+    generator_param["start_frame"] = 0
+    generator_param["end_frame"] = 100  # -1 to go until the end.
 
     inferrence_param["name"] = "core_inferrence"
 
@@ -150,10 +144,10 @@ def test_integration_cli_ephys_inference(tmp_path):
         "local_path": local_path
     }
 
+    inferrence_param["output_padding"] = True
+
     # Replace this path to where you want to store your output file
-    inferrence_param[
-        "output_file"
-    ] = os.path.join(
+    inferrence_param["output_file"] = os.path.join(
         tmp_path,
         "ephys_tiny_continuous_deep_interpolation.h5"
     )
@@ -166,4 +160,79 @@ def test_integration_cli_ephys_inference(tmp_path):
 
     inference = inf_cli.Inference(input_data=args, args=[])
     inference.run()
-    assert Path(args["inference_params"]["output_file"]).exists()
+
+    path_output = args["inference_params"]["output_file"]
+
+    assert Path(path_output).exists()
+
+    with h5py.File(path_output, 'r') as h5_handle:
+        nb_frame = h5_handle['data'].shape[0]
+
+    assert nb_frame == (generator_param["end_frame"] -
+                        generator_param["start_frame"])
+
+
+def test_integration_cli_ephys_inference_no_padding(tmp_path):
+
+    generator_param = {}
+    inferrence_param = {}
+
+    generator_param["name"] = "EphysGenerator"
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
+    generator_param["pre_post_omission"] = 1
+
+    generator_param["data_path"] = os.path.join(
+        Path(__file__).parent.absolute(),
+        "..",
+        "..",
+        "sample_data",
+        "ephys_tiny_continuous.dat2",
+    )
+
+    generator_param["batch_size"] = 50
+    generator_param["start_frame"] = 0
+    generator_param["end_frame"] = 100  # -1 to go until the end.
+
+    inferrence_param["name"] = "core_inferrence"
+
+    # Replace this path to where you stored your model
+    filename = \
+        "2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5"
+    local_path = \
+        os.path.join(
+            Path(__file__).parent.absolute(),
+            "..",
+            "..",
+            "sample_data",
+            filename
+        )
+    inferrence_param["model_source"] = {
+        "local_path": local_path
+    }
+
+    inferrence_param["output_padding"] = False
+
+    # Replace this path to where you want to store your output file
+    inferrence_param["output_file"] = os.path.join(
+        tmp_path,
+        "ephys_tiny_continuous_deep_interpolation.h5"
+    )
+
+    args = {
+        "inference_params": inferrence_param,
+        "generator_params": generator_param,
+        "output_full_args": True
+    }
+
+    inference = inf_cli.Inference(input_data=args, args=[])
+    inference.run()
+
+    path_output = args["inference_params"]["output_file"]
+
+    assert Path(path_output).exists()
+
+    with h5py.File(path_output, 'r') as h5_handle:
+        nb_frame = h5_handle['data'].shape[0]
+
+    assert nb_frame == 50

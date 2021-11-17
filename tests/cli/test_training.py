@@ -20,11 +20,11 @@ def training_args(tmpdir, request):
 @pytest.fixture
 def generator_args(tmpdir):
     # make some dummy files so the schema validation is satisfied
-    train_path = tmpdir / "train_data.h5"
-    with h5py.File(train_path, "w") as f:
+    data_path = tmpdir / "train_data.h5"
+    with h5py.File(data_path, "w") as f:
         f.create_dataset("data", data=[1, 2, 3])
     args = {
-        "train_path": str(train_path)
+        "data_path": str(data_path)
     }
     yield args
 
@@ -124,13 +124,11 @@ def test_integration_cli_ephys_inference(tmp_path):
     network_param = {}
 
     generator_param["name"] = "EphysGenerator"
-    generator_param["pre_post_frame"] = 30
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
-    generator_param[
-        "steps_per_epoch"
-    ] = 2
 
-    generator_param["train_path"] = os.path.join(
+    generator_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
@@ -146,13 +144,11 @@ def test_integration_cli_ephys_inference(tmp_path):
     ] = 1
 
     generator_test_param["name"] = "EphysGenerator"
-    generator_test_param["pre_post_frame"] = 30
+    generator_test_param["pre_frame"] = 30
+    generator_test_param["post_frame"] = 30
     generator_test_param["pre_post_omission"] = 1
-    generator_test_param[
-        "steps_per_epoch"
-    ] = 2
 
-    generator_test_param["train_path"] = os.path.join(
+    generator_test_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
@@ -161,17 +157,17 @@ def test_integration_cli_ephys_inference(tmp_path):
     )
 
     generator_test_param["batch_size"] = 1
-    generator_test_param["start_frame"] = 0
-    generator_test_param["end_frame"] = 2  # -1 to go until the end.
+    generator_test_param["start_frame"] = 103
+    generator_test_param["end_frame"] = 105  # -1 to go until the end.
     generator_test_param[
         "randomize"
-    ] = 1
+    ] = True
 
     training_param["name"] = "core_trainer"
     training_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
     training_param["output_dir"] = str(tmp_path)
-
+    training_param["steps_per_epoch"] = 2
     network_param["name"] = "unet_single_ephys_1024"
 
     args = {

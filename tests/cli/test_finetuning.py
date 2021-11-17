@@ -35,7 +35,7 @@ def generator_args(tmpdir):
     with h5py.File(train_path, "w") as f:
         f.create_dataset("data", data=[1, 2, 3])
     args = {
-        "train_path": str(train_path)
+        "data_path": str(train_path)
     }
     yield args
 
@@ -99,7 +99,7 @@ def test_finetuning_cli(generator_args, training_args,
     """
     args = {
         "run_uid": "test_uid",
-        "training_params": training_args,
+        "finetuning_params": training_args,
         "generator_params": generator_args,
         "test_generator_params": generator_args,
         "output_full_args": True
@@ -108,9 +108,9 @@ def test_finetuning_cli(generator_args, training_args,
     training = cli.FineTuning(input_data=args, args=[])
     training.run()
 
-    model_path = os.path.join(args["training_params"]["output_dir"],
+    model_path = os.path.join(args["finetuning_params"]["output_dir"],
                               args["run_uid"] + "_" +
-                              args["training_params"]["model_string"]
+                              args["finetuning_params"]["model_string"]
                               + "_transfer_model.h5")
 
     assert Path(model_path).exists()
@@ -121,16 +121,14 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     generator_param = {}
     generator_test_param = {}
 
-    training_param = {}
+    finetuning_param = {}
 
     generator_param["name"] = "EphysGenerator"
-    generator_param["pre_post_frame"] = 30
+    generator_param["pre_frame"] = 30
+    generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
-    generator_param[
-        "steps_per_epoch"
-    ] = 2
 
-    generator_param["train_path"] = os.path.join(
+    generator_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
@@ -146,13 +144,11 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     ] = 1
 
     generator_test_param["name"] = "EphysGenerator"
-    generator_test_param["pre_post_frame"] = 30
+    generator_test_param["pre_frame"] = 30
+    generator_test_param["post_frame"] = 30
     generator_test_param["pre_post_omission"] = 1
-    generator_test_param[
-        "steps_per_epoch"
-    ] = 2
 
-    generator_test_param["train_path"] = os.path.join(
+    generator_test_param["data_path"] = os.path.join(
         Path(__file__).parent.absolute(),
         "..",
         "..",
@@ -161,15 +157,16 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     )
 
     generator_test_param["batch_size"] = 1
-    generator_test_param["start_frame"] = 0
-    generator_test_param["end_frame"] = 2  # -1 to go until the end.
+    generator_test_param["start_frame"] = 103
+    generator_test_param["end_frame"] = 106  # -1 to go until the end.
     generator_test_param[
         "randomize"
     ] = 1
 
-    training_param["model_string"] = "test_model_string"
+    finetuning_param["steps_per_epoch"] = 2
+    finetuning_param["model_string"] = "test_model_string"
     # Replace this path to where you want to store your output file
-    training_param["output_dir"] = str(tmp_path)
+    finetuning_param["output_dir"] = str(tmp_path)
 
     # Replace this path to where you stored your model
     filename = \
@@ -182,13 +179,13 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
             "sample_data",
             filename
         )
-    training_param["model_source"] = {
+    finetuning_param["model_source"] = {
         "local_path": local_path
     }
 
     args = {
         "run_uid": "test_uid",
-        "training_params": training_param,
+        "finetuning_params": finetuning_param,
         "generator_params": generator_param,
         "test_generator_params": generator_test_param,
         "output_full_args": True
@@ -197,9 +194,9 @@ def test_fine_integration_cli_ephys_finetuning(tmp_path):
     finetuning = cli.FineTuning(input_data=args, args=[])
     finetuning.run()
 
-    model_path = os.path.join(args["training_params"]["output_dir"],
+    model_path = os.path.join(args["finetuning_params"]["output_dir"],
                               args["run_uid"] + "_" +
-                              training_param["model_string"]
+                              finetuning_param["model_string"]
                               + "_transfer_model.h5")
 
     assert Path(model_path).exists()

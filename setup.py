@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 
-with open("README.rst") as f:
+with open("README.rst", encoding='utf-8') as f:
     readme = f.read()
 
 with open("LICENSE") as f:
@@ -15,8 +15,9 @@ with open("requirements.txt", "r") as f:
 setup(
     name="deepinterpolation",
     version="0.1.3",
-    description=("implemenent deep interpolation to denoise data by "
-                 "removing independent noise"),
+    description="Implemenent DeepInterpolation to denoise data by removing \
+independent noise",
+    long_description_content_type='text/x-rst',
     long_description=readme,
     author="Jerome Lecoq",
     author_email="jeromel@alleninstitute.org",

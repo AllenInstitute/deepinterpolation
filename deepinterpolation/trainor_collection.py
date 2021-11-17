@@ -59,7 +59,7 @@ class core_trainer:
         self.output_dir = json_data["output_dir"]
         self.run_uid = json_data["run_uid"]
         self.model_string = json_data["model_string"]
-        self.batch_size = json_data["batch_size"]
+        self.batch_size = self.local_generator.batch_size
         self.steps_per_epoch = json_data["steps_per_epoch"]
         self.loss_type = json_data["loss"]
         self.nb_gpus = json_data["nb_gpus"]
@@ -351,7 +351,7 @@ class transfer_trainer(core_trainer):
         self.output_dir = self.json_data["output_dir"]
         self.run_uid = self.json_data["run_uid"]
         self.model_string = self.json_data["model_string"]
-        self.batch_size = self.json_data["batch_size"]
+        self.batch_size = self.local_generator.batch_size
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.loss_type = self.json_data["loss"]
         self.nb_gpus = self.json_data["nb_gpus"]

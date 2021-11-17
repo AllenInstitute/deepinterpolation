@@ -1,3 +1,11 @@
+.vscode/
+build/
+dist/
+**/mypy_cache/
+**/__pycache__/
+*.pyc
+deepinterpolation.egg-info/
+=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -48,6 +56,3 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-
-# vscode stuff
-.vscode/

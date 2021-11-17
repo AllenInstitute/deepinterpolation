@@ -25,7 +25,7 @@ def _get_generator_params():
         "pre_post_omission": 1,
         "steps_per_epoch": -1,
         "train_path": train_path,
-        "batch_size": 100,
+        "batch_size": 10,
         "start_frame": 100,
         "end_frame": 200,
         "randomize": 0

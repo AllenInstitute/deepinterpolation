@@ -38,11 +38,11 @@ class Training(argschema.ArgSchemaParser):
             self.args["training_params"]["multi_gpus"]
         )
 
-        # Forward parameters to the training agent
-        self.args["training_params"]["steps_per_epoch"] = \
-            self.args["generator_params"]["steps_per_epoch"]
-        self.args["training_params"]["batch_size"] = \
-            self.args["generator_params"]["batch_size"]
+        # To be removed once fully transitioned to CLI
+        self.args["generator_params"]["train_path"] = \
+            self.args["generator_params"]["data_path"]
+        self.args["test_generator_params"]["train_path"] = \
+            self.args["test_generator_params"]["data_path"]
 
         # This is used to send to the legacy parameter tracking system
         # to specify each sub-object type.
