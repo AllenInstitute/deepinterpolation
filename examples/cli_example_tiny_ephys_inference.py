@@ -25,7 +25,6 @@ if __name__ == '__main__':
     generator_param["start_frame"] = 100
     generator_param["end_frame"] = 200  # -1 to go until the end.
 
-
     inference_param["name"] = "core_inferrence"
 
     # Replace this path to where you stored your model
@@ -42,12 +41,11 @@ if __name__ == '__main__':
         "local_path": local_path
     }
 
-
     # Replace this path to where you want to store your output file
     inference_param[
         "output_file"
-    ] = "/Users/jeromel/Desktop/test/ephys_tiny_continuous_deep_interpolation.h5"
-
+    ] = "/Users/jeromel/Desktop/test/\
+        ephys_tiny_continuous_deep_interpolation.h5"
 
     # This option is to add blank frames at the onset and end of the output
     # movie if some output frames are missing input frames to go through

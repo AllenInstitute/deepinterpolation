@@ -68,7 +68,8 @@ if __name__ == '__main__':
     finetuning_params["steps_per_epoch"] = steps_per_epoch
     finetuning_params[
         "period_save"
-    ] = 25  # network model is potentially saved during training between a regular
+    ] = 25  
+    # network model is potentially saved during training between a regular
     # nb epochs
 
     finetuning_params["learning_rate"] = 0.0001
