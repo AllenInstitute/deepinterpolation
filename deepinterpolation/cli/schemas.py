@@ -317,7 +317,7 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             pre_frame and post_frame frames before and after any given frame \
             for inference. Setting this to 'True' will pad the start and end \
             of the output dataset with blank frames to keep the dataset of \
-            the same size."    
+            the same size."
         ),
     )
 
