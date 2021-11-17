@@ -56,7 +56,7 @@ It is possible to train specific networks to deal with those boundary conditions
 
 **Question:When training or fine-tuning a network for 2d movies, I get the following error (or similar) ?:** 
 
-"WARNING:tensorflow:multiprocessing can interact badly with TensorFlow, causing...proper idiom
+        WARNING:tensorflow:multiprocessing can interact badly with TensorFlow, causing...proper idiom
         in the main module:
 
             if __name__ == '__main__':
@@ -65,17 +65,13 @@ It is possible to train specific networks to deal with those boundary conditions
 
         The "freeze_support()" line can be omitted if the program
         is not going to be frozen to produce an... " 
-?
-"
 
 **Answer:** This error is related to this post : https://stackoverflow.com/questions/20222534/python-multiprocessing-on-windows-if-name-main
 For running scripts that trigger multi-processing, they need to be calling under a separate header as such: 
 
-"
-if __name__ == ‘__main__‘:
-"
+        if __name__ == ‘__main__‘:
 
-Place this line at the top of your script, below the import statement and indent your script code so that the code gets call under main. This prevents the computer to call an infinite number of thread upon activation of sub-threads. We corrected our example python script to fix this issue. 
+Place this line at the top of your script, below the import statement and before all your script code. Then indent your script code so that the code gets call under main. This prevents the computer to call an infinite number of threads upon activation of sub-threads. We corrected our example python script to fix this issue. 
 
 **Question:When running python scripts, I encounter the following error: 
 "ValueError: A `Concatenate` layer requires inputs with matching shapes except for the concat axis. Got inputs shapes: [(None, 49, 43, 1024), (None, 49, 42, 512)]" 
