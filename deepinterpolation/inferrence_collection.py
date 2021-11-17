@@ -264,7 +264,7 @@ class core_inferrence:
                     else:
                         corrected_raw = local_data[1]
 
-                    raw_out[start:end, :] = np.squeeze(corrected_raw,-1)
-                    
+                    raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
+
                 # We squeeze to remove the feature dimension from tensorflow
-                dset_out[start:end, :] = np.squeeze(corrected_data,-1)
+                dset_out[start:end, :] = np.squeeze(corrected_data, -1)
