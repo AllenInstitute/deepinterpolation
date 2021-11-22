@@ -22,7 +22,7 @@ For more information, consult the associated bioRxiv publication : https://www.b
 
 # **Support**
 
-For bug and issues, please submit issue tickets on this repository. For installation and running support, we are trying to move to using the more public discussion forum on this repository (https://github.com/AllenInstitute/deepinterpolation/discussions). Alternatively you can join the slack channel where the past support history is saved (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-rkmcw7h1-v8y0Grwe3fZg4m~DiAQVMg
+For bug and issues, please submit issue tickets on this repository. For installation and running support, we are trying to move to using the more public discussion forum on this repository (https://github.com/AllenInstitute/deepinterpolation/discussions). Alternatively you can join the slack channel where the past support history was saved (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-rkmcw7h1-v8y0Grwe3fZg4m~DiAQVMg
 
 # **Installation**
 
@@ -45,7 +45,6 @@ This will install the latest deployed stable version and only the core component
 2. Install from a clone of this repository. 
 
 This will give you access to the latest developments as well as the provided sample data. Our step by step example assume this installation mode as it depends on the sample datasets. 
-The following outlines how to install on your local machine from a clone repository.
 
 The small training examples below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixel data provided. 
 
