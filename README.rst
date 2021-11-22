@@ -2,13 +2,13 @@
     :target: https://circleci.com/gh/AllenInstitute/deepinterpolation
 
 
-# Deep Interpolation
+# **Deep Interpolation**
 
 
 *deepinterpolation* is a Python library to denoise data by removing independent noise. Importantly training does **NOT** require ground truth. This repository is currently meant to support the bioRxiv publication results : https://www.biorxiv.org/content/10.1101/2020.10.15.341602v1
 
 
-# Principle of Deep Interpolation
+# **Principle of Deep Interpolation**
 
 
 .. image:: /docs/principle.png
@@ -20,14 +20,14 @@
 For more information, consult the associated bioRxiv publication : https://www.biorxiv.org/content/10.1101/2020.10.15.341602v1
 
 
-# Support
+# **Support**
 
 
 For bug and issues, please submit issue tickets on this repository. 
 For installation and running support, join the slack channel (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-rkmcw7h1-v8y0Grwe3fZg4m~DiAQVMg
 
 
-# Installation
+# **Installation**
 
 In all cases, unless you only want to work from CPU, you will have to consider installing tensorflow GPU dependencies (ie. cuda drivers). To that end, you might have to consult tensorflow documentation to enable your GPU. 
 
@@ -78,7 +78,7 @@ Our integration tests on the CI server are currently running with python 3.7. Wh
 
 	python setup.py install
 
-# Descrition and use of the Command Line Interface (CLI). 
+# **Descrition and use of the Command Line Interface (CLI).** 
 
 DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the examples/ folder under cli_*.
 
@@ -104,16 +104,16 @@ or
 
 	python -m deepinterpolation.cli.fine_tuning --help 
 
-# General package description
+# **General package description**
 
 The files in the deepinterpolation folder contains the core classes for training, inferrence, loss calculation and network generations. Those are called 'Collection'. Each collection is essentially a local list of functions that are used to create different type of objects and can be extended on one another. 
 For instance, the network_collection.py contains a list of networks that can be generated for training. This allows for quick iteration and modification of an architecture while keeping the code organized. 
 
-# FAQ
+# **FAQ**
 
 See here : https://github.com/AllenInstitute/deepinterpolation/tree/master/faq
 
-# Training
+# **Training**
 
 To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from a core class called 'DeepGenerator'. The 'CollectorGenerator' class allows to group generators if your dataset is distributed across many files/folder/sources. 
 This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
@@ -154,13 +154,13 @@ This is a toy example but you can increase the number of training frames to incr
 All parameters are commented in the file. To adjust to a larger dataset, change the train_path parameters, the start_frame and end_frame parameters. 
 
 
-# Inference
+# **Inference**
 
 Raw pre-trained models are available either as part of Tensorflow ModelServer in an AWS docker environment or as a separate h5 file on Dropbox. 
 
 The following models are currently available : 
 
-**Two-photon Ai93 excitatory line DeepInterpolation network:**
+*Two-photon Ai93 excitatory line DeepInterpolation network:*
 
 Key recording parameters: 
 
@@ -173,7 +173,7 @@ Key recording parameters:
 - Dropbox link : https://www.dropbox.com/sh/vwxf1uq2j60uj9o/AAC9BQI1bdfmAL3OFO0lmVb1a?dl=0
 - Training data : https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/paper_generation_code/json_data/2019-09-05-train-very-large-single-plane-Ai93-norm.json
 
-**Two-photon Ai148 excitatory line DeepInterpolation network:**
+*Two-photon Ai148 excitatory line DeepInterpolation network:*
 
 Key recording parameters: 
 
@@ -187,7 +187,7 @@ Key recording parameters:
 - Dropxbox link : https://www.dropbox.com/sh/u9h9mhppkmku5bs/AAD9UoomhB3D4JfLV7zT9Y_Ca?dl=0
 - Training data : https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/paper_generation_code/json_data/2019-09-05-train-very-large-single-plane-Ai148-norm.json
 
-**Neuropixel DeepInterpolation network:**
+*Neuropixel DeepInterpolation network:*
 
 Key recording parameters: 
 
@@ -201,7 +201,7 @@ Key recording parameters:
 - Docker hub id : 245412653747/deep_interpolation:allen_neuropixel
 - Dropxbox link : https://www.dropbox.com/sh/tm3epzil44ybalq/AACyKxfvvA2T_Lq_rnpHnhFma?dl=0
 
-**fMRI DeepInterpolation network:**
+*fMRI DeepInterpolation network:*
 
 Key recording parameters: 
 
@@ -236,7 +236,7 @@ It is important to keep in mind that this process is easily parallelizable. In p
 More on using the Tensorflow ModelServer soon. Those are usefull to deploy to AWS and/or avoid installing GPUs related packages. 
 
 
-# License
+# **License**
 
 
 Allen Institute Software License – This software license is the 2-clause BSD 
