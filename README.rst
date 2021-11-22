@@ -58,11 +58,11 @@ git clone https://github.com/AllenInstitute/deepinterpolation.git
 
 * Go to that directory::
 
-    cd 'local_dir'
+	cd 'local_dir'
 
 * Create new conda environment called 'local_env'
 
-    conda create -n local_env python=3.7
+	conda create -n local_env python=3.7
 
 Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
 
@@ -90,6 +90,7 @@ All parameters of the CLI are documented within the schema. To access the docume
 	python -m deepinterpolation.cli.training --help 
 
 or
+
 	python -m deepinterpolation.cli.inference --help 
 
 or 
