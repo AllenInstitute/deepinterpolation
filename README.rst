@@ -35,7 +35,8 @@ To install the package, you have 2 options.
 
 A. Install from pypi using: 
 
-1.Create new conda environment called 'local_env'::
+1.Create new conda environment called 'local_env'
+
     conda create -n local_env python=3.7
     
 Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
@@ -49,16 +50,18 @@ B. Install from a clone of this repository.
 This will give you access to the latest developments as well as the provided sample data. Our step by step example assume this installation mode as it depends on the sample datasets. 
 The following outlines how to install on your local machine from a clone repository.
 
-The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
+The small training examples below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixel data provided. 
 
 1. Clone the repository locally on a directory 'local_dir'
+
 git clone https://github.com/AllenInstitute/deepinterpolation.git
 
 2. Go to that directory::
 
     cd 'local_dir'
 
-3. Create new conda environment called 'local_env'::
+3. Create new conda environment called 'local_env'
+
     conda create -n local_env python=3.7
 
 Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
@@ -67,11 +70,11 @@ Our integration tests on the CI server are currently running with python 3.7. Wh
 
 	conda activate local_env
 
-5. install necessary packages::
+5. install necessary packages
 
 	make init
 
-6. install deepinterpolation package::
+6. install deepinterpolation package
 
 	python setup.py install
 
@@ -83,10 +86,14 @@ There are two modes to use:
 - command line mode: In this mode, you save the dictionary into a json file and provide the path to this file through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the examples/ folder as cli_*.sh and cli_*.json files. 
 
 All parameters of the CLI are documented within the schema. To access the documentation, type down : 
+
 	python -m deepinterpolation.cli.training --help 
+
 or
 	python -m deepinterpolation.cli.inference --help 
+
 or 
+
 	python -m deepinterpolation.cli.fine_tuning --help 
 
 # General package description
