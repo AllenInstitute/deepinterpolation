@@ -29,8 +29,27 @@ For installation and running support, join the slack channel (if invitation has 
 
 # Installation
 
+In all cases, unless you only want to work from CPU, you will have to consider installing tensorflow GPU dependencies (ie. cuda drivers). To that end, you might have to consult tensorflow documentation to enable your GPU. 
 
-The following outlines how to install on your local machine. This should take no more than a few minutes. This was tested on a macOS Catalina but should be adapted depending on your final environment (institution cluster, AWS EC2 instance, ...). Tensorflow made a lot of progress lately to install GPU dependencies. However, you might have to consult tensorflow documentation to enable your GPU. The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
+To install the package, you have 2 options. 
+
+A. Install from pypi using: 
+
+1.Create new conda environment called 'local_env'::
+    conda create -n local_env python=3.7
+    
+Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
+
+2. pip install deepinterpolation
+
+This will install the latest deployed stable version and only the core components of the library. You will NOT have access to sample datasets present on this repository. 
+
+B. Install from a clone of this repository. 
+
+This will give you access to the latest developments as well as the provided sample data. Our step by step example assume this installation mode as it depends on the sample datasets. 
+The following outlines how to install on your local machine from a clone repository.
+
+The small training example below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixels data provided. 
 
 1. Clone the repository locally on a directory 'local_dir'
 git clone https://github.com/AllenInstitute/deepinterpolation.git
@@ -40,7 +59,9 @@ git clone https://github.com/AllenInstitute/deepinterpolation.git
     cd 'local_dir'
 
 3. Create new conda environment called 'local_env'::
-    conda create -n local_env python=3.8
+    conda create -n local_env python=3.7
+
+Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
 
 4. activate environment::
 
@@ -54,19 +75,28 @@ git clone https://github.com/AllenInstitute/deepinterpolation.git
 
 	python setup.py install
 
+# Descrition and use of the Command Line Interface (CLI). 
 
-# General code description
+DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the examples/ folder under cli_*. 
+There are two modes to use:
+- Scripting mode: In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provide in the examples/ folder as cli_*.py files. 
+- command line mode: In this mode, you save the dictionary into a json file and provide the path to this file through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the examples/ folder as cli_*.sh and cli_*.json files. 
 
+All parameters of the CLI are documented within the schema. To access the documentation, type down : 
+	python -m deepinterpolation.cli.training --help 
+or
+	python -m deepinterpolation.cli.inference --help 
+or 
+	python -m deepinterpolation.cli.fine_tuning --help 
+
+# General package description
 
 The files in the deepinterpolation folder contains the core classes for training, inferrence, loss calculation and network generations. Those are called 'Collection'. Each collection is essentially a local list of functions that are used to create different type of objects and can be extended on one another. 
 For instance, the network_collection.py contains a list of networks that can be generated for training. This allows for quick iteration and modification of an architecture while keeping the code organized. 
 
-
 # FAQ
 
-
 See here : https://github.com/AllenInstitute/deepinterpolation/tree/master/faq
-
 
 # Training
 
@@ -110,7 +140,6 @@ All parameters are commented in the file. To adjust to a larger dataset, change 
 
 
 # Inference
-
 
 Raw pre-trained models are available either as part of Tensorflow ModelServer in an AWS docker environment or as a separate h5 file on Dropbox. 
 
