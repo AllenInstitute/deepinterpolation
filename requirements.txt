@@ -4,8 +4,8 @@ h5py==2.10.0
 matplotlib
 numpy
 python-dateutil
-scipy==1.4.1
+scipy
 tifffile
 s3fs
-argschema==2.0.2
-mlflow==1.14.1
+argschema
+mlflow
