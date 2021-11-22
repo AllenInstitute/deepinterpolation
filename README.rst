@@ -80,17 +80,17 @@ Our integration tests on the CI server are currently running with python 3.7. Wh
 
 # **Descrition and use of the Command Line Interface (CLI).** 
 
-DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the examples/ folder under cli_*.
+DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the *examples/* folder under cli_*.
 
-There are two modes to use:
+There are two modes that you can use:
 
 * Scripting mode: 
 
-In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provide in the examples/ folder as cli_*.py files. 
+In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provided in the *examples/* folder as cli_*.py files. 
 
-* Command line mode: 
+* Command-line mode: 
 
-In this mode, you save the dictionary into a json file and provide the path to this file through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the examples/ folder as cli_*.sh and cli_*.json files. 
+In this mode, you save the dictionary into a json file and provide the path to this file as a paramter through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the *examples/* folder as cli_*.sh and cli_*.json files. 
 
 All parameters of the CLI are documented within the schema. To access the documentation, type down : 
 
@@ -113,10 +113,7 @@ For instance, the network_collection.py contains a list of networks that can be 
 
 See here : https://github.com/AllenInstitute/deepinterpolation/tree/master/faq
 
-# **Training**
-
-To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from a core class called 'DeepGenerator'. The 'CollectorGenerator' class allows to group generators if your dataset is distributed across many files/folder/sources. 
-This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
+# **Example training**
 
 To try out training your own DeepInterpolation network, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_training.py
 
@@ -154,7 +151,7 @@ This is a toy example but you can increase the number of training frames to incr
 All parameters are commented in the file. To adjust to a larger dataset, change the train_path parameters, the start_frame and end_frame parameters. 
 
 
-# **Inference**
+# **Example inference**
 
 Raw pre-trained models are available either as part of Tensorflow ModelServer in an AWS docker environment or as a separate h5 file on Dropbox. 
 
@@ -235,6 +232,13 @@ It is important to keep in mind that this process is easily parallelizable. In p
 
 More on using the Tensorflow ModelServer soon. Those are usefull to deploy to AWS and/or avoid installing GPUs related packages. 
 
+# **Adapting the module to a newer data structure**
+
+To adapt DeepInterpolation to a new dataset, you will need to use or recreate a generator in 'generator_collection.py'. Those are all constructed from core classes called *DeepGenerator* and *SequentialGenerator*. 
+
+The *CollectorGenerator* class allows to group generators if your dataset is distributed across many files/folder/sources. 
+This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
+The *CollectorGenerator* is not currently supported throught the CLI and will be replaced with a simpler API in a future release. 
 
 # **License**
 
