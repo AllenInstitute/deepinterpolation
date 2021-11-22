@@ -33,48 +33,48 @@ In all cases, unless you only want to work from CPU, you will have to consider i
 
 To install the package, you have 2 options. 
 
-A. Install from pypi using: 
+1. Install from pypi using: 
 
-1.Create new conda environment called 'local_env'
+Create new conda environment called 'local_env'
 
-    conda create -n local_env python=3.7
+	conda create -n local_env python=3.7
     
 Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
 
-2. pip install deepinterpolation
+	pip install deepinterpolation
 
 This will install the latest deployed stable version and only the core components of the library. You will NOT have access to sample datasets present on this repository. 
 
-B. Install from a clone of this repository. 
+2. Install from a clone of this repository. 
 
 This will give you access to the latest developments as well as the provided sample data. Our step by step example assume this installation mode as it depends on the sample datasets. 
 The following outlines how to install on your local machine from a clone repository.
 
 The small training examples below works on both CPU and GPU architecture (ie. even a small macbook). If you are not familiar with using deep learning, we recommend to play with smaller datasets first, such as the example Neuropixel data provided. 
 
-1. Clone the repository locally on a directory 'local_dir'
+* Clone the repository locally on a directory 'local_dir'
 
 git clone https://github.com/AllenInstitute/deepinterpolation.git
 
-2. Go to that directory::
+* Go to that directory::
 
     cd 'local_dir'
 
-3. Create new conda environment called 'local_env'
+* Create new conda environment called 'local_env'
 
     conda create -n local_env python=3.7
 
 Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
 
-4. activate environment::
+* activate environment::
 
 	conda activate local_env
 
-5. install necessary packages
+* install necessary packages
 
 	make init
 
-6. install deepinterpolation package
+* install deepinterpolation package
 
 	python setup.py install
 
