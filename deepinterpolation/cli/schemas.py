@@ -111,8 +111,8 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         description=(
             "Number of frames fed to the DeepInterpolation model before a \
             center frame for interpolation. Omitted frames will not be used \
-            to fetch pre_frames. All pre_frame frame(s) will be fetch before \
-            pre_omission frame(s)."
+            to fetch pre_frames. All pre_frame frame(s) will be fetched \
+            before pre_omission frame(s)."
         ),
     )
 
@@ -123,15 +123,15 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             "Number of frames fed to the DeepInterpolation model after a \
             center frame for interpolation. Omitted frames will not be used \
             to fetch post_frames. All post_frame frame(s) will be fetch after \
-            post_mission frame(s)."
+            post_omission frame(s)."
         ),
     )
 
     pre_post_omission = argschema.fields.Int(
         required=False,
         default=0,
-        description="Number of frames omitted before and after a center frame for \
-            DeepInterpolation. Omission will be done on both sides of the \
+        description="Number of frames omitted before and after a center frame \
+            for DeepInterpolation. Omission will be done on both sides of the \
             center frame, ie. twice pre_post_omission are omitted.\
             Omitted frames will not be used to fetch pre_frames and \
             post_frames."
@@ -164,7 +164,10 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         description=(
             "Last frame used by the generator. -1 defaults to the \
             last available frame. Negative values smaller than -1 \
-            increasingly truncates the end of the dataset. 0 is not permitted."
+            increasingly truncates the end of the dataset. 0 is not permitted.\
+            Note: if end_frame = 2000, frame 2000 will be included \
+            if there is sufficient post_frame frames available after frame \
+            2000."
         ),
     )
 
@@ -264,10 +267,10 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         default="core_inferrence",
         validate=OneOf(get_list_of_inferrences()),
         description=(
-            "Inferrence class to use. All available classes are visible in the \
-            inferrence_collection.py file as part of the deepinterpolation \
-            package. More classes can be added to this file to modify\
-            details of the inferrence behavior."
+            "Inferrence class to use. All available classes are visible in \
+            the inferrence_collection.py file as part of the \
+            deepinterpolation package. More classes can be added to this file \
+            to modify details of the inferrence behavior."
         ),
     )
 
@@ -287,7 +290,7 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=False,
         description=(
-            "Whether to save raw data along with the infered in the output \
+            "Whether to save raw data along with the inference in the output \
             file. It will be saved as a 'raw' field in the hdf5 file. \
             This is useful for evaluation and direct comparison. \
             Output file will take twice hard drive space when set to 'True'."
@@ -313,12 +316,11 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default=False,
         description=(
-            "Whether to pad the output frames. DeepInterpolation cannot \
-            properly predict the onset and end frames in a long serie as \
-            the pre and post frames are missing at those frames. Setting this \
-            to 'True' will pad the onset and end of the output dataset with \
-            blank frames to keep the dataset of the same size as requested by \
-            start_frame and end_frame in the generator."
+            "Whether to pad the output frames. DeepInterpolation requires \
+            pre_frame and post_frame frames before and after any given frame \
+            for inference. Setting this to 'True' will pad the start and end \
+            of the output dataset with blank frames to keep the dataset of \
+            the same size."
         ),
     )
 

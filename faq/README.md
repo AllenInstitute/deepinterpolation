@@ -54,7 +54,26 @@ It is possible to train specific networks to deal with those boundary conditions
 
 **Answer:** First, Deep Learning methods typically convert input to float so as to have differentiable functions. Second, while the output values are mapped back on the same range as the input, the bit depth could potentially improve through denoising as DeepInterpolation is pulling more information than is present in a single pixel. We chose not to enforce the original bit depth because of that. Arguably some datasets are collected with excessive bit depth to begin with so it is possible that your data will not benefit from being represented with the higher precision of float32. We recommend to exercise good judgement when choosing your final bit depth based on these criterias. 
 
-**Question:When training or fine-tuning a network for 2d movies, I get the following error (or similar): 
+**Question:When training or fine-tuning a network for 2d movies, I get the following error (or similar) ?:** 
+
+        WARNING:tensorflow:multiprocessing can interact badly with TensorFlow, causing...proper idiom
+        in the main module:
+
+            if __name__ == '__main__':
+                freeze_support()
+                ...
+
+        The "freeze_support()" line can be omitted if the program
+        is not going to be frozen to produce an... " 
+
+**Answer:** This error is related to this post : https://stackoverflow.com/questions/20222534/python-multiprocessing-on-windows-if-name-main
+For running scripts that trigger multi-processing, they need to be calling under a separate header as such: 
+
+        if __name__ == ‘__main__‘:
+
+Place this line at the top of your script, below the import statement and before all your script code. Then indent your script code so that the code gets call under main. This prevents the computer to call an infinite number of threads upon activation of sub-threads. We corrected our example python script to fix this issue. 
+
+**Question:When running python scripts, I encounter the following error: 
 "ValueError: A `Concatenate` layer requires inputs with matching shapes except for the concat axis. Got inputs shapes: [(None, 49, 43, 1024), (None, 49, 42, 512)]" 
 ?**
 

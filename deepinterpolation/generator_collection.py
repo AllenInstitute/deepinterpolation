@@ -102,6 +102,9 @@ class CollectorGenerator(DeepGenerator):
         self.generator_list = generator_list
         self.nb_generator = len(self.generator_list)
         self.batch_size = self.generator_list[0].batch_size
+        self.steps_per_epoch = self.generator_list[0].steps_per_epoch
+        self.epoch_index = 0
+
         self.assign_indexes()
         self.shuffle_indexes()
 
@@ -129,6 +132,8 @@ class CollectorGenerator(DeepGenerator):
 
     def __getitem__(self, index):
         # Generate indexes of the batch
+        if self.steps_per_epoch > 0:
+            index = index + self.steps_per_epoch * self.epoch_index
 
         local_index = self.list_samples[index]
 
@@ -139,6 +144,13 @@ class CollectorGenerator(DeepGenerator):
             local_generator_index)
 
         return input_full, output_full
+
+    def on_epoch_end(self):
+        if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+            self.epoch_index = self.epoch_index + 1
+        else:
+            # if we reach the end of the data, we roll over
+            self.epoch_index = 0
 
 
 class FmriGenerator(DeepGenerator):
@@ -401,9 +413,9 @@ class FmriGenerator(DeepGenerator):
 class SequentialGenerator(DeepGenerator):
     """This generator stores shared code across generators that have a
     continous temporal direction upon which start_frame, end_frame,
-    pre_frame,... are used to to generate a list of samples. It is an abstract
-    class that is meant to be extended with details of how datasets
-    are loaded."""
+    pre_frame,... are used to to generate a list of samples. It is an
+    intermediary class that is meant to be extended with details of
+    how datasets are loaded."""
 
     def __init__(self, json_path):
         "Initialization"
@@ -425,7 +437,7 @@ class SequentialGenerator(DeepGenerator):
         if "randomize" in self.json_data.keys():
             self.randomize = self.json_data["randomize"]
         else:
-            self.randomize = 1
+            self.randomize = True
 
         if "pre_post_omission" in self.json_data.keys():
             self.pre_post_omission = self.json_data["pre_post_omission"]
@@ -447,7 +459,7 @@ class SequentialGenerator(DeepGenerator):
         # We initialize the epoch counter
         self.epoch_index = 0
 
-    def update_end_frame(self, total_frame_per_movie):
+    def _update_end_frame(self, total_frame_per_movie):
         """Update end_frame based on the total number of frames available.
         This allows for truncating the end of the movie when end_frame is
         negative."""
@@ -458,7 +470,7 @@ class SequentialGenerator(DeepGenerator):
         elif total_frame_per_movie <= self.end_frame:
             self.end_frame = total_frame_per_movie-1
 
-    def calculate_list_samples(self, total_frame_per_movie):
+    def _calculate_list_samples(self, total_frame_per_movie):
 
         # We first cut if start and end frames are too close to the edges.
         self.start_sample = np.max([self.pre_frame
@@ -497,7 +509,7 @@ class SequentialGenerator(DeepGenerator):
 
     def __len__(self):
         "Denotes the total number of batches"
-        return int(np.floor(float(len(self.list_samples)) / self.batch_size))
+        return int(len(self.list_samples) / self.batch_size)
 
     def generate_batch_indexes(self, index):
         # This is to ensure we are going through
@@ -528,8 +540,8 @@ class EphysGenerator(SequentialGenerator):
         self.raw_data = np.memmap(self.raw_data_file, dtype="int16")
         self.total_frame_per_movie = int(self.raw_data.size / self.nb_probes)
 
-        self.update_end_frame(self.total_frame_per_movie)
-        self.calculate_list_samples(self.total_frame_per_movie)
+        self._update_end_frame(self.total_frame_per_movie)
+        self._calculate_list_samples(self.total_frame_per_movie)
 
         # We calculate the mean and std of the data
         average_nb_samples = 200000
@@ -655,8 +667,8 @@ class MultiContinuousTifGenerator(SequentialGenerator):
 
         self.list_bounds = np.array(self.list_bounds)
 
-        self.update_end_frame(self.total_frame_per_movie)
-        self.calculate_list_samples(self.total_frame_per_movie)
+        self._update_end_frame(self.total_frame_per_movie)
+        self._calculate_list_samples(self.total_frame_per_movie)
 
         average_nb_samples = 1000
 
@@ -721,9 +733,9 @@ class MultiContinuousTifGenerator(SequentialGenerator):
         return input_full, output_full
 
     def __data_generation__(self, index_frame):
-        # X : (n_samples, *dim, n_channels)
         "Generates data containing batch_size samples"
 
+        # X : (n_samples, *dim, n_channels)
         input_full = np.zeros(
             [
                 1,
@@ -789,8 +801,8 @@ class SingleTifGenerator(SequentialGenerator):
 
         self.total_frame_per_movie = self.raw_data.shape[0]
 
-        self.update_end_frame(self.total_frame_per_movie)
-        self.calculate_list_samples(self.total_frame_per_movie)
+        self._update_end_frame(self.total_frame_per_movie)
+        self._calculate_list_samples(self.total_frame_per_movie)
 
         average_nb_samples = np.min([self.total_frame_per_movie, 1000])
         local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
@@ -826,8 +838,9 @@ class SingleTifGenerator(SequentialGenerator):
         return input_full, output_full
 
     def __data_generation__(self, index_frame):
-        # X : (n_samples, *dim, n_channels)
         "Generates data containing batch_size samples"
+
+        # X : (n_samples, *dim, n_channels)
 
         input_full = np.zeros(
             [
@@ -908,8 +921,8 @@ class OphysGenerator(SequentialGenerator):
 
         self.total_frame_per_movie = int(raw_data.shape[0])
 
-        self.update_end_frame(self.total_frame_per_movie)
-        self.calculate_list_samples(self.total_frame_per_movie)
+        self._update_end_frame(self.total_frame_per_movie)
+        self._calculate_list_samples(self.total_frame_per_movie)
 
         average_nb_samples = np.min([int(raw_data.shape[0]), 1000])
         local_data = raw_data[0:average_nb_samples, :, :].flatten()
@@ -1086,8 +1099,9 @@ class MovieJSONGenerator(DeepGenerator):
         return local_mean, local_std
 
     def __data_generation__(self, index_frame):
-        # X : (n_samples, *dim, n_channels)
         "Generates data containing batch_size samples"
+
+        # X : (n_samples, *dim, n_channels)
         try:
             local_lims, local_img = self.get_lims_id_sample_from_index(
                 index_frame)
