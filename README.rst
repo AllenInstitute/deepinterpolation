@@ -54,9 +54,9 @@ The small training examples below works on both CPU and GPU architecture (ie. ev
 
 * Clone the repository locally on a directory 'local_dir'
 
-git clone https://github.com/AllenInstitute/deepinterpolation.git
+	git clone https://github.com/AllenInstitute/deepinterpolation.git
 
-* Go to that directory::
+* Go to that directory
 
 	cd 'local_dir'
 
@@ -66,7 +66,7 @@ git clone https://github.com/AllenInstitute/deepinterpolation.git
 
 Our integration tests on the CI server are currently running with python 3.7. While it is likely working with other versions, we cannot guarantee it. 
 
-* activate environment::
+* activate environment
 
 	conda activate local_env
 
@@ -80,10 +80,11 @@ Our integration tests on the CI server are currently running with python 3.7. Wh
 
 # Descrition and use of the Command Line Interface (CLI). 
 
-DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the examples/ folder under cli_*. 
+DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the examples/ folder under cli_*.
+
 There are two modes to use:
-- Scripting mode: In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provide in the examples/ folder as cli_*.py files. 
-- command line mode: In this mode, you save the dictionary into a json file and provide the path to this file through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the examples/ folder as cli_*.sh and cli_*.json files. 
+* Scripting mode: In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provide in the examples/ folder as cli_*.py files. 
+* command line mode: In this mode, you save the dictionary into a json file and provide the path to this file through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the examples/ folder as cli_*.sh and cli_*.json files. 
 
 All parameters of the CLI are documented within the schema. To access the documentation, type down : 
 
@@ -115,15 +116,15 @@ To try out training your own DeepInterpolation network, we recommend to start wi
 
 In this file, you will need to edit the jobdir variable, in particular change "/Users/jeromel/test" to a local folder appropriate to save your models. 
 
-Then, activate your conda env called 'local_env'::
+Then, activate your conda env called 'local_env'
 
 	conda activate local_env
 	
-then run::
+then run
 
 	python example_tiny_ephys_training.py
 
-If everything runs correctly, you should see the following in just a few minutes : ::
+If everything runs correctly, you should see the following in just a few minutes :
 
 	2020-10-19 18:01:03.735098: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2 FMA
 	To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
@@ -207,15 +208,15 @@ To start inference, we recommend to start with this file: https://github.com/All
 
 In this file, you will need to edit the train_path, model_path and output_file variable to fit your local paths. 
 
-Then, activate your conda env called 'local_env'::
+Then, activate your conda env called 'local_env'
 
 	conda activate local_env
 	
-then run ::
+then run:
 
 	python example_tiny_ephys_inference.py
 
-If everything runs correctly, you should see the following in just a few minutes : ::
+If everything runs correctly, you should see the following in just a few minutes:
 
 	2020-10-20 14:10:37.549061: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2 FMA
 	To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
