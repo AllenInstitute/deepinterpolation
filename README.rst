@@ -82,11 +82,11 @@ There are two modes that you can use:
 
 * Scripting mode: 
 
-In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provided in the *examples/* folder as cli_*.py files. 
+In this mode you construct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provided in the *examples/* folder as cli_*.py files. 
 
 * Command-line mode: 
 
-In this mode, you save the dictionary into a json file and provide the path to this file as a paramter through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the *examples/* folder as cli_*.sh and cli_*.json files. 
+In this mode, you save the dictionary into a json file and provide the path to this file as a parameter through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the *examples/* folder as cli_*.sh and cli_*.json files. 
 
 All parameters of the CLI are documented within the schema. To access the documentation, type down : 
 
