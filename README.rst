@@ -83,8 +83,14 @@ Our integration tests on the CI server are currently running with python 3.7. Wh
 DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the examples/ folder under cli_*.
 
 There are two modes to use:
-* Scripting mode: In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provide in the examples/ folder as cli_*.py files. 
-* command line mode: In this mode, you save the dictionary into a json file and provide the path to this file through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the examples/ folder as cli_*.sh and cli_*.json files. 
+
+* Scripting mode: 
+
+In this mode you contruct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provide in the examples/ folder as cli_*.py files. 
+
+* Command line mode: 
+
+In this mode, you save the dictionary into a json file and provide the path to this file through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the examples/ folder as cli_*.sh and cli_*.json files. 
 
 All parameters of the CLI are documented within the schema. To access the documentation, type down : 
 
