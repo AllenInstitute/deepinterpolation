@@ -28,7 +28,7 @@ jobs:
             echo ${CHANGED_PYFILES} | xargs -r flake8 --count
           name: Lint
 
-  py37_test:
+  raw_packrequirement_test:
     executor: py37_executor
     steps:
       - checkout
@@ -36,6 +36,24 @@ jobs:
           command: |
             pip install .
             pip install -r test_requirements.txt
+          name: Install
+
+      - run:
+          command: |
+            python -m pytest --cov deepinterpolation --cov-report xml
+            bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
+          name: Test
+
+ 
+  tensorflow_latest_test:
+    executor: py37_executor
+    steps:
+      - checkout
+      - run:
+          command: |
+            pip install .
+            pip install -r test_requirements.txt
+            pip install tensorflow --upgrade
           name: Install
 
       - run:
@@ -72,10 +90,11 @@ workflows:
   main:
     jobs:
       - lint
-      - py37_test
+      - raw_packrequirement_test
+      - tensorflow_latest_test
       - docker:
           requires:
-            - py37_test
+            - raw_packrequirement_test
           filters:
             branches:
               only:
