@@ -115,9 +115,9 @@ See here : https://github.com/AllenInstitute/deepinterpolation/tree/master/faq
 
 # **Example training**
 
-To try out training your own DeepInterpolation network, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_training.py
+To try out training your own DeepInterpolation network, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/cli_example_tiny_ephys_training.py
 
-In this file, you will need to edit the jobdir variable, in particular change "/Users/jeromel/test" to a local folder appropriate to save your models. 
+In this file, you will need to edit the paths to a local folder appropriate to save your models. 
 
 Then, activate your conda env called 'local_env'
 
@@ -125,7 +125,7 @@ Then, activate your conda env called 'local_env'
 	
 then run
 
-	python example_tiny_ephys_training.py
+	python cli_example_tiny_ephys_training.py
 
 If everything runs correctly, you should see the following in just a few minutes :
 
@@ -148,12 +148,12 @@ If everything runs correctly, you should see the following in just a few minutes
 	Saved model to disk
 
 This is a toy example but you can increase the number of training frames to increase the quality of the model. 
-All parameters are commented in the file. To adjust to a larger dataset, change the train_path parameters, the start_frame and end_frame parameters. 
-
+All parameters are commented in the file. To adjust to a larger dataset, change the path parameters, the start_frame and end_frame parameters.
+Please consult the CLI documentation mentioned above for more details of each parameter.
 
 # **Example inference**
 
-Raw pre-trained models are available either as part of Tensorflow ModelServer in an AWS docker environment or as a separate h5 file on Dropbox. 
+Raw pre-trained models are available as separate h5 file on Dropbox. 
 
 The following models are currently available : 
 
@@ -207,9 +207,9 @@ Key recording parameters:
 - Docker hub id : 245412653747/deep_interpolation:allen_3_3_3_tr_3000_fmri
 - Dropxbox link : https://www.dropbox.com/sh/ngx5plndmd4jsca/AAAkR-_4_E7VyL8WzEC7twuza?dl=0
 
-To start inference, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_inference.py
+To start inference, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/cli_example_tiny_ephys_inference.py
 
-In this file, you will need to edit the train_path, model_path and output_file variable to fit your local paths. 
+In this file, you will need to edit the paths strings to fit your local paths. 
 
 Then, activate your conda env called 'local_env'
 
@@ -217,7 +217,7 @@ Then, activate your conda env called 'local_env'
 	
 then run:
 
-	python example_tiny_ephys_inference.py
+	python cli_example_tiny_ephys_inference.py
 
 If everything runs correctly, you should see the following in just a few minutes:
 
@@ -228,9 +228,8 @@ If everything runs correctly, you should see the following in just a few minutes
 	2020-10-20 14:10:37.564156: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
 
 This is a toy example but you can increase the start_frame and end_frame variable for larger data. 
-It is important to keep in mind that this process is easily parallelizable. In practice, we wrapped this code with additional routines to leverage 20 to 100 cluster CPU nodes to accelerate this process. You could also use GPU nodes as well, we just had access to a much larger number of CPU machines quickly.  
 
-More on using the Tensorflow ModelServer soon. Those are usefull to deploy to AWS and/or avoid installing GPUs related packages. 
+It is important to keep in mind that this process is easily parallelizable. In practice, we wrapped this code with additional routines to leverage 20 to 100 cluster CPU nodes to accelerate this process. You could also use GPU nodes as well, we just had access to a much larger number of CPU machines quickly.  
 
 # **Adapting the module to a newer data structure**
 
@@ -241,7 +240,6 @@ This system was designed to allow to train very large DeepInterpolation models f
 The *CollectorGenerator* is not currently supported throught the CLI and will be replaced with a simpler API in a future release. 
 
 # **License**
-
 
 Allen Institute Software License – This software license is the 2-clause BSD 
 license plus clause a third clause that prohibits redistribution and use for 
