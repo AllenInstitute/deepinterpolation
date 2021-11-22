@@ -22,10 +22,7 @@ For more information, consult the associated bioRxiv publication : https://www.b
 
 # **Support**
 
-
-For bug and issues, please submit issue tickets on this repository. 
-For installation and running support, join the slack channel (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-rkmcw7h1-v8y0Grwe3fZg4m~DiAQVMg
-
+For bug and issues, please submit issue tickets on this repository. For installation and running support, we are trying to move to using the more public discussion forum on this repository (https://github.com/AllenInstitute/deepinterpolation/discussions). Alternatively you can join the slack channel where the past support history is saved (if invitation has expired: email to Jerome): https://join.slack.com/t/deepinterpolation/shared_invite/zt-rkmcw7h1-v8y0Grwe3fZg4m~DiAQVMg
 
 # **Installation**
 
