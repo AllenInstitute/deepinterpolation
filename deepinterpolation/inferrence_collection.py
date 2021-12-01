@@ -396,6 +396,7 @@ class core_inferrence:
                                     output_dataset_name,
                                     self.batch_size,
                                     first_sample)
+                    n_written += n0-len(output_dict)
 
         logger.info('processing last datasets')
         for p in process_list:
