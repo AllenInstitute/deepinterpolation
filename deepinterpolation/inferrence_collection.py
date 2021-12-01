@@ -241,7 +241,7 @@ def write_output_to_file(output_dict,
                          first_sample):
     index_list = list(output_dict.keys())
 
-    with h5py.file(output_file_Path, 'a') as out_file:
+    with h5py.File(output_file_Path, 'a') as out_file:
 
         if output_dict[index_list[0]]['corrected_raw'] is not None:
             raw_out = out_file[raw_dataset_name]
