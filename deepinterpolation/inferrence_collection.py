@@ -237,7 +237,7 @@ def __load_model_from_mlflow(json_data):
 
 def write_output_to_file(output_dict,
                          output_file_path,
-                         raw_dataset_name
+                         raw_dataset_name,
                          output_dataset_name,
                          batch_size,
                          first_sample):
@@ -376,7 +376,7 @@ class core_inferrence:
             process.start()
             ct += 1
             if ct % log_every == 0:
-                 duration = time.time()-global_t0
+                duration = time.time()-global_t0
                 n_done = max(1, len(output_dict)+n_written)
                 per = duration/n_done
                 prediction = per*self.nb_datasets
