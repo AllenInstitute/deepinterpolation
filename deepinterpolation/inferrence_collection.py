@@ -383,7 +383,7 @@ class core_inferrence:
                 msg += f'remaining of {prediction:.2e}'
                 logger.info(msg)
 
-            while len(process_list) >= self.args['n_parallel_workers']:
+            while len(process_list) >= self.json_data['n_parallel_workers']:
                 process_list = _winnow_process_list(process_list)
 
             if len(output_dict) >= max(1, self.nb_datasets//8):
