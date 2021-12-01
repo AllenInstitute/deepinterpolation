@@ -157,8 +157,6 @@ def core_inference_worker(
         output_dict,
         output_lock):
 
-    local_data = self.generator_obj.__getitem__(index_dataset)
-
     model = load_model_worker(json_data)
     local_output = {}
     for dataset_index in input_lookup:
