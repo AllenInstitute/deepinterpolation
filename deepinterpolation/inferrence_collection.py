@@ -12,6 +12,18 @@ from deepinterpolation.utils import _winnow_process_list
 import tensorflow.config.threading
 import tensorflow.compat.v1.logging
 import os
+import time
+import logging
+
+tensorflow.config.threading.set_inter_op_parallelism_threads(1)
+tensorflow.config.threading.set_intra_op_parallelism_threads(1)
+
+tensorflow.compat.v1.logging.set_verbosity(
+    tensorflow.compat.v1.logging.ERROR)
+
+logger = logging.getLogger(__name__)
+logging.captureWarnings(True)
+logging.basicConfig(level=logging.INFO)
 
 
 class fmri_inferrence:
@@ -141,7 +153,9 @@ def core_inference_worker(
         json_data,
         input_lookup,
         rescale,
-        save_raw):
+        save_raw,
+        output_dict,
+        output_lock):
 
     local_data = self.generator_obj.__getitem__(index_dataset)
 
@@ -171,7 +185,11 @@ def core_inference_worker(
         local_output[dataset_index] = {'corrected_raw': corrected_raw,
                                        'corrected_data': corrected_data}
 
-    return local_output
+    with output_lock:
+        k_list = list(local_output.keys())
+        for k in k_list:
+            output_dict[k] = local_output.pop(k)
+    return None
 
 
 def __get_local_model_path(json_data):
@@ -218,24 +236,33 @@ def __load_model_from_mlflow(json_data):
 
 
 def write_output_to_file(output_dict,
-                         raw_out,
-                         dset_out,
+                         output_file_path,
+                         raw_dataset_name
+                         output_dataset_name,
                          batch_size,
                          first_sample):
     index_list = list(output_dict.keys())
-    for dataset_index in index_list:
-        dataset = output_dict.pop(index_list)
-        local_size = dataset['corrected_data'].shape[0]
-        start = first_sample + dataset_index * batch_size
-        end = start + local_size
 
-        if dataset['corrected_raw'] is not None:
-            corrected_raw = dataset['corrected_raw']
-            raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
+    with h5py.file(output_file_Path, 'a') as out_file:
 
-        # We squeeze to remove the feature dimension from tensorflow
-        corrected_data = dataset['corrected_data']
-        dset_out[start:end, :] = np.squeeze(corrected_data, -1)
+        if output_dict[index_list[0]]['corrected_raw'] is not None:
+            raw_out = out_file[raw_dataset_name]
+
+        dset_out = out_file[output_dataset_name]
+
+        for dataset_index in index_list:
+            dataset = output_dict.pop(dataset_index)
+            local_size = dataset['corrected_data'].shape[0]
+            start = first_sample + dataset_index * batch_size
+            end = start + local_size
+
+            if dataset['corrected_raw'] is not None:
+                corrected_raw = dataset['corrected_raw']
+                raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
+
+            # We squeeze to remove the feature dimension from tensorflow
+            corrected_data = dataset['corrected_data']
+            dset_out[start:end, :] = np.squeeze(corrected_data, -1)
 
     return output_dict
 
@@ -294,9 +321,12 @@ class core_inferrence:
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape[:-1])
 
+        output_dataset_name = "data"
+        raw_dataset_name = "raw"
+
         with h5py.File(self.output_file, "w") as file_handle:
             dset_out = file_handle.create_dataset(
-                "data",
+                output_dataset_name,
                 shape=tuple(final_shape),
                 chunks=tuple(chunk_size),
                 dtype=self.output_datatype,
@@ -304,31 +334,82 @@ class core_inferrence:
 
             if self.save_raw:
                 raw_out = file_handle.create_dataset(
-                    "raw",
+                    raw_dataset_name,
                     shape=tuple(final_shape),
                     chunks=tuple(chunk_size),
                     dtype=self.output_datatype,
                 )
 
-            for index_dataset in np.arange(0, self.nb_datasets, 1):
-                local_data = self.generator_obj.__getitem__(index_dataset)
-                local_mean, local_std = \
-                    self.generator_obj.__get_norm_parameters__(index_dataset)
-                this_batch = dict()
-                this_batch[index_dataset] = dict()
-                this_batch[index_dataset]['local_data'] = local_data
-                this_batch[index_dataset]['local_mean'] = local_mean
-                this_batch[index_dataset]['local_std'] = local_std
+        logger.info(f"Created empty HDF5 file {self.output_file}")
 
-                result = core_inference_worker(
-                            self.json_data,
-                            this_batch,
-                            self.rescale,
-                            self.save_raw)
+        mgr = multiprocessing.Manager()
+        output_lock = mgr.Lock()
+        output_dict = mgr.dict()
+        process_list = []
 
-                write_output_to_file(
-                    result,
-                    raw_out,
-                    dset_out,
-                    self.batch_size,
-                    first_sample)
+        ct = 0
+        n_written = 0
+        log_every = 100
+        if self.nb_datasets < log_every:
+            log_every = 5
+
+        global_t0 = time.time()
+
+        for index_dataset in np.arange(0, self.nb_datasets, 1):
+            local_data = self.generator_obj.__getitem__(index_dataset)
+            local_mean, local_std = \
+                self.generator_obj.__get_norm_parameters__(index_dataset)
+            this_batch = dict()
+            this_batch[index_dataset] = dict()
+            this_batch[index_dataset]['local_data'] = local_data
+            this_batch[index_dataset]['local_mean'] = local_mean
+            this_batch[index_dataset]['local_std'] = local_std
+
+            process = multiprocessing.Process(
+                        target=core_inference_worker,
+                        args=(self.json_data,
+                              this_batch,
+                              self.rescale,
+                              self.save_raw,
+                              output_dict,
+                              output_lock))
+            process.start()
+            ct += 1
+            if ct % log_every == 0:
+                 duration = time.time()-global_t0
+                n_done = max(1, len(output_dict)+n_written)
+                per = duration/n_done
+                prediction = per*self.nb_datasets
+                msg = f'{n_done} datasets in {duration:.2e} seconds '
+                msg += f' -- predict {prediction-duration:.2e} '
+                msg += f'remaining of {prediction:.2e}'
+                logger.info(msg)
+
+            while len(process_list) >= self.args['n_parallel_workers']:
+                process_list = _winnow_process_list(process_list)
+
+            if len(output_dict) >= max(1, self.nb_datasets//8):
+                with output_lock:
+                    n0 = len(output_dict)
+                    output_dict = write_output_to_file(
+                                    output_dict,
+                                    self.output_file,
+                                    raw_dataset_name,
+                                    output_dataset_name,
+                                    self.batch_size,
+                                    first_sample)
+
+        logger.info('processing last datasets')
+        for p in process_list:
+            p.join()
+
+        output_dict = write_output_to_file(
+                                    output_dict,
+                                    self.output_file,
+                                    raw_dataset_name,
+                                    output_dataset_name,
+                                    self.batch_size,
+                                    first_sample)
+
+        duration = time.time()-global_t0
+        logger.info(f"core_inference took {duration:.2e} seconds")
