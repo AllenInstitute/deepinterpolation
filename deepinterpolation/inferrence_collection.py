@@ -157,6 +157,7 @@ def core_inference_worker(
         else:
             corrected_data = predictions_data
 
+        corrected_raw = None
         if save_raw:
             if rescale:
                 corrected_raw = local_data[1] * local_std + local_mean
@@ -210,6 +211,29 @@ def __load_model_from_mlflow(json_data):
     )
 
     return model
+
+
+def write_output_to_file(output_dict,
+                         raw_out,
+                         dset_out,
+                         batch_size,
+                         first_sample):
+    index_list = list(output_dict.keys())
+    for dataset_index in index_list:
+        dataset = output_dict.pop(index_list)
+        local_size = dataset['corrected_data'].shape[0]
+        start = first_sample + dataset_index * batch_size
+        end = start + local_size
+
+        if dataset['corrected_raw'] is not None:
+            corrected_raw = dataset['corrected_raw']
+            raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
+
+        # We squeeze to remove the feature dimension from tensorflow
+        corrected_data = dataset['corrected_data']
+        dset_out[start:end, :] = np.squeeze(corrected_data, -1)
+
+    return output_dict
 
 
 class core_inferrence:
@@ -298,15 +322,9 @@ class core_inferrence:
                             self.rescale,
                             self.save_raw)
 
-                local_size = results[index_dataset]['corrected_data'].shape[0]
-
-                start = first_sample + index_dataset * self.batch_size
-                end = start + local_size
-
-                if self.save_raw:
-                    corrected_raw = result[index_dataset]['corrected_raw']
-                    raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
-
-                # We squeeze to remove the feature dimension from tensorflow
-                corrected_data = results[index_dataset]['corrected_data']
-                dset_out[start:end, :] = np.squeeze(corrected_data, -1)
+                write_output_to_file(
+                    result,
+                    raw_out,
+                    dset_out,
+                    self.batch_size,
+                    first_sample)
