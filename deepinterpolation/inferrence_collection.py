@@ -372,6 +372,7 @@ class core_inferrence:
                               output_dict,
                               output_lock))
             process.start()
+            process_list.append(process)
             ct += 1
             if ct % log_every == 0:
                 duration = time.time()-global_t0
