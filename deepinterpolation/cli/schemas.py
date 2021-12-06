@@ -488,6 +488,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
             training becomes limited either by RAM or CPU usage.",
     )
 
+
 class FineTuningSchema(argschema.schemas.DefaultSchema):
     name = argschema.fields.String(
         required=False,
@@ -592,7 +593,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         description="Period in number of epochs to periodically save model \
             checkpoints.",
     )
-    
+
     use_multiprocessing = argschema.fields.Bool(
         required=False,
         default=True,
@@ -612,6 +613,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
             will increase memory usage. Increase this number until your \
             training becomes limited either by RAM or CPU usage.",
     )
+
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
     name = argschema.fields.String(
