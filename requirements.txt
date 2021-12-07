@@ -1,6 +1,5 @@
-tensorflow==2.4.4
+tensorflow==2.7
 nibabel
-h5py==2.10.0
 matplotlib
 numpy
 python-dateutil
