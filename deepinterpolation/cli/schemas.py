@@ -583,6 +583,12 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
             checkpoints.",
     )
 
+    nb_workers = argschema.fields.Int(
+        required=False,
+        default=None,
+        allow_none=True,
+        description="Number of workers passed to model.fit")
+
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
     name = argschema.fields.String(

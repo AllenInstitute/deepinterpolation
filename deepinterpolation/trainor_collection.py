@@ -13,6 +13,12 @@ from tensorflow.keras.models import load_model
 from packaging import version
 import warnings
 
+import logging
+
+logger = logging.getLogger(__name__)
+logging.captureWarnings(True)
+logging.basicConfig(level=logging.INFO)
+
 
 def create_decay_callback(initial_learning_rate, epochs_drop):
     """ This is a helper function to return a configured
@@ -90,6 +96,8 @@ class core_trainer:
             self.workers = json_data["nb_workers"]
         else:
             self.workers = 16
+
+        logger.info(f"set self.workers = {self.workers}")
 
         # These parameters are related to setting up the
         # behavior of learning rates
