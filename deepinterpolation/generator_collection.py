@@ -1107,18 +1107,7 @@ class MovieJSONGenerator(DeepGenerator):
                 index_frame)
 
             # Initialization
-            local_path = self.frame_data_location[local_lims]["path"]
-
-            _filenames = ["motion_corrected_video.h5", "concat_31Hz_0.h5"]
-            motion_path = []
-            for _filename in _filenames:
-                _filepath = os.path.join(local_path, "processed", _filename)
-                if os.path.exists(_filepath) and not os.path.islink(
-                    _filepath
-                ):  # Path exists and is not symbolic
-                    motion_path = _filepath
-                    break
-
+            motion_path = self.frame_data_location[local_lims]["path"]
             movie_obj = h5py.File(motion_path, "r")
 
             local_frame_data = self.frame_data_location[local_lims]
