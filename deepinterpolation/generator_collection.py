@@ -1153,3 +1153,4 @@ class MovieJSONGenerator(DeepGenerator):
             return input_full, output_full
         except Exception:
             print("Issues with " + str(self.lims_id))
+            raise
