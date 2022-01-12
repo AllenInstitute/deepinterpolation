@@ -4,6 +4,11 @@ from pathlib import Path
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
 from deepinterpolation.generic import ClassLoader
+import tensorflow.config.threading
+
+
+tensorflow.config.threading.set_inter_op_parallelism_threads(1)
+tensorflow.config.threading.set_intra_op_parallelism_threads(1)
 
 
 class Inference(argschema.ArgSchemaParser):

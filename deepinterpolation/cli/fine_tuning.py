@@ -1,6 +1,7 @@
 import argschema
 import json
 from pathlib import Path
+import time
 
 from deepinterpolation.cli.schemas import FineTuningInputSchema
 from deepinterpolation.generic import ClassLoader
@@ -86,6 +87,8 @@ class FineTuning(argschema.ArgSchemaParser):
             data_generator, data_test_generator, finetuning_json_path
         )
 
+        self.logger.info(f"training_class {type(training_class)}")
+
         self.logger.info("created objects for training")
         training_class.run()
 
@@ -94,5 +97,8 @@ class FineTuning(argschema.ArgSchemaParser):
 
 
 if __name__ == "__main__":  # pragma: nocover
+    t0 = time.time()
     fine = FineTuning()
     fine.run()
+    duration = time.time()-t0
+    print(f'that took {duration:.3e} seconds')

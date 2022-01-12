@@ -9,14 +9,10 @@ import deepinterpolation.loss_collection as lc
 import multiprocessing
 from deepinterpolation.utils import _winnow_process_list
 
-import tensorflow.config.threading
 import tensorflow.compat.v1.logging
 import os
 import time
 import logging
-
-tensorflow.config.threading.set_inter_op_parallelism_threads(1)
-tensorflow.config.threading.set_intra_op_parallelism_threads(1)
 
 tensorflow.compat.v1.logging.set_verbosity(
     tensorflow.compat.v1.logging.ERROR)

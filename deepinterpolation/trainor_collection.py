@@ -375,6 +375,8 @@ class transfer_trainer(core_trainer):
         else:
             self.workers = 16
 
+        logger.info(f"set workers to {self.workers}")
+
         if "caching_validation" in self.json_data.keys():
             self.caching_validation = self.json_data["caching_validation"]
         else:
