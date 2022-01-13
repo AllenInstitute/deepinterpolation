@@ -1098,20 +1098,13 @@ class MovieJSONGenerator(DeepGenerator):
 
         return local_mean, local_std
 
-    def __data_generation__(self, index_frame):
-        "Generates data containing batch_size samples"
+    def _data_from_indexes(self, video_index, img_index):
+        # Initialization
+        motion_path = self.frame_data_location[video_index]["path"]
+        with h5py.File(motion_path, "r") as movie_obj:
 
-        # X : (n_samples, *dim, n_channels)
-        try:
-            local_lims, local_img = self.get_lims_id_sample_from_index(
-                index_frame)
-
-            # Initialization
-            motion_path = self.frame_data_location[local_lims]["path"]
-            movie_obj = h5py.File(motion_path, "r")
-
-            local_frame_data = self.frame_data_location[local_lims]
-            output_frame = local_frame_data["frames"][local_img]
+            local_frame_data = self.frame_data_location[video_index]
+            output_frame = local_frame_data["frames"][img_index]
             local_mean = local_frame_data["mean"]
             local_std = local_frame_data["std"]
 
@@ -1148,9 +1141,19 @@ class MovieJSONGenerator(DeepGenerator):
                        : img_in_shape[1], :] = data_img_input
             output_full[0, : img_out_shape[0],
                         : img_out_shape[1], 0] = data_img_output
-            movie_obj.close()
 
-            return input_full, output_full
+        return input_full, output_full
+
+    def __data_generation__(self, index_frame):
+        "Generates data containing batch_size samples"
+
+        # X : (n_samples, *dim, n_channels)
+        try:
+            local_lims, local_img = self.get_lims_id_sample_from_index(
+                index_frame)
+
+            return self._data_from_indexes(local_lims, local_img)
+
         except Exception:
             print("Issues with " + str(self.lims_id))
             raise
