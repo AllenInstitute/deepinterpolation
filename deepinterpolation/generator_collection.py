@@ -7,6 +7,7 @@ import tifffile
 import nibabel as nib
 import s3fs
 import glob
+import pathlib
 from deepinterpolation.generic import JsonLoader
 
 
@@ -1019,6 +1020,8 @@ class MovieJSONGenerator(DeepGenerator):
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.epoch_index = 0
+
+        self.tmp_dir = pathlib.Path(self.json_data["tmp_dir"])
 
         # For backward compatibility
         if "pre_post_frame" in self.json_data.keys():
