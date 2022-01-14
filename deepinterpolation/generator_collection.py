@@ -1045,6 +1045,8 @@ class MovieJSONGenerator(DeepGenerator):
         self.img_per_movie = len(
             self.frame_data_location[self.lims_id[0]]["frames"])
 
+        self._make_index_to_frames()
+
     def __len__(self):
         "Denotes the total number of batches"
         return int(np.ceil(float(self.nb_lims
@@ -1101,31 +1103,50 @@ class MovieJSONGenerator(DeepGenerator):
 
         return local_mean, local_std
 
+
+    def _make_index_to_frames(self):
+        """
+        Construct a lookup that goes from video_index, img_index
+        to an index of input and outputframes
+        """
+        self.frame_lookup = dict()
+        for video_tag in self.lims_id:
+            local_frame_data = self.frame_data_location[video_tag]
+            for img_index in range(self.img_per_movie):
+                output_frame = local_frame_data["frames"][img_index]
+
+                input_index = np.arange(
+                    output_frame - self.pre_frame - self.pre_post_omission,
+                    output_frame + self.post_frame + self.pre_post_omission + 1,
+                )
+                input_index = input_index[input_index != output_frame]
+
+                for index_padding in np.arange(self.pre_post_omission + 1):
+                    input_index = input_index[input_index !=
+                                              output_frame - index_padding]
+                    input_index = input_index[input_index !=
+                                              output_frame + index_padding]
+
+                this_dict = {'output_frame': output_frame,
+                             'input_index': input_index}
+                self.frame_lookup[(video_tag, img_index)] = this_dict
+
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
         motion_path = self.frame_data_location[video_index]["path"]
         with h5py.File(motion_path, "r") as movie_obj:
 
+            index_dict = self.frame_lookup[(video_index, img_index)]
+            input_index = index_dict['input_index']
+            output_frame = index_dict['output_frame']
+
             local_frame_data = self.frame_data_location[video_index]
-            output_frame = local_frame_data["frames"][img_index]
             local_mean = local_frame_data["mean"]
             local_std = local_frame_data["std"]
 
             input_full = np.zeros(
-                [1, 512, 512, self.pre_frame + self.post_frame])
+                [1, 512, 512, len(input_index)])
             output_full = np.zeros([1, 512, 512, 1])
-
-            input_index = np.arange(
-                output_frame - self.pre_frame - self.pre_post_omission,
-                output_frame + self.post_frame + self.pre_post_omission + 1,
-            )
-            input_index = input_index[input_index != output_frame]
-
-            for index_padding in np.arange(self.pre_post_omission + 1):
-                input_index = input_index[input_index !=
-                                          output_frame - index_padding]
-                input_index = input_index[input_index !=
-                                          output_frame + index_padding]
 
             data_img_input = movie_obj["data"][input_index, :, :]
             data_img_output = movie_obj["data"][output_frame, :, :]
