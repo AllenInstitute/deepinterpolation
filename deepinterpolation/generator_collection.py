@@ -1103,7 +1103,6 @@ class MovieJSONGenerator(DeepGenerator):
 
         return local_mean, local_std
 
-
     def _make_index_to_frames(self):
         """
         Construct a lookup that goes from video_index, img_index
@@ -1134,6 +1133,7 @@ class MovieJSONGenerator(DeepGenerator):
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
         motion_path = self.frame_data_location[video_index]["path"]
+        print(f'opening {pathlib.Path(motion_path).name}')
         with h5py.File(motion_path, "r") as movie_obj:
 
             index_dict = self.frame_lookup[(video_index, img_index)]
