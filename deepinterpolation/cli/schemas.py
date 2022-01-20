@@ -145,6 +145,10 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             MultiContinuousTifGenerator)"
     )
 
+    cache_path = argschema.fields.InputFile(
+        required=False,
+        description="Path to cache file for FromCacheGenerator")
+
     batch_size = argschema.fields.Int(
         required=False,
         default=5,

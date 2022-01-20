@@ -8,6 +8,7 @@ import nibabel as nib
 import s3fs
 import glob
 import pathlib
+import time
 from deepinterpolation.generic import JsonLoader
 
 
@@ -1001,11 +1002,6 @@ class OphysGenerator(SequentialGenerator):
 
 class MovieJSONMixin():
 
-    def __len__(self):
-        "Denotes the total number of batches"
-        return int(np.ceil(float(self.nb_lims
-                                 * self.img_per_movie) / self.batch_size))
-
     def on_epoch_end(self):
         # We only increase index if steps_per_epoch
         # is set to positive value. -1 will force the generator
@@ -1084,6 +1080,55 @@ class MovieJSONMixin():
                              'input_index': input_index}
                 self.frame_lookup[(video_tag, img_index)] = this_dict
 
+
+class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
+    """This generator is used when dealing with a large number of hdf5 files
+    referenced into a json file with pre-computed mean and std value. The json
+    file is passed to the generator in place of the movie file themselves. Each
+    frame is expected to be smaller than (512,512).
+    Each individual hdf5 movie is recorded into a 'data' field
+    as [time, x, y]. The json files is pre-calculated and have the following
+    fields (replace <...> appropriately):
+    {"<id>": {"path": <string path to the hdf5 file>,
+    "frames": <[int frame1, int frame2,...]>,
+    "mean": <float value>,
+    "std": <float_value>}}"""
+
+    def __init__(self, json_path):
+        "Initialization"
+        super().__init__(json_path)
+
+        self.sample_data_path_json = self.json_data["train_path"]
+        self.batch_size = self.json_data["batch_size"]
+        self.steps_per_epoch = self.json_data["steps_per_epoch"]
+        self.epoch_index = 0
+
+        self.tmp_dir = pathlib.Path(self.json_data["tmp_dir"])
+
+        # For backward compatibility
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+
+        # For backward compatibility
+        if "pre_post_omission" in self.json_data.keys():
+            self.pre_post_omission = self.json_data["pre_post_omission"]
+        else:
+            self.pre_post_omission = 0
+
+        with open(self.sample_data_path_json, "r") as json_handle:
+            self.frame_data_location = json.load(json_handle)
+
+        self.lims_id = list(self.frame_data_location.keys())
+        self.nb_lims = len(self.lims_id)
+        self.img_per_movie = len(
+            self.frame_data_location[self.lims_id[0]]["frames"])
+
+        self._make_index_to_frames()
+
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
         motion_path = self.frame_data_location[video_index]["path"]
@@ -1136,50 +1181,102 @@ class MovieJSONMixin():
             print("Issues with " + str(self.lims_id))
             raise
 
-class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
-    """This generator is used when dealing with a large number of hdf5 files
-    referenced into a json file with pre-computed mean and std value. The json
-    file is passed to the generator in place of the movie file themselves. Each
-    frame is expected to be smaller than (512,512).
-    Each individual hdf5 movie is recorded into a 'data' field
-    as [time, x, y]. The json files is pre-calculated and have the following
-    fields (replace <...> appropriately):
-    {"<id>": {"path": <string path to the hdf5 file>,
-    "frames": <[int frame1, int frame2,...]>,
-    "mean": <float value>,
-    "std": <float_value>}}"""
+    def __len__(self):
+        "Denotes the total number of batches"
+        return int(np.ceil(float(self.nb_lims
+                                 * self.img_per_movie) / self.batch_size))
+
+
+class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
 
     def __init__(self, json_path):
         "Initialization"
         super().__init__(json_path)
 
-        self.sample_data_path_json = self.json_data["train_path"]
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.epoch_index = 0
+        self.cache_path = self.json_data["cache_path"]
 
         self.tmp_dir = pathlib.Path(self.json_data["tmp_dir"])
+        self.input_frames = None
+        self.output_frames = None
+        self.loaded_group = ''
+        self.io_time = 0.0
+        self.load_cache_metadata()
 
-        # For backward compatibility
-        if "pre_post_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_post_frame"]
-            self.post_frame = self.json_data["pre_post_frame"]
-        else:
-            self.pre_frame = self.json_data["pre_frame"]
-            self.post_frame = self.json_data["post_frame"]
+    def load_cache_metadata(self):
+        with h5py.File(self.cache_path, 'r') as in_file:
+            self.metadata = json.loads(in_file['metadata'][()].decode('utf-8'))
 
-        # For backward compatibility
-        if "pre_post_omission" in self.json_data.keys():
-            self.pre_post_omission = self.json_data["pre_post_omission"]
-        else:
-            self.pre_post_omission = 0
+    @property
+    def nb_lims(self):
+        return self.metadata['n_videos']
 
-        with open(self.sample_data_path_json, "r") as json_handle:
-            self.frame_data_location = json.load(json_handle)
+    @property
+    def img_per_movie(self):
+        return self.metadata['n_frames_per_video']
 
-        self.lims_id = list(self.frame_data_location.keys())
-        self.nb_lims = len(self.lims_id)
-        self.img_per_movie = len(
-            self.frame_data_location[self.lims_id[0]]["frames"])
+    @property
+    def pre_frame(self):
+        return self.metadata['pre_frame']
 
-        self._make_index_to_frames()
+    @property
+    def post_frame(self):
+        return self.metadata['post_frame']
+
+    @property
+    def n_frames_per_frame(self):
+        return self.pre_frame + self.post_frame
+
+    def __len__(self):
+        return np.ceil(self.metadata['n_frames']/self.batch_size).astype(int)
+
+    def load_group(self, group_tag):
+        t0 = time.time()
+        with h5py.File(self.cache_path, 'r') as in_file:
+            group = in_file[group_tag]
+            self.input_frames = group['input_frames'][()]
+            self.output_frames = group['output_frames'][()]
+        self.loaded_group = group_tag
+        self.io_time += (time.time()-t0)
+        msg = f"time spent reading from {self.cache_path}:"
+        msg += f"{self.io_time:.2e} seconds"
+        print(msg)
+
+    def __data_generation__(self, index_frame):
+        str_index = str(index_frame)
+        desired_group = self.metadata['frame_index_to_group'][str_index]
+        if desired_group != self.loaded_group:
+            self.load_group(desired_group)
+        this_manifest = self.metadata['manifest'][desired_group]
+        local_mean = self.metadata['mean_lookup'][str_index]
+        local_std = self.metadata['std_lookup'][str_index]
+
+        local_i_output = index_frame-this_manifest[0]
+        data_img_output = self.output_frames[local_i_output, :, :]
+
+        local_i0 = local_i_output*self.n_frames_per_frame
+        local_i1 = local_i0 + self.n_frames_per_frame
+        data_img_input = self.input_frames[local_i0:local_i1, :, :]
+
+        input_full = np.zeros(
+            [1, 512, 512, self.n_frames_per_frame])
+        output_full = np.zeros([1, 512, 512, 1])
+
+        data_img_input = np.swapaxes(data_img_input, 1, 2)
+        data_img_input = np.swapaxes(data_img_input, 0, 2)
+
+        img_in_shape = data_img_input.shape
+        img_out_shape = data_img_output.shape
+
+        data_img_input = (data_img_input.astype(
+                "float") - local_mean) / local_std
+        data_img_output = (data_img_output.astype(
+                "float") - local_mean) / local_std
+        input_full[0, : img_in_shape[0],
+                       : img_in_shape[1], :] = data_img_input
+        output_full[0, : img_out_shape[0],
+                        : img_out_shape[1], 0] = data_img_output
+
+        return input_full, output_full
