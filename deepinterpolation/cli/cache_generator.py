@@ -34,6 +34,13 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
             desription=('Write data to cache every time you have '
                         'this many frames in memory (approximately)'))
 
+    compression_level = argschema.fields.Integer(
+            required=False,
+            default=6,
+            description=('Level of compression applied to data when '
+                         'writing to the cache (higher is more compressed '
+                         'but slower; must be 0-9)'))
+
     pre_frame = argschema.fields.Int(
         required=False,
         default=30,
@@ -63,6 +70,10 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
         output_path points to .h5 file
         """
         msg = ''
+        if data['compression_level'] < 0 or data['compression_level'] > 9:
+           msg += "\ncompresion_level must be between 0 and 9; you gave "
+           msg += f"{data['compression_level']}\n"
+
         if not data['data_path'].endswith('.json'):
             msg += "\ndata_path needs to point to .json file\n"
             msg += f"you gave: {data['data_path']}\n"
@@ -209,6 +220,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
 
         cache_manifest = dict()
         frame_index_to_group = dict()
+        compression_level = self.args['compression_level']
 
         # create the empty HDF5 file
         with h5py.File(self.args['output_path'], 'w') as out_file:
@@ -221,6 +233,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                 n_full_frames = n_frames*self.n_frames_per_frame
                 data_group.create_dataset('input_frames',
                                           compression='gzip',
+                                          compression_opts=compression_level,
                                           shuffle=True,
                                           shape=(n_full_frames,
                                                  self.frame_shape[0],
@@ -231,6 +244,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                                                   self.frame_shape[1]))
                 data_group.create_dataset('output_frames',
                                           compression='gzip',
+                                          compression_opts=compression_level,
                                           shuffle=True,
                                           shape=(n_frames,
                                                  self.frame_shape[0],
