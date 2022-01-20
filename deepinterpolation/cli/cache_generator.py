@@ -28,6 +28,12 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
             description=('Number of frames and their pre/post to store per '
                          'dataset in the final HDF5 file'))
 
+    flush_every = argschema.fields.Integer(
+            required=False,
+            defaulte=500,
+            desription=('Write data to cache every time you have '
+                        'this many frames in memory (approximately)'))
+
     pre_frame = argschema.fields.Int(
         required=False,
         default=30,
@@ -246,7 +252,6 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         i_frame_to_mean = dict()
         i_frame_to_std = dict()
 
-        flush_every = 500 #self.args['frames_per_dataset']
         data_chunks = []
 
         n_video_keys = len(self.video_key_list)
@@ -286,7 +291,12 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                   f'predict {remaining:.2e} of {predicted:.2e} left to go '
                   f'-- rate {per:.2e}')
 
-            if len(data_chunks) >= flush_every or video_key == self.video_key_list[-1]:
+            do_flush = False
+            if len(data_chunks) >= self.args['flush_every']:
+                do_flush = True
+            if video_key == self.video_key_list[-1]:
+                do_flush = True
+            if do_flush:
                 print('flushing')
                 with h5py.File(self.args['output_path'], 'a') as out_file:
                     for chunk in data_chunks:
