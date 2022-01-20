@@ -283,9 +283,11 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
             remaining = predicted-read_duration
             print(f'read {i_video_key} of {n_video_keys} in '
                   f'{read_duration:.2e} seconds; '
-                  f'predict {remaining:.2e} of {predicted:.2e} left to go')
+                  f'predict {remaining:.2e} of {predicted:.2e} left to go '
+                  f'-- rate {per:.2e}')
 
             if len(data_chunks) >= flush_every or video_key == self.video_key_list[-1]:
+                print('flushing')
                 with h5py.File(self.args['output_path'], 'a') as out_file:
                     for chunk in data_chunks:
                         locale = chunk['locale']
