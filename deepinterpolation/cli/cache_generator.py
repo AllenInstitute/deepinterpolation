@@ -216,22 +216,20 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                 data_group.create_dataset('input_frames',
                                           compression='gzip',
                                           shuffle=True,
-                                          data=np.zeros(
-                                                  (n_full_frames,
-                                                   self.frame_shape[0],
-                                                   self.frame_shape[1]),
-                                                  dtype=self.video_dtype),
-                                                  chunks=(1,
-                                                          self.frame_shape[0],
-                                                          self.frame_shape[1]))
+                                          shape=(n_full_frames,
+                                                 self.frame_shape[0],
+                                                 self.frame_shape[1]),
+                                          dtype=self.video_dtype,
+                                          chunks=(1,
+                                                  self.frame_shape[0],
+                                                  self.frame_shape[1]))
                 data_group.create_dataset('output_frames',
                                           compression='gzip',
                                           shuffle=True,
-                                          data=np.zeros(
-                                                  (n_frames,
-                                                   self.frame_shape[0],
-                                                   self.frame_shape[1]),
-                                                  dtype=self.video_dtype),
+                                          shape=(n_frames,
+                                                 self.frame_shape[0],
+                                                 self.frame_shape[1]),
+                                          dtype=self.video_dtype,
                                           chunks=(1,
                                                   self.frame_shape[0],
                                                   self.frame_shape[1]))
@@ -248,7 +246,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         i_frame_to_mean = dict()
         i_frame_to_std = dict()
 
-        flush_every = self.args['frames_per_dataset']
+        flush_every = 500 #self.args['frames_per_dataset']
         data_chunks = []
 
         n_video_keys = len(self.video_key_list)
