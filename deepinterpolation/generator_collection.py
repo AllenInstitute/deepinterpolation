@@ -1199,9 +1199,11 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         self.cache_path = self.json_data["cache_path"]
 
         if 'cache_tmp_dir' in self.json_data:
+            old_path = pathlib.Path(self.cache_path)
+            old_path_name = old_path.name.replace(old_path.suffix, '')
             new_cache_path = tempfile.mkstemp(
                                   dir=self.json_data['cache_tmp_dir'],
-                                  prefix='cache_',
+                                  prefix=old_path_name+'_',
                                   suffix='.h5')[1]
             t0 = time.time()
             print('copying cache from\n'
