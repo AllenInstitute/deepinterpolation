@@ -1250,6 +1250,12 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         return np.ceil(self.metadata['n_frames']/self.batch_size).astype(int)
 
     def load_group(self, group_tag):
+        if self.loaded_group == group_tag:
+            return
+        msg = f"\n{self.cache_path}\n"
+        msg += f"{self}\n"
+        msg += f"had loaded {self.loaded_group}\n"
+        msg += f"asking for {group_tag}\n"
         t0 = time.time()
         with h5py.File(self.cache_path, 'r') as in_file:
             group = in_file[group_tag]
@@ -1259,16 +1265,15 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         this_time = time.time()
         self.io_time += (this_time-t0)
         duration = this_time - self.generator_t0
-        msg = f"\nread {group_tag} from {self.cache_path}; "
+        msg += f"read {group_tag} from {self.cache_path}; "
         msg += "time spent reading from this cache: "
-        msg += f"{self.io_time:.2e} seconds of {duration:.2e}"
+        msg += f"{self.io_time:.2e} seconds of {duration:.2e}\n"
         print(msg)
 
     def __data_generation__(self, index_frame):
         str_index = str(index_frame)
         desired_group = self.metadata['frame_index_to_group'][str_index]
-        if desired_group != self.loaded_group:
-            self.load_group(desired_group)
+        self.load_group(desired_group)
         this_manifest = self.metadata['manifest'][desired_group]
         local_mean = self.metadata['mean_lookup'][str_index]
         local_std = self.metadata['std_lookup'][str_index]
