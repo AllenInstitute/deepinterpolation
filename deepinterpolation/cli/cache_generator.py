@@ -90,6 +90,112 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
 
         return data
 
+def video_frame_to_locale(video_key,
+                          i_frame,
+                          cache_manifest,
+                          frame_index_to_group,
+                          video_key_to_index,
+                          n_frames_per_frame):
+    """
+    video_key -- a str from self.video_key_list
+    i_frame -- index within json_data[video_key]['frames']
+    cache_manifest -- dict mapping group_tag to (i0, i1)
+    frame_index_to_group -- dict mapping i_global to group_tag
+    """
+
+    i_video = video_key_to_index[video_key]
+    i_frame_global = i_frame*len(video_key_to_index)+i_video
+    group_tag = frame_index_to_group[i_frame_global]
+    group_window = cache_manifest[group_tag]
+    i_output = i_frame_global - group_window[0]
+
+    i0 = i_output*n_frames_per_frame
+    i1 = i0+n_frames_per_frame
+    return {'i_output': i_output,
+            'input_window': (i0, i1),
+             'group': group_tag,
+             'i_frame_global': i_frame_global}
+
+
+def cache_population_worker(
+        video_key_list,
+        video_json_data,
+        video_key_to_index,
+        cache_manifest,
+        frame_index_to_group,
+        n_frames_per_video,
+        pre_frame,
+        post_frame,
+        i_frame_to_mean,
+        i_frame_to_std,
+        flush_every,
+        output_lock,
+        output_path):
+
+    n_frames_per_frame = pre_frame+post_frame
+    data_chunks = []
+
+    read_t0 = time.time()
+    n_video_keys = len(video_key_list)
+    for i_video_key, video_key in enumerate(video_key_list):
+        video_path = video_json_data[video_key]['path']
+        mu = video_json_data[video_key]['mean']
+        std = video_json_data[video_key]['std']
+        with h5py.File(video_path, 'r') as in_file:
+            for i_frame in range(n_frames_per_video):
+                locale = video_frame_to_locale(
+                                video_key,
+                                i_frame,
+                                cache_manifest,
+                                frame_index_to_group,
+                                video_key_to_index,
+                                n_frames_per_frame)
+                i_frame_to_mean[locale['i_frame_global']] = mu
+                i_frame_to_std[locale['i_frame_global']] = std
+
+                frame = video_json_data[video_key]['frames'][i_frame]
+                f0 = frame - pre_frame
+                f1 = frame + post_frame + 1
+                full_data = in_file['data'][f0:f1, :, :]
+                output_frame = full_data[pre_frame, :, :]
+                input_dexes = np.ones(f1-f0, dtype=bool)
+                input_dexes[pre_frame] = False
+                input_frames = full_data[input_dexes, :, :]
+                data_chunks.append({'locale': locale,
+                                    'output_frame': output_frame,
+                                    'input_frames': input_frames})
+
+            read_duration = time.time()-read_t0
+            per = read_duration / (i_video_key+1)
+            predicted = per*n_video_keys
+            remaining = predicted-read_duration
+            print(f'read {i_video_key} of {n_video_keys} in '
+                  f'{read_duration:.2e} seconds; '
+                  f'predict {remaining:.2e} of {predicted:.2e} '
+                  'left to go '
+                  f'-- rate {per:.2e}')
+
+        do_flush = False
+        if len(data_chunks) >= flush_every:
+            do_flush = True
+        if video_key == video_key_list[-1]:
+            do_flush = True
+        if do_flush:
+            print('flushing')
+            if True:
+                with h5py.File(output_path, 'a') as out_file:
+                    for chunk in data_chunks:
+                        locale = chunk['locale']
+                        o_frame = chunk['output_frame']
+                        i_frames = chunk['input_frames']
+                        group = out_file[locale['group']]
+                        group['output_frames'][locale['i_output']] = o_frame
+                        input_window = locale['input_window']
+                        group['input_frames'][input_window[0]:
+                                              input_window[1]] = i_frames
+
+                data_chunks = []
+
 
 class DataCacheGenerator(argschema.ArgSchemaParser):
 
@@ -105,31 +211,6 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
     def n_frames_per_frame(self):
         n_frames_per_frame = self.args['post_frame'] + self.args['pre_frame']
         return n_frames_per_frame
-
-    def video_frame_to_locale(self,
-                              video_key,
-                              i_frame,
-                              cache_manifest,
-                              frame_index_to_group):
-        """
-        video_key -- a str from self.video_key_list
-        i_frame -- index within json_data[video_key]['frames']
-        cache_manifest -- dict mapping group_tag to (i0, i1)
-        frame_index_to_group -- dict mapping i_global to group_tag
-        """
-
-        i_video = self.video_key_to_index[video_key]
-        i_frame_global = i_frame*len(self.video_key_list)+i_video
-        group_tag = frame_index_to_group[i_frame_global]
-        group_window = cache_manifest[group_tag]
-        i_output = i_frame_global - group_window[0]
-
-        i0 = i_output*self.n_frames_per_frame
-        i1 = i0+self.n_frames_per_frame
-        return {'i_output': i_output,
-                'input_window': (i0, i1),
-                'group': group_tag,
-                'i_frame_global': i_frame_global}
 
     def read_json_data(self):
         """
@@ -269,61 +350,20 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         data_chunks = []
 
         n_video_keys = len(self.video_key_list)
-        read_t0 = time.time()
-        for i_video_key, video_key in enumerate(self.video_key_list):
-            video_path = self.video_json_data[video_key]['path']
-            mu = self.video_json_data[video_key]['mean']
-            std = self.video_json_data[video_key]['std']
-            with h5py.File(video_path, 'r') as in_file:
-                for i_frame in range(self.n_frames_per_video):
-                    locale = self.video_frame_to_locale(
-                                    video_key,
-                                    i_frame,
-                                    cache_manifest,
-                                    frame_index_to_group)
-                    i_frame_to_mean[locale['i_frame_global']] = mu
-                    i_frame_to_std[locale['i_frame_global']] = std
-
-                    frame = self.video_json_data[video_key]['frames'][i_frame]
-                    f0 = frame - self.args['pre_frame']
-                    f1 = frame + self.args['post_frame'] + 1
-                    full_data = in_file['data'][f0:f1, :, :]
-                    output_frame = full_data[self.args['pre_frame'], :, :]
-                    input_dexes = np.ones(f1-f0, dtype=bool)
-                    input_dexes[self.args['pre_frame']] = False
-                    input_frames = full_data[input_dexes, :, :]
-                    data_chunks.append({'locale': locale,
-                                        'output_frame': output_frame,
-                                        'input_frames': input_frames})
-
-            read_duration = time.time()-read_t0
-            per = read_duration / (i_video_key+1)
-            predicted = per*n_video_keys
-            remaining = predicted-read_duration
-            print(f'read {i_video_key} of {n_video_keys} in '
-                  f'{read_duration:.2e} seconds; '
-                  f'predict {remaining:.2e} of {predicted:.2e} left to go '
-                  f'-- rate {per:.2e}')
-
-            do_flush = False
-            if len(data_chunks) >= self.args['flush_every']:
-                do_flush = True
-            if video_key == self.video_key_list[-1]:
-                do_flush = True
-            if do_flush:
-                print('flushing')
-                with h5py.File(self.args['output_path'], 'a') as out_file:
-                    for chunk in data_chunks:
-                        locale = chunk['locale']
-                        output_frame = chunk['output_frame']
-                        input_frames = chunk['input_frames']
-                        group = out_file[locale['group']]
-                        group['output_frames'][locale['i_output']] = output_frame
-                        input_window = locale['input_window']
-                        group['input_frames'][input_window[0]:
-                                              input_window[1]] = input_frames
-
-                data_chunks = []
+        cache_population_worker(
+            self.video_key_list,
+            self.video_json_data,
+            self.video_key_to_index,
+            cache_manifest,
+            frame_index_to_group,
+            self.n_frames_per_video,
+            self.pre_frame,
+            self.post_frame,
+            i_frame_to_mean,
+            i_frame_to_std,
+            self.args['flush_every'],
+            None,
+            self.args['output_path'])
 
         return i_frame_to_mean, i_frame_to_std
 
