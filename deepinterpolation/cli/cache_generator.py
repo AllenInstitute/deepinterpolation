@@ -276,19 +276,19 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                                         'output_frame': output_frame,
                                         'input_frames': input_frames})
 
-                if len(data_chunks) >= flush_every or video_key == self.video_key_list[-1]:
-                    with h5py.File(self.args['output_path'], 'a') as out_file:
-                        for chunk in data_chunks:
-                            locale = chunk['locale']
-                            output_frame = chunk['output_frame']
-                            input_frames = chunk['input_frames']
-                            group = out_file[locale['group']]
-                            group['output_frames'][locale['i_output']] = output_frame
-                            input_window = locale['input_window']
-                            group['input_frames'][input_window[0]:
-                                                  input_window[1]] = input_frames
+            if len(data_chunks) >= flush_every or video_key == self.video_key_list[-1]:
+                with h5py.File(self.args['output_path'], 'a') as out_file:
+                    for chunk in data_chunks:
+                        locale = chunk['locale']
+                        output_frame = chunk['output_frame']
+                        input_frames = chunk['input_frames']
+                        group = out_file[locale['group']]
+                        group['output_frames'][locale['i_output']] = output_frame
+                        input_window = locale['input_window']
+                        group['input_frames'][input_window[0]:
+                                              input_window[1]] = input_frames
 
-                    data_chunks = []
+                data_chunks = []
 
         return i_frame_to_mean, i_frame_to_std
 
