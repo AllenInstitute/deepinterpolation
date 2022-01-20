@@ -3,6 +3,7 @@ import marshmallow
 import json
 import h5py
 import numpy as np
+import time
 import pathlib
 
 
@@ -250,7 +251,9 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         flush_every = self.args['frames_per_dataset']
         data_chunks = []
 
-        for video_key in self.video_key_list:
+        n_video_keys = len(self.video_key_list)
+        read_t0 = time.time()
+        for i_video_key, video_key in enumerate(self.video_key_list):
             video_path = self.video_json_data[video_key]['path']
             mu = self.video_json_data[video_key]['mean']
             std = self.video_json_data[video_key]['std']
@@ -275,6 +278,14 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                     data_chunks.append({'locale': locale,
                                         'output_frame': output_frame,
                                         'input_frames': input_frames})
+
+            read_duration = time.time()-read_t0
+            per = read_duration / (i_video_key+1)
+            predicted = per*n_video_keys
+            remaining = predicted-read_duration
+            print(f'read {i_video_key} of {n_video_keys} in '
+                  f'{read_duration:.2e} seconds; '
+                  f'predict {remaining:.2e} of {predicted:.2e} left to go')
 
             if len(data_chunks) >= flush_every or video_key == self.video_key_list[-1]:
                 with h5py.File(self.args['output_path'], 'a') as out_file:
@@ -306,6 +317,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         (i_frame_to_mean,
          i_frame_to_std) = self.populate_cache(cache_manifest, frame_index_to_group)
 
+        print('assembling metadata')
         metadata = dict()
         metadata['manifest'] = cache_manifest
         metadata['frame_index_to_group'] = frame_index_to_group
