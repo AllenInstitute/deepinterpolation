@@ -110,7 +110,8 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         i1 = i0+self.n_frames_per_frame
         return {'i_output': i_output,
                 'input_window': (i0, i1),
-                'group': group_tag}
+                'group': group_tag,
+                'i_frame_global': i_frame_global}
 
     def read_json_data(self):
         """
@@ -256,8 +257,8 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                                     i_frame,
                                     cache_manifest,
                                     frame_index_to_group)
-                    i_frame_to_mean[locale['i_output']] = mu
-                    i_frame_to_std[locale['i_output']] = std
+                    i_frame_to_mean[locale['i_frame_global']] = mu
+                    i_frame_to_std[locale['i_frame_global']] = std
 
                     frame = self.video_json_data[video_key]['frames'][i_frame]
                     f0 = frame - self.args['pre_frame']
@@ -309,6 +310,8 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         metadata['n_frames'] = int(len(frame_index_to_group))
         metadata['mean_lookup'] = i_frame_to_mean
         metadata['std_lookup'] = i_frame_to_std
+        metadata['n_videos'] = int(len(self.video_key_list))
+        metadata['n_frames_per_video'] = int(self.n_frames_per_video)
         with h5py.File(self.args['output_path'], 'a') as output_file:
             output_file.create_dataset(
                     'metadata',
