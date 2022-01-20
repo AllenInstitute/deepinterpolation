@@ -214,6 +214,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                 n_full_frames = n_frames*self.n_frames_per_frame
                 data_group.create_dataset('input_frames',
                                           compression='gzip',
+                                          shuffle=True,
                                           data=np.zeros(
                                                   (n_full_frames,
                                                    self.frame_shape[0],
@@ -224,6 +225,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                                                           self.frame_shape[1]))
                 data_group.create_dataset('output_frames',
                                           compression='gzip',
+                                          shuffle=True,
                                           data=np.zeros(
                                                   (n_frames,
                                                    self.frame_shape[0],
