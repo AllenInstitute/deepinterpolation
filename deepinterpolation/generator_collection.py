@@ -999,53 +999,7 @@ class OphysGenerator(SequentialGenerator):
         return input_full, output_full
 
 
-class MovieJSONGenerator(DeepGenerator):
-    """This generator is used when dealing with a large number of hdf5 files
-    referenced into a json file with pre-computed mean and std value. The json
-    file is passed to the generator in place of the movie file themselves. Each
-    frame is expected to be smaller than (512,512).
-    Each individual hdf5 movie is recorded into a 'data' field
-    as [time, x, y]. The json files is pre-calculated and have the following
-    fields (replace <...> appropriately):
-    {"<id>": {"path": <string path to the hdf5 file>,
-    "frames": <[int frame1, int frame2,...]>,
-    "mean": <float value>,
-    "std": <float_value>}}"""
-
-    def __init__(self, json_path):
-        "Initialization"
-        super().__init__(json_path)
-
-        self.sample_data_path_json = self.json_data["train_path"]
-        self.batch_size = self.json_data["batch_size"]
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
-        self.epoch_index = 0
-
-        self.tmp_dir = pathlib.Path(self.json_data["tmp_dir"])
-
-        # For backward compatibility
-        if "pre_post_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_post_frame"]
-            self.post_frame = self.json_data["pre_post_frame"]
-        else:
-            self.pre_frame = self.json_data["pre_frame"]
-            self.post_frame = self.json_data["post_frame"]
-
-        # For backward compatibility
-        if "pre_post_omission" in self.json_data.keys():
-            self.pre_post_omission = self.json_data["pre_post_omission"]
-        else:
-            self.pre_post_omission = 0
-
-        with open(self.sample_data_path_json, "r") as json_handle:
-            self.frame_data_location = json.load(json_handle)
-
-        self.lims_id = list(self.frame_data_location.keys())
-        self.nb_lims = len(self.lims_id)
-        self.img_per_movie = len(
-            self.frame_data_location[self.lims_id[0]]["frames"])
-
-        self._make_index_to_frames()
+class MovieJSONMixin():
 
     def __len__(self):
         "Denotes the total number of batches"
@@ -1181,3 +1135,51 @@ class MovieJSONGenerator(DeepGenerator):
         except Exception:
             print("Issues with " + str(self.lims_id))
             raise
+
+class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
+    """This generator is used when dealing with a large number of hdf5 files
+    referenced into a json file with pre-computed mean and std value. The json
+    file is passed to the generator in place of the movie file themselves. Each
+    frame is expected to be smaller than (512,512).
+    Each individual hdf5 movie is recorded into a 'data' field
+    as [time, x, y]. The json files is pre-calculated and have the following
+    fields (replace <...> appropriately):
+    {"<id>": {"path": <string path to the hdf5 file>,
+    "frames": <[int frame1, int frame2,...]>,
+    "mean": <float value>,
+    "std": <float_value>}}"""
+
+    def __init__(self, json_path):
+        "Initialization"
+        super().__init__(json_path)
+
+        self.sample_data_path_json = self.json_data["train_path"]
+        self.batch_size = self.json_data["batch_size"]
+        self.steps_per_epoch = self.json_data["steps_per_epoch"]
+        self.epoch_index = 0
+
+        self.tmp_dir = pathlib.Path(self.json_data["tmp_dir"])
+
+        # For backward compatibility
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+
+        # For backward compatibility
+        if "pre_post_omission" in self.json_data.keys():
+            self.pre_post_omission = self.json_data["pre_post_omission"]
+        else:
+            self.pre_post_omission = 0
+
+        with open(self.sample_data_path_json, "r") as json_handle:
+            self.frame_data_location = json.load(json_handle)
+
+        self.lims_id = list(self.frame_data_location.keys())
+        self.nb_lims = len(self.lims_id)
+        self.img_per_movie = len(
+            self.frame_data_location[self.lims_id[0]]["frames"])
+
+        self._make_index_to_frames()
