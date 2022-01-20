@@ -1193,6 +1193,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         "Initialization"
         super().__init__(json_path)
 
+        self.generator_t0 = time.time()
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.epoch_index = 0
@@ -1255,9 +1256,11 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
             self.input_frames = group['input_frames'][()]
             self.output_frames = group['output_frames'][()]
         self.loaded_group = group_tag
-        self.io_time += (time.time()-t0)
+        this_time = time.time()
+        self.io_time += (this_time-t0)
+        duration = this_time - self.generator_t0
         msg = f"\ntime spent reading from {self.cache_path}:"
-        msg += f"{self.io_time:.2e} seconds"
+        msg += f"{self.io_time:.2e} seconds of {duration:.2e}"
         print(msg)
 
     def __data_generation__(self, index_frame):
