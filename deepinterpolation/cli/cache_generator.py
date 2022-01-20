@@ -5,6 +5,7 @@ import h5py
 import numpy as np
 import time
 import pathlib
+import multiprocessing
 
 
 class DataCacheGeneratorSchema(argschema.ArgSchema):
@@ -33,6 +34,11 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
             defaulte=500,
             desription=('Write data to cache every time you have '
                         'this many frames in memory (approximately)'))
+
+    n_parallel_workers = argschema.fields.Integer(
+            required=False,
+            default=1,
+            description=('Number of workers to use when creating the cache'))
 
     compression_level = argschema.fields.Integer(
             required=False,
@@ -132,6 +138,7 @@ def cache_population_worker(
         output_lock,
         output_path):
 
+    print('starting worker')
     n_frames_per_frame = pre_frame+post_frame
     data_chunks = []
 
@@ -181,8 +188,9 @@ def cache_population_worker(
         if video_key == video_key_list[-1]:
             do_flush = True
         if do_flush:
-            print('flushing')
-            if True:
+            print('waiting to flush')
+            with output_lock:
+                print('flushing')
                 with h5py.File(output_path, 'a') as out_file:
                     for chunk in data_chunks:
                         locale = chunk['locale']
@@ -343,29 +351,64 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         return cache_manifest, frame_index_to_group
 
     def populate_cache(self, cache_manifest, frame_index_to_group):
+        n_workers = self.args['n_parallel_workers']
+        mgr = multiprocessing.Manager()
 
-        i_frame_to_mean = dict()
-        i_frame_to_std = dict()
+        output_lock = mgr.Lock()
 
-        data_chunks = []
+        if n_workers > 1:
+            i_frame_to_mean = mgr.dict()
+            i_frame_to_std = mgr.dict()
 
-        n_video_keys = len(self.video_key_list)
-        cache_population_worker(
-            self.video_key_list,
-            self.video_json_data,
-            self.video_key_to_index,
-            cache_manifest,
-            frame_index_to_group,
-            self.n_frames_per_video,
-            self.pre_frame,
-            self.post_frame,
-            i_frame_to_mean,
-            i_frame_to_std,
-            self.args['flush_every'],
-            None,
-            self.args['output_path'])
+            n_videos = len(self.video_key_list)
+            n_videos_per_worker = np.ceil(n_videos/n_workers).astype(int)
+            n_videos_per_worker = max(n_videos_per_worker, 1)
+            process_list = []
+            for i0 in range(0, n_videos, n_videos_per_worker):
+                i1 = i0 + n_videos_per_worker
+                sub_list = self.video_key_list[i0:i1]
+                process = multiprocessing.Process(
+                            target = cache_population_worker,
+                            args = (
+                               sub_list,
+                               self.video_json_data,
+                               self.video_key_to_index,
+                               cache_manifest,
+                               frame_index_to_group,
+                               self.n_frames_per_video,
+                               self.pre_frame,
+                               self.post_frame,
+                               i_frame_to_mean,
+                               i_frame_to_std,
+                               max(1, self.args['flush_every']//n_workers),
+                               output_lock,
+                               self.args['output_path']))
+                process.start()
+                process_list.append(process)
 
-        return i_frame_to_mean, i_frame_to_std
+            for process in process_list:
+                process.join()
+
+        else:
+            i_frame_to_mean = dict()
+            i_frame_to_std = dict()
+
+            cache_population_worker(
+                self.video_key_list,
+                self.video_json_data,
+                self.video_key_to_index,
+                cache_manifest,
+                frame_index_to_group,
+                self.n_frames_per_video,
+                self.pre_frame,
+                self.post_frame,
+                i_frame_to_mean,
+                i_frame_to_std,
+                self.args['flush_every'],
+                output_lock,
+                self.args['output_path'])
+
+        return dict(i_frame_to_mean), dict(i_frame_to_std)
 
     def run(self):
         self.pre_frame = self.args['pre_frame']
