@@ -149,6 +149,12 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         required=False,
         description="Path to cache file for FromCacheGenerator")
 
+    cache_tmp_dir = argschema.fields.OutputDir(
+        required=False,
+        allow_none=True,
+        default=None,
+        description="Optional dir into which to copy cache")
+
     batch_size = argschema.fields.Int(
         required=False,
         default=5,

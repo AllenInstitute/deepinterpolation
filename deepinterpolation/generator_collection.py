@@ -9,6 +9,8 @@ import s3fs
 import glob
 import pathlib
 import time
+import shutil
+import tempfile
 from deepinterpolation.generic import JsonLoader
 
 
@@ -1103,8 +1105,6 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.epoch_index = 0
 
-        self.tmp_dir = pathlib.Path(self.json_data["tmp_dir"])
-
         # For backward compatibility
         if "pre_post_frame" in self.json_data.keys():
             self.pre_frame = self.json_data["pre_post_frame"]
@@ -1198,7 +1198,21 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         self.epoch_index = 0
         self.cache_path = self.json_data["cache_path"]
 
-        self.tmp_dir = pathlib.Path(self.json_data["tmp_dir"])
+        if 'cache_tmp_dir' in self.json_data:
+            new_cache_path = tempfile.mkstemp(
+                                  dir=self.json_data['cache_tmp_dir'],
+                                  prefix='cache_',
+                                  suffix='.h5')[1]
+            t0 = time.time()
+            print('copying cache from\n'
+                  f'{self.cache_path}\n'
+                  'to\n'
+                  f'{new_cache_path}')
+            shutil.copy(self.cache_path, new_cache_path)
+            self.cache_path = new_cache_path
+            duration = time.time()-t0
+            print(f'copying took {duration:.2e} seconds')
+
         self.input_frames = None
         self.output_frames = None
         self.loaded_group = ''
