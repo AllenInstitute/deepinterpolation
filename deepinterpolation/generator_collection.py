@@ -1256,7 +1256,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
             self.output_frames = group['output_frames'][()]
         self.loaded_group = group_tag
         self.io_time += (time.time()-t0)
-        msg = f"time spent reading from {self.cache_path}:"
+        msg = f"\ntime spent reading from {self.cache_path}:"
         msg += f"{self.io_time:.2e} seconds"
         print(msg)
 
