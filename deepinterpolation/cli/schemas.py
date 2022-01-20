@@ -595,7 +595,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
 
     nb_workers = argschema.fields.Int(
         required=False,
-        default=None,
+        default=8,
         allow_none=True,
         description="Number of workers passed to model.fit")
 
