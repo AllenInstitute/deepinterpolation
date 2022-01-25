@@ -1199,6 +1199,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         self.epoch_index = 0
         self.cache_path = self.json_data["cache_path"]
 
+        self.cache_is_tmp = False
         if 'cache_tmp_dir' in self.json_data:
             old_path = pathlib.Path(self.cache_path)
             old_path_name = old_path.name.replace(old_path.suffix, '')
@@ -1215,12 +1216,19 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
             self.cache_path = new_cache_path
             duration = time.time()-t0
             print(f'copying took {duration:.2e} seconds')
+            self.cache_is_tmp = True
 
         self.input_frames = None
         self.output_frames = None
         self.loaded_group = ''
         self.io_time = 0.0
         self.load_cache_metadata()
+
+    def __del__(self):
+        if self.cache_is_tmp:
+            print(f'cleaning up {self.cache_path}')
+            cache_path = pathlib.Path(self.cache_path)
+            cache_path.unlink()
 
     def load_cache_metadata(self):
         with h5py.File(self.cache_path, 'r') as in_file:
