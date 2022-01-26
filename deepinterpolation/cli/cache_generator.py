@@ -14,9 +14,15 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
             required=True,
             description='HDF5 file where cache will be written')
 
-    data_path = argschema.fields.InputFile(
+    training_path = argschema.fields.InputFile(
             required=True,
-            description='Path to json file specifying the frames to use')
+            description=('Path to json file specifying the training '
+                         'frames to use'))
+
+    validation_path = argschema.fields.InputFile(
+            required=True,
+            description=('Path to json file specifying the validation '
+                         'frames to use'))
 
     clobber = argschema.fields.Boolean(
                 required=False,
@@ -68,12 +74,15 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
            msg += "\ncompresion_level must be between 0 and 9; you gave "
            msg += f"{data['compression_level']}\n"
 
-        if not data['data_path'].endswith('.json'):
-            msg += "\ndata_path needs to point to .json file\n"
-            msg += f"you gave: {data['data_path']}\n"
+        for k in ('training_path', 'validation_path'):
+            if not data[k].endswith('.json'):
+                msg += "\n{k} needs to point to .json file\n"
+                msg += f"you gave: {data[k]}\n"
+
         if not data['output_path'].endswith('.h5'):
             msg += "\noutput_path needs to point to .h5 file\n"
             msg += f"you gave: {data['output_path']}"
+
         if len(msg) > 0:
             raise ValueError(msg)
 
