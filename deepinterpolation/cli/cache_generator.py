@@ -47,6 +47,9 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
                          'writing to the cache (higher is more compressed '
                          'but slower; must be 0-9)'))
 
+    compression = argschema.fields.Bool(
+            default=True)
+
     pre_frame = argschema.fields.Int(
         required=False,
         default=30,
@@ -299,6 +302,14 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
             frame_set = np.sort(np.array([f for f in frame_set]))
             total_frame_lookup[video_key] = frame_set
 
+        compression_switch = self.args['compression']
+        if compression_switch:
+            compression_level = self.args['compression_level']
+            compresion_type = 'gzip'
+        else:
+            compression_level = None
+            compression_type = None
+
         with h5py.File(self.args['output_path'], 'w') as output_file:
             for video_key in video_key_list:
                 frame_set = total_frame_lookup[video_key]
@@ -314,8 +325,8 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                                 chunks=(1+self.args['post_frame']-self.args['pre_frame'],
                                         frame_shape[0],
                                         frame_shape[1]),
-                                compression='gzip',
-                                compression_opts=self.args['compression_level'])
+                                compression=compression_type,
+                                compression_opts=compression_level)
 
                 # this will list all of the frame indices as they are in the
                 # original movie
