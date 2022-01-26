@@ -126,6 +126,8 @@ def cache_population_worker(
         output_lock,
         output_path):
 
+    t0 = time.time()
+    ct = 0
     for video_key in video_key_to_path:
         video_path = video_key_to_path[video_key]
         frame_index = total_frame_lookup[video_key]
@@ -138,7 +140,13 @@ def cache_population_worker(
                     out_file[f'{video_key}_index'][()],
                     frame_index)
                 out_file[video_key][:, :, :] = frame_data
-
+        ct += 1
+        duration = time.time()-t0
+        per = duration/ct
+        prediction = per*len(video_key_to_path)
+        remaining = prediction-duration
+        print(f'{ct} files in {duration:.2e} seconds; '
+              f'predict {remaining:.2e} of {prediction:.2e} remain')
 
 def read_json_data(json_path):
     """
