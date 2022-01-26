@@ -149,6 +149,11 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         required=False,
         description="Path to cache file for FromCacheGenerator")
 
+    cache_size = argschema.fields.Integer(
+        required=False,
+        default=500,
+        description="number of frames to load at a time from cache")
+
     cache_tmp_dir = argschema.fields.OutputDir(
         required=False,
         allow_none=True,
