@@ -34,6 +34,12 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
             default=1,
             description=('Number of workers to use when creating the cache'))
 
+    flush_every = argschema.fields.Integer(
+            required=False,
+            default=40000,
+            description=("every time you have this many frames in memory, "
+                         "write to the cache"))
+
     compression_level = argschema.fields.Integer(
             required=False,
             default=6,
@@ -123,30 +129,49 @@ def video_frame_to_locale(video_key,
 def cache_population_worker(
         video_key_to_path,
         total_frame_lookup,
+        flush_every,
         output_lock,
+        status_dict,
         output_path):
 
     t0 = time.time()
     ct = 0
-    for video_key in video_key_to_path:
+    n_frames = 0
+    frame_data_chunk = dict()
+    video_key_list = list(video_key_to_path.keys())
+    for video_key in video_key_list:
         video_path = video_key_to_path[video_key]
         frame_index = total_frame_lookup[video_key]
         with h5py.File(video_path, 'r') as in_file:
             frame_data = in_file['data'][()]
         frame_data = frame_data[frame_index, :, :]
-        with output_lock:
-            with h5py.File(output_path, 'a') as out_file:
-                np.testing.assert_array_equal(
-                    out_file[f'{video_key}_index'][()],
-                    frame_index)
-                out_file[video_key][:, :, :] = frame_data
+        frame_data_chunk[video_key] = (frame_data, frame_index)
+        n_frames += len(frame_index)
         ct += 1
-        duration = time.time()-t0
-        per = duration/ct
-        prediction = per*len(video_key_to_path)
-        remaining = prediction-duration
-        print(f'{ct} files in {duration:.2e} seconds; '
-              f'predict {remaining:.2e} of {prediction:.2e} remain')
+        need_to_flush = (n_frames >= flush_every
+                         or video_key==video_key_list[-1])
+
+        if not status_dict['holding'] or need_to_flush:
+            print(f'flushing {len(frame_data_chunk)} chunks')
+            with output_lock:
+                status_dict['holding'] = True
+                with h5py.File(output_path, 'a') as out_file:
+                    for flush_key in frame_data_chunk:
+                        frame_data = frame_data_chunk[flush_key][0]
+                        frame_index = frame_data_chunk[flush_key][1]
+                        np.testing.assert_array_equal(
+                            out_file[f'{flush_key}_index'][()],
+                            frame_index)
+                        out_file[flush_key][:, :, :] = frame_data
+                status_dict['holding'] = False
+            n_frames = 0
+            frame_data_chunk = dict()
+            duration = time.time()-t0
+            per = duration/ct
+            prediction = per*len(video_key_to_path)
+            remaining = prediction-duration
+            print(f'{ct} files in {duration:.2e} seconds; '
+                  f'predict {remaining:.2e} of {prediction:.2e} remain')
 
 def read_json_data(json_path):
     """
@@ -315,7 +340,12 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         n_workers = self.args['n_parallel_workers']
         mgr = multiprocessing.Manager()
 
+        flush_every = self.args['flush_every']
+        print(f'flushing every {flush_every}')
+
         output_lock = mgr.Lock()
+        status_dict = mgr.dict()
+        status_dict['holding'] = False
 
         if n_workers > 1:
             n_videos = len(video_key_list)
@@ -332,7 +362,9 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                             args = (
                                video_key_to_path,
                                total_frame_lookup,
+                               flush_every,
                                output_lock,
+                               status_dict,
                                self.args['output_path']))
                 process.start()
                 process_list.append(process)
@@ -346,7 +378,9 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
             cache_population_worker(
                 video_key_to_path,
                 total_frame_lookup,
+                flush_every,
                 output_lock,
+                status_dict,
                 self.args['output_path'])
 
     def run(self):
