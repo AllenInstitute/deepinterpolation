@@ -277,7 +277,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                 # this will map i_frame in the training dataset to frame index
                 # in the original movie
                 output_file.create_dataset(
-                            f'{video_key}_i_frame_to_frame',
+                            f'{video_key}_i_frame_to_video_frame',
                             data=i_frame_arr)
 
         return total_frame_lookup

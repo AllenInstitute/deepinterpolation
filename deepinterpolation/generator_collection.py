@@ -1198,6 +1198,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.epoch_index = 0
         self.cache_path = self.json_data["cache_path"]
+        self.cache_size = self.json_data["cache_size"]
 
         self.cache_is_tmp = False
         if 'cache_tmp_dir' in self.json_data:
@@ -1218,9 +1219,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
             print(f'copying took {duration:.2e} seconds')
             self.cache_is_tmp = True
 
-        self.input_frames = None
-        self.output_frames = None
-        self.loaded_group = ''
+        self.cached_frames = dict()
         self.io_time = 0.0
         self.load_cache_metadata()
 
@@ -1229,13 +1228,21 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
             print(f'cleaning up {self.cache_path}')
             self.cache_path.unlink()
 
+    def i_local_to_i_global(self, i_frame, i_video):
+        return i_frame*self.nb_lims+i_video
+
+    def i_global_to_i_local(self, i_global):
+        i_video = i_global%self.nb_lims
+        i_frame = i_global//self.nb_lims
+        return {'i_video': i_video, 'i_frame': i_frame}
+
     def load_cache_metadata(self):
         with h5py.File(self.cache_path, 'r') as in_file:
             self.metadata = json.loads(in_file['metadata'][()].decode('utf-8'))
 
     @property
     def nb_lims(self):
-        return self.metadata['n_videos']
+        return len(self.metadata['video_key_list'])
 
     @property
     def img_per_movie(self):
@@ -1254,43 +1261,84 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         return self.pre_frame + self.post_frame
 
     def __len__(self):
-        return np.ceil(self.metadata['n_frames']/self.batch_size).astype(int)
+        n_frames = self.nb_lims*self.img_per_movie
+        return np.ceil(n_frames/self.batch_size).astype(int)
 
-    def load_group(self, group_tag):
-        if self.loaded_group == group_tag:
-            return
+    def load_cache_of_frames(self, frame_list):
+        self.cached_frames = dict()
         msg = f"\n{self.cache_path}\n"
         msg += f"{self}\n"
-        msg += f"had loaded {self.loaded_group}\n"
-        msg += f"asking for {group_tag}\n"
+        msg += f"loading {len(frame_list)} frames\n"
         t0 = time.time()
+
+        video_key_to_i_video = {k: ii
+                   for ii, k in enumerate(self.metadata['video_key_list'])}
+
+        # figure out which frames to load from each dataset
+        frames_to_get = dict()
+        for i_global in frame_list:
+            locale = self.i_global_to_i_local(i_global)
+            i_video = locale['i_video']
+            i_frame = locale['i_frame']
+            video_key = self.metadata['video_key_list'][i_video]
+            if video_key not in frames_to_get:
+                frames_to_get[video_key] = []
+            frames_to_get[video_key].append({'i_global': i_global,
+                                             'i_local': i_frame})
+
+        # actually load the dataset
         with h5py.File(self.cache_path, 'r') as in_file:
-            group = in_file[group_tag]
-            self.input_frames = group['input_frames'][()]
-            self.output_frames = group['output_frames'][()]
-        self.loaded_group = group_tag
+            for video_key in frames_to_get:
+                frame_index = in_file[f'{video_key}_index'][()]
+                i_local_to_video_frame = in_file[f'{video_key}_i_frame_to_video_frame'][()]
+                for group in frames_to_get[video_key]:
+                    i_global = group['i_global']
+                    i_local = group['i_local']
+                    video_frame = i_local_to_video_frame[i_local]
+                    i_input = np.concatenate(
+                                   [np.arange(video_frame-self.pre_frame,
+                                              video_frame,
+                                              dtype=int),
+                                    np.arange(video_frame+1,
+                                              video_frame+self.post_frame+1,
+                                              dtype=int)])
+
+                    input_indexes = np.searchsorted(frame_index, i_input)
+                    np.testing.assert_array_equal(frame_index[input_indexes],
+                                                  i_input)
+
+                    input_frames = in_file[video_key][input_indexes, :, :]
+                    i_output = np.where(frame_index == video_frame)[0][0]
+                    output_frame = in_file[video_key][i_output, :, :]
+                    mean = self.metadata['mean_lookup'][video_key]
+                    std = self.metadata['std_lookup'][video_key]
+                    self.cached_frames[i_global] = {'input': input_frames,
+                                                    'output': output_frame,
+                                                    'mean': mean,
+                                                    'std': std}
+
         this_time = time.time()
         self.io_time += (this_time-t0)
         duration = this_time - self.generator_t0
-        msg += f"read {group_tag} from {self.cache_path}; "
+        msg += f"read data from {self.cache_path}; "
         msg += "time spent reading from this cache: "
         msg += f"{self.io_time:.2e} seconds of {duration:.2e}\n"
         print(msg)
 
     def __data_generation__(self, index_frame):
-        str_index = str(index_frame)
-        desired_group = self.metadata['frame_index_to_group'][str_index]
-        self.load_group(desired_group)
-        this_manifest = self.metadata['manifest'][desired_group]
-        local_mean = self.metadata['mean_lookup'][str_index]
-        local_std = self.metadata['std_lookup'][str_index]
+        if index_frame not in self.cached_frames:
+            i_end = min(index_frame+self.cache_size,
+                        self.nb_lims*self.img_per_movie)
+            to_cache = list(range(index_frame, i_end))
+            self.load_cache_of_frames(to_cache)
 
-        local_i_output = index_frame-this_manifest[0]
-        data_img_output = self.output_frames[local_i_output, :, :]
+        data = self.cached_frames[index_frame]
 
-        local_i0 = local_i_output*self.n_frames_per_frame
-        local_i1 = local_i0 + self.n_frames_per_frame
-        data_img_input = self.input_frames[local_i0:local_i1, :, :]
+        local_mean = data['mean']
+        local_std = data['std']
+
+        data_img_output = data['output']
+        data_img_input = data['input']
 
         input_full = np.zeros(
             [1, 512, 512, self.n_frames_per_frame])
