@@ -192,7 +192,6 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
 
         self.video_key_list = video_key_list
         self.video_json_data = json_data
-        self.video_key_to_index = {k: ii for ii, k in enumerate(video_key_list)}
 
     def validate_videos(self):
         """
