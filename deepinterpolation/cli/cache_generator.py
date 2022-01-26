@@ -23,18 +23,6 @@ class DataCacheGeneratorSchema(argschema.ArgSchema):
                 default=False,
                 description='Whether or not to overwrite existing output_path')
 
-    frames_per_dataset = argschema.fields.Integer(
-            required=False,
-            default=2000,
-            description=('Number of frames and their pre/post to store per '
-                         'dataset in the final HDF5 file'))
-
-    flush_every = argschema.fields.Integer(
-            required=False,
-            defaulte=500,
-            desription=('Write data to cache every time you have '
-                        'this many frames in memory (approximately)'))
-
     n_parallel_workers = argschema.fields.Integer(
             required=False,
             default=1,
@@ -126,83 +114,23 @@ def video_frame_to_locale(video_key,
 def cache_population_worker(
         video_key_list,
         video_json_data,
-        video_key_to_index,
-        cache_manifest,
-        frame_index_to_group,
-        n_frames_per_video,
-        pre_frame,
-        post_frame,
-        i_frame_to_mean,
-        i_frame_to_std,
-        flush_every,
+        total_frame_lookup,
         output_lock,
         output_path):
 
-    print('starting worker')
-    n_frames_per_frame = pre_frame+post_frame
-    data_chunks = []
-
-    read_t0 = time.time()
-    n_video_keys = len(video_key_list)
-    for i_video_key, video_key in enumerate(video_key_list):
+    for video_key in video_key_list:
         video_path = video_json_data[video_key]['path']
-        mu = video_json_data[video_key]['mean']
-        std = video_json_data[video_key]['std']
+        frame_index = total_frame_lookup[video_key]
         with h5py.File(video_path, 'r') as in_file:
-            for i_frame in range(n_frames_per_video):
-                locale = video_frame_to_locale(
-                                video_key,
-                                i_frame,
-                                cache_manifest,
-                                frame_index_to_group,
-                                video_key_to_index,
-                                n_frames_per_frame)
-                i_frame_to_mean[locale['i_frame_global']] = mu
-                i_frame_to_std[locale['i_frame_global']] = std
+            frame_data = in_file['data'][()]
+        frame_data = frame_data[frame_index, :, :]
+        with output_lock:
+            with h5py.File(output_path, 'a') as out_file:
+                np.testing.assert_array_equal(
+                    out_file[f'{video_key}_index'][()],
+                    frame_index)
+                out_file[video_key][:, :, :] = frame_data
 
-                frame = video_json_data[video_key]['frames'][i_frame]
-                f0 = frame - pre_frame
-                f1 = frame + post_frame + 1
-                full_data = in_file['data'][f0:f1, :, :]
-                output_frame = full_data[pre_frame, :, :]
-                input_dexes = np.ones(f1-f0, dtype=bool)
-                input_dexes[pre_frame] = False
-                input_frames = full_data[input_dexes, :, :]
-                data_chunks.append({'locale': locale,
-                                    'output_frame': output_frame,
-                                    'input_frames': input_frames})
-
-            read_duration = time.time()-read_t0
-            per = read_duration / (i_video_key+1)
-            predicted = per*n_video_keys
-            remaining = predicted-read_duration
-            print(f'read {i_video_key} of {n_video_keys} in '
-                  f'{read_duration:.2e} seconds; '
-                  f'predict {remaining:.2e} of {predicted:.2e} '
-                  'left to go '
-                  f'-- rate {per:.2e}')
-
-        do_flush = False
-        if len(data_chunks) >= flush_every:
-            do_flush = True
-        if video_key == video_key_list[-1]:
-            do_flush = True
-        if do_flush:
-            print('waiting to flush')
-            with output_lock:
-                print('flushing')
-                with h5py.File(output_path, 'a') as out_file:
-                    for chunk in data_chunks:
-                        locale = chunk['locale']
-                        o_frame = chunk['output_frame']
-                        i_frames = chunk['input_frames']
-                        group = out_file[locale['group']]
-                        group['output_frames'][locale['i_output']] = o_frame
-                        input_window = locale['input_window']
-                        group['input_frames'][input_window[0]:
-                                              input_window[1]] = i_frames
-
-                data_chunks = []
 
 
 class DataCacheGenerator(argschema.ArgSchemaParser):
@@ -299,67 +227,54 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
 
     def create_empty_cache(self):
         """
-        Returns
-        -------
-        cache_manifest -- dict mapping group name to (i0, i1) of frames
-        frame_index_to_group -- dict mapping frame name to (i0, i1)
+        Create datasets for video_key and video_key_index
+        (video_key_index is a numpy array of the frames needed
+        from the movie pointed to by video_key)
         """
 
-        n_total_frames = self.n_frames_per_video*len(self.video_key_list)
+        total_frame_lookup = dict()
+        for video_key in self.video_key_list:
+            frame_list = self.video_json_data[video_key]['frames']
+            video_path = self.video_json_data[video_key]['path']
+            with h5py.File(video_path, 'r') as in_file:
+                n_frames = in_file['data'].shape[0]
+            frame_set = set()
+            for frame in frame_list:
+                start_frame = max(0, frame-self.args['pre_frame'])
+                end_frame = min(n_frames, frame+self.args['post_frame']+1)
+                for i_frame in range(start_frame, end_frame):
+                    frame_set.add(i_frame)
+            frame_set = np.sort(np.array([f for f in frame_set]))
+            total_frame_lookup[video_key] = frame_set
 
-        cache_manifest = dict()
-        frame_index_to_group = dict()
-        compression_level = self.args['compression_level']
+        with h5py.File(self.args['output_path'], 'w') as output_file:
+            for video_key in self.video_key_list:
+                frame_set = total_frame_lookup[video_key]
+                output_file.create_dataset(
+                                video_key,
+                                shape=(len(frame_set),
+                                       self.frame_shape[0],
+                                       self.frame_shape[1]),
+                                dtype=self.video_dtype,
+                                shuffle=True,
+                                chunks=(1+self.args['post_frame']-self.args['pre_frame'],
+                                        self.frame_shape[0],
+                                        self.frame_shape[1]),
+                                compression='gzip',
+                                compression_opts=self.args['compression_level'])
+                output_file.create_dataset(
+                            f'{video_key}_index',
+                            data=frame_set)
+        return total_frame_lookup
 
-        # create the empty HDF5 file
-        with h5py.File(self.args['output_path'], 'w') as out_file:
-            dataset_ct = 0
-            for i0 in range(0, n_total_frames, self.args['frames_per_dataset']):
-                i1 = min(n_total_frames, i0+self.args['frames_per_dataset'])
-                group_tag = f'group_{dataset_ct}'
-                data_group = out_file.create_group(group_tag)
-                n_frames = i1-i0
-                n_full_frames = n_frames*self.n_frames_per_frame
-                data_group.create_dataset('input_frames',
-                                          compression='gzip',
-                                          compression_opts=compression_level,
-                                          shuffle=True,
-                                          shape=(n_full_frames,
-                                                 self.frame_shape[0],
-                                                 self.frame_shape[1]),
-                                          dtype=self.video_dtype,
-                                          chunks=(1,
-                                                  self.frame_shape[0],
-                                                  self.frame_shape[1]))
-                data_group.create_dataset('output_frames',
-                                          compression='gzip',
-                                          compression_opts=compression_level,
-                                          shuffle=True,
-                                          shape=(n_frames,
-                                                 self.frame_shape[0],
-                                                 self.frame_shape[1]),
-                                          dtype=self.video_dtype,
-                                          chunks=(1,
-                                                  self.frame_shape[0],
-                                                  self.frame_shape[1]))
 
-                cache_manifest[group_tag] = (int(i0), int(i1))
-                for ii in range(i0, i1):
-                    frame_index_to_group[ii] = group_tag
-                dataset_ct += 1
-
-        return cache_manifest, frame_index_to_group
-
-    def populate_cache(self, cache_manifest, frame_index_to_group):
+    def populate_cache(self, total_frame_lookup):
         n_workers = self.args['n_parallel_workers']
         mgr = multiprocessing.Manager()
 
         output_lock = mgr.Lock()
 
         if n_workers > 1:
-            i_frame_to_mean = mgr.dict()
-            i_frame_to_std = mgr.dict()
-
             n_videos = len(self.video_key_list)
             n_videos_per_worker = np.ceil(n_videos/n_workers).astype(int)
             n_videos_per_worker = max(n_videos_per_worker, 1)
@@ -372,15 +287,7 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                             args = (
                                sub_list,
                                self.video_json_data,
-                               self.video_key_to_index,
-                               cache_manifest,
-                               frame_index_to_group,
-                               self.n_frames_per_video,
-                               self.pre_frame,
-                               self.post_frame,
-                               i_frame_to_mean,
-                               i_frame_to_std,
-                               max(1, self.args['flush_every']//n_workers),
+                               total_frame_lookup,
                                output_lock,
                                self.args['output_path']))
                 process.start()
@@ -390,25 +297,12 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                 process.join()
 
         else:
-            i_frame_to_mean = dict()
-            i_frame_to_std = dict()
-
             cache_population_worker(
                 self.video_key_list,
                 self.video_json_data,
-                self.video_key_to_index,
-                cache_manifest,
-                frame_index_to_group,
-                self.n_frames_per_video,
-                self.pre_frame,
-                self.post_frame,
-                i_frame_to_mean,
-                i_frame_to_std,
-                self.args['flush_every'],
+                total_frame_lookup,
                 output_lock,
                 self.args['output_path'])
-
-        return dict(i_frame_to_mean), dict(i_frame_to_std)
 
     def run(self):
         self.pre_frame = self.args['pre_frame']
@@ -417,24 +311,25 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         self.validate_videos()
 
         print('writing empty cache')
-        (cache_manifest,
-         frame_index_to_group) = self.create_empty_cache()
+        total_frame_lookup = self.create_empty_cache()
 
         print('populating cache')
-        (i_frame_to_mean,
-         i_frame_to_std) = self.populate_cache(cache_manifest, frame_index_to_group)
+        self.populate_cache(total_frame_lookup)
 
         print('assembling metadata')
+        mean_lookup = dict()
+        std_lookup = dict()
+        for video_key in self.video_key_list:
+            mean_lookup[video_key] = self.video_json_data[video_key]['mean']
+            std_lookup[video_key] = self.video_json_data[video_key]['std']
+
         metadata = dict()
-        metadata['manifest'] = cache_manifest
-        metadata['frame_index_to_group'] = frame_index_to_group
         metadata['pre_frame'] = int(self.args['pre_frame'])
         metadata['post_frame'] = int(self.args['post_frame'])
-        metadata['n_frames'] = int(len(frame_index_to_group))
-        metadata['mean_lookup'] = i_frame_to_mean
-        metadata['std_lookup'] = i_frame_to_std
-        metadata['n_videos'] = int(len(self.video_key_list))
+        metadata['mean_lookup'] = mean_lookup
+        metadata['std_lookup'] = std_lookup
         metadata['n_frames_per_video'] = int(self.n_frames_per_video)
+        metadata['video_key_list'] = self.video_key_list
         with h5py.File(self.args['output_path'], 'a') as output_file:
             output_file.create_dataset(
                     'metadata',
