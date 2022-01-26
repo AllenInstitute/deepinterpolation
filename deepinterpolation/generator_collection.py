@@ -1291,7 +1291,26 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
             for video_key in frames_to_get:
                 frame_index = in_file[f'{video_key}_index'][()]
                 i_local_to_video_frame = in_file[f'{video_key}_i_frame_to_video_frame'][()]
-                all_data = in_file[video_key][()]
+
+                # only load the frames we need *right now*
+                i_min = None
+                i_max = None
+                for group in frames_to_get[video_key]:
+                    i_global = group['i_global']
+                    i_local = group['i_local']
+                    video_frame = i_local_to_video_frame[i_local]
+                    local_min = video_frame-self.pre_frame
+                    local_max = video_frame+self.post_frame
+                    if i_min is None or local_min < i_min:
+                        i_min = local_min
+                    if i_max is None or local_max > i_max:
+                        i_max = local_max
+
+                i_min = np.where(frame_index==i_min)[0][0]
+                i_max = np.where(frame_index==i_max)[0][0]
+                all_data = in_file[video_key][i_min:i_max+1, :, :]
+                offset = i_min
+
                 for group in frames_to_get[video_key]:
                     i_global = group['i_global']
                     i_local = group['i_local']
@@ -1308,9 +1327,9 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
                     np.testing.assert_array_equal(frame_index[input_indexes],
                                                   i_input)
 
-                    input_frames = all_data[input_indexes, :, :]
+                    input_frames = all_data[input_indexes-offset, :, :]
                     i_output = np.where(frame_index == video_frame)[0][0]
-                    output_frame = all_data[i_output, :, :]
+                    output_frame = all_data[i_output-offset, :, :]
                     mean = self.metadata['mean_lookup'][video_key]
                     std = self.metadata['std_lookup'][video_key]
                     self.cached_frames[i_global] = {'input': input_frames,
