@@ -151,7 +151,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
 
     cache_size = argschema.fields.Integer(
         required=False,
-        default=27,
+        default=500,
         description="number of frames to load at a time from cache")
 
     cache_tmp_dir = argschema.fields.OutputDir(
