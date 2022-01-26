@@ -121,14 +121,13 @@ def video_frame_to_locale(video_key,
 
 
 def cache_population_worker(
-        video_key_list,
-        video_json_data,
+        video_key_to_path,
         total_frame_lookup,
         output_lock,
         output_path):
 
-    for video_key in video_key_list:
-        video_path = video_json_data[video_key]['path']
+    for video_key in video_key_to_path:
+        video_path = video_key_to_path[video_key]
         frame_index = total_frame_lookup[video_key]
         with h5py.File(video_path, 'r') as in_file:
             frame_data = in_file['data'][()]
@@ -141,99 +140,101 @@ def cache_population_worker(
                 out_file[video_key][:, :, :] = frame_data
 
 
+def read_json_data(json_path):
+    """
+    Load and validate the JSON file that points to the video data
+    this cache will rely upon
+
+    Save contents of json file in self.video_json_data and a sorted
+    video key list in self.video_key_list
+    """
+    with open(json_path, 'rb') as in_file:
+        json_data = json.load(in_file)
+    video_key_list = list(json_data.keys())
+    #video_key_list.sort()
+
+    # make sure that every video has the same number of frames
+    # sampled from it (that is a requirement of the generator
+    # this cache will feed)
+    n_frames = len(json_data[video_key_list[0]]['frames'])
+    msg = ''
+    for video_key in video_key_list:
+        n = len(json_data[video_key]['frames'])
+        if n != n_frames:
+            msg += f'video {video_key} has {n} frames; '
+            msg += f'it should have {n_frames}\n'
+
+    # make sure every specified video points to a valid path
+    for video_key in video_key_list:
+        video_path = pathlib.Path(json_data[video_key]['path'])
+        if not video_path.is_file():
+            msg += f'{video_path.resolve().absolute()} is not a file\n'
+
+    if len(msg) > 0:
+        raise RuntimeError(msg)
+
+    return json_data
+
+
+def validate_videos(video_json_data, pre_frame, post_frame):
+    """
+    Check that videos all have the same dtype and that none of them
+    require frames that are within pre/post of the end
+    """
+    video_dtype = None
+    frame_shape = None
+    msg = ""
+    key_list = list(video_json_data.keys())
+    for video_key in key_list:
+        video_path = video_json_data[video_key]['path']
+        with h5py.File(video_path, 'r') as in_file:
+            this_dtype = in_file['data'].dtype
+            if video_dtype is None:
+                video_dtype = this_dtype
+            else:
+                if in_file['data'].dtype != video_dtype:
+                    msg += f"{video_path} dtype is {str(this_dtype)}; "
+                    msg += f"should be {str(video_dtype)}\n"
+            if frame_shape is None:
+                frame_shape = in_file['data'].shape[1:]
+            else:
+                if in_file['data'].shape[1:] != frame_shape:
+                    msg += f"{video_path} shape is "
+                    msg += f"{in_file['data'].shape}; "
+                    msg += "frame shape should be {frame_shape}\n"
+
+            these_frames = video_json_data[video_key]['frames']
+            min_frame = min(these_frames)
+            max_frame = max(these_frames)
+            if min_frame < pre_frame:
+                msg += f"{video_path} min_frame {min_frame}; "
+                msg += f"is within {pre_frame} of beginning of movie\n"
+            if max_frame > (in_file['data'].shape[0]-post_frame):
+                msg += f"{video_path} max_frame {max_frame}; "
+                msg += "is within {post_frame} of end of movie\n"
+        if len(msg) > 0:
+            raise RuntimeError(msg)
+
+    return {'video_dtype': video_dtype, 'frame_shape': frame_shape}
+
 
 class DataCacheGenerator(argschema.ArgSchemaParser):
 
     default_schema = DataCacheGeneratorSchema
 
-    @property
-    def n_frames_per_video(self):
-        frames = self.video_json_data[self.video_key_list[0]]['frames']
-        n_frames_per_video = len(frames)
-        return n_frames_per_video
 
     @property
     def n_frames_per_frame(self):
         n_frames_per_frame = self.args['post_frame'] + self.args['pre_frame']
         return n_frames_per_frame
 
-    def read_json_data(self):
-        """
-        Load and validate the JSON file that points to the video data
-        this cache will rely upon
 
-        Save contents of json file in self.video_json_data and a sorted
-        video key list in self.video_key_list
-        """
-        with open(self.args['data_path'], 'rb') as in_file:
-            json_data = json.load(in_file)
-        video_key_list = list(json_data.keys())
-        #video_key_list.sort()
 
-        # make sure that every video has the same number of frames
-        # sampled from it (that is a requirement of the generator
-        # this cache will feed)
-        n_frames = len(json_data[video_key_list[0]]['frames'])
-        msg = ''
-        for video_key in video_key_list:
-            n = len(json_data[video_key]['frames'])
-            if n != n_frames:
-                msg += f'video {video_key} has {n} frames; '
-                msg += f'it should have {n_frames}\n'
-
-        # make sure every specified video points to a valid path
-        for video_key in video_key_list:
-            video_path = pathlib.Path(json_data[video_key]['path'])
-            if not video_path.is_file():
-                msg += f'{video_path.resolve().absolute()} is not a file\n'
-
-        if len(msg) > 0:
-            raise RuntimeError(msg)
-
-        self.video_key_list = video_key_list
-        self.video_json_data = json_data
-
-    def validate_videos(self):
-        """
-        Check that videos all have the same dtype and that none of them
-        require frames that are within pre/post of the end
-        """
-        video_dtype = None
-        frame_shape = None
-        msg = ""
-        for video_key in self.video_key_list:
-            video_path = self.video_json_data[video_key]['path']
-            with h5py.File(video_path, 'r') as in_file:
-                this_dtype = in_file['data'].dtype
-                if video_dtype is None:
-                    video_dtype = this_dtype
-                else:
-                    if in_file['data'].dtype != video_dtype:
-                        msg += f"{video_path} dtype is {str(this_dtype)}; "
-                        msg += f"should be {str(video_dtype)}\n"
-                if frame_shape is None:
-                    frame_shape = in_file['data'].shape[1:]
-                else:
-                    if in_file['data'].shape[1:] != frame_shape:
-                        msg += f"{video_path} shape is "
-                        msg += f"{in_file['data'].shape}; "
-                        msg += "frame shape should be {frame_shape}\n"
-
-                these_frames = self.video_json_data[video_key]['frames']
-                min_frame = min(these_frames)
-                max_frame = max(these_frames)
-                if min_frame < self.pre_frame:
-                    msg += f"{video_path} min_frame {min_frame}; "
-                    msg += f"is within {self.pre_frame} of beginning of movie\n"
-                if max_frame > (in_file['data'].shape[0]-self.post_frame):
-                    msg += f"{video_path} max_frame {max_frame}; "
-                    msg += "is within {self.post_frame} of end of movie\n"
-            if len(msg) > 0:
-                raise RuntimeError(msg)
-        self.video_dtype = video_dtype
-        self.frame_shape = frame_shape
-
-    def create_empty_cache(self):
+    def create_empty_cache(self,
+                           training_data,
+                           validation_data,
+                           video_dtype,
+                           frame_shape):
         """
         Create datasets for video_key and video_key_index
         (video_key_index is a numpy array of the frames needed
@@ -241,38 +242,45 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         """
 
         total_frame_lookup = dict()
-        i_frame_to_frame = dict()
-        for video_key in self.video_key_list:
-            frame_list = self.video_json_data[video_key]['frames']
-            video_path = self.video_json_data[video_key]['path']
+        training_i_frame_to_frame = dict()
+        validation_i_frame_to_frame = dict()
+        video_key_list = list(training_data.keys())
+        for video_key in video_key_list:
+            video_path = training_data[video_key]['path']
             with h5py.File(video_path, 'r') as in_file:
                 n_frames = in_file['data'].shape[0]
+
             frame_set = set()
-            i_frame_arr = []
-            for frame in frame_list:
-                i_frame_arr.append(frame)
-                start_frame = max(0, frame-self.args['pre_frame'])
-                end_frame = min(n_frames, frame+self.args['post_frame']+1)
-                for i_frame in range(start_frame, end_frame):
-                    frame_set.add(i_frame)
+            for (video_json_data, i_frame_to_frame) in zip((training_data, validation_data),
+                                                           (training_i_frame_to_frame,
+                                                            validation_i_frame_to_frame)):
+                i_frame_arr = []
+                frame_list = video_json_data[video_key]['frames']
+                for frame in frame_list:
+                    i_frame_arr.append(frame)
+                    start_frame = max(0, frame-self.args['pre_frame'])
+                    end_frame = min(n_frames, frame+self.args['post_frame']+1)
+                    for i_frame in range(start_frame, end_frame):
+                        frame_set.add(i_frame)
+                i_frame_to_frame[video_key] = np.array(i_frame_arr)
             frame_set = np.sort(np.array([f for f in frame_set]))
             total_frame_lookup[video_key] = frame_set
-            i_frame_to_frame[video_key] = np.array(i_frame_arr)
 
         with h5py.File(self.args['output_path'], 'w') as output_file:
-            for video_key in self.video_key_list:
+            for video_key in video_key_list:
                 frame_set = total_frame_lookup[video_key]
-                i_frame_arr = i_frame_to_frame[video_key]
+                training_i_frame_arr = training_i_frame_to_frame[video_key]
+                validation_i_frame_arr = validation_i_frame_to_frame[video_key]
                 output_file.create_dataset(
                                 video_key,
                                 shape=(len(frame_set),
-                                       self.frame_shape[0],
-                                       self.frame_shape[1]),
-                                dtype=self.video_dtype,
+                                       frame_shape[0],
+                                       frame_shape[1]),
+                                dtype=video_dtype,
                                 shuffle=True,
                                 chunks=(1+self.args['post_frame']-self.args['pre_frame'],
-                                        self.frame_shape[0],
-                                        self.frame_shape[1]),
+                                        frame_shape[0],
+                                        frame_shape[1]),
                                 compression='gzip',
                                 compression_opts=self.args['compression_level'])
 
@@ -285,31 +293,36 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                 # this will map i_frame in the training dataset to frame index
                 # in the original movie
                 output_file.create_dataset(
-                            f'{video_key}_i_frame_to_video_frame',
-                            data=i_frame_arr)
+                            f'{video_key}_training_i_frame_to_video_frame',
+                            data=training_i_frame_arr)
+                output_file.create_dataset(
+                            f'{video_key}_validation_i_frame_to_video_frame',
+                            data=validation_i_frame_arr)
 
         return total_frame_lookup
 
 
-    def populate_cache(self, total_frame_lookup):
+    def populate_cache(self, total_frame_lookup, video_json_data):
+        video_key_list = list(video_json_data.keys())
         n_workers = self.args['n_parallel_workers']
         mgr = multiprocessing.Manager()
 
         output_lock = mgr.Lock()
 
         if n_workers > 1:
-            n_videos = len(self.video_key_list)
+            n_videos = len(video_key_list)
             n_videos_per_worker = np.ceil(n_videos/n_workers).astype(int)
             n_videos_per_worker = max(n_videos_per_worker, 1)
             process_list = []
             for i0 in range(0, n_videos, n_videos_per_worker):
                 i1 = i0 + n_videos_per_worker
-                sub_list = self.video_key_list[i0:i1]
+                sub_list = video_key_list[i0:i1]
+                video_key_to_path = {k: video_json_data[k]['path']
+                                     for k in sub_list}
                 process = multiprocessing.Process(
                             target = cache_population_worker,
                             args = (
-                               sub_list,
-                               self.video_json_data,
+                               video_key_to_path,
                                total_frame_lookup,
                                output_lock,
                                self.args['output_path']))
@@ -320,9 +333,10 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                 process.join()
 
         else:
+            video_key_to_path = {k: video_json_data[k]['path']
+                                 for k in video_json_data}
             cache_population_worker(
-                self.video_key_list,
-                self.video_json_data,
+                video_key_to_path,
                 total_frame_lookup,
                 output_lock,
                 self.args['output_path'])
@@ -330,29 +344,55 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
     def run(self):
         self.pre_frame = self.args['pre_frame']
         self.post_frame = self.args['post_frame']
-        self.read_json_data()
-        self.validate_videos()
+
+        training_json_data = read_json_data(self.args['training_path'])
+        validation_json_data = read_json_data(self.args['validation_path'])
+
+        t_list = list(training_json_data.keys())
+        v_list = list(validation_json_data.keys())
+        t_list.sort()
+        v_list.sort()
+        assert t_list == v_list
+
+        training_types = validate_videos(training_json_data,
+                                         self.pre_frame,
+                                         self.post_frame)
+
+        validation_types = validate_videos(validation_json_data,
+                                           self.pre_frame,
+                                           self.post_frame)
 
         print('writing empty cache')
-        total_frame_lookup = self.create_empty_cache()
+        total_frame_lookup = self.create_empty_cache(
+                                     training_data=training_json_data,
+                                     validation_data=validation_json_data,
+                                     video_dtype=training_types['video_dtype'],
+                                     frame_shape=training_types['frame_shape'])
 
         print('populating cache')
-        self.populate_cache(total_frame_lookup)
+        self.populate_cache(total_frame_lookup, training_json_data)
 
         print('assembling metadata')
         mean_lookup = dict()
         std_lookup = dict()
-        for video_key in self.video_key_list:
-            mean_lookup[video_key] = self.video_json_data[video_key]['mean']
-            std_lookup[video_key] = self.video_json_data[video_key]['std']
+        video_key_list = list(validation_json_data.keys())
+        for video_key in video_key_list:
+            mean_lookup[video_key] = validation_json_data[video_key]['mean']
+            std_lookup[video_key] = validation_json_data[video_key]['std']
 
         metadata = dict()
         metadata['pre_frame'] = int(self.args['pre_frame'])
         metadata['post_frame'] = int(self.args['post_frame'])
         metadata['mean_lookup'] = mean_lookup
         metadata['std_lookup'] = std_lookup
-        metadata['n_frames_per_video'] = int(self.n_frames_per_video)
-        metadata['video_key_list'] = self.video_key_list
+
+        n_frames_per_video = dict()
+        k = video_key_list[0]
+        n_frames_per_video['training'] = len(training_json_data[k]['frames'])
+        n_frames_per_video['validation'] = len(training_json_data[k]['frames'])
+
+        metadata['n_frames_per_video'] = n_frames_per_video
+        metadata['video_key_list'] = video_key_list
         with h5py.File(self.args['output_path'], 'a') as output_file:
             output_file.create_dataset(
                     'metadata',

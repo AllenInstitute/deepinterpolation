@@ -154,6 +154,13 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         default=500,
         description="number of frames to load at a time from cache")
 
+    cache_flavor = argschema.fields.String(
+        required=False,
+        default=None,
+        allow_none=True,
+        validation=OneOf([None, 'training', 'validation']),
+        description=("either 'training' or 'validation'"))
+
     cache_tmp_dir = argschema.fields.OutputDir(
         required=False,
         allow_none=True,

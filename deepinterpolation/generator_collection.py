@@ -1199,6 +1199,8 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         self.epoch_index = 0
         self.cache_path = self.json_data["cache_path"]
         self.cache_size = self.json_data["cache_size"]
+        self.flavor = self.json_data["cache_flavor"]
+        assert self.flavor is not None
 
         self.cache_is_tmp = False
         if 'cache_tmp_dir' in self.json_data:
@@ -1246,7 +1248,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
 
     @property
     def img_per_movie(self):
-        return self.metadata['n_frames_per_video']
+        return self.metadata['n_frames_per_video'][self.flavor]
 
     @property
     def pre_frame(self):
@@ -1290,7 +1292,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         with h5py.File(self.cache_path, 'r') as in_file:
             for video_key in frames_to_get:
                 frame_index = in_file[f'{video_key}_index'][()]
-                i_local_to_video_frame = in_file[f'{video_key}_i_frame_to_video_frame'][()]
+                i_local_to_video_frame = in_file[f'{video_key}_{self.flavor}_i_frame_to_video_frame'][()]
 
                 # only load the frames we need *right now*
                 i_min = None
