@@ -233,23 +233,28 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
         """
 
         total_frame_lookup = dict()
+        i_frame_to_frame = dict()
         for video_key in self.video_key_list:
             frame_list = self.video_json_data[video_key]['frames']
             video_path = self.video_json_data[video_key]['path']
             with h5py.File(video_path, 'r') as in_file:
                 n_frames = in_file['data'].shape[0]
             frame_set = set()
+            i_frame_arr = []
             for frame in frame_list:
+                i_frame_arr.append(frame)
                 start_frame = max(0, frame-self.args['pre_frame'])
                 end_frame = min(n_frames, frame+self.args['post_frame']+1)
                 for i_frame in range(start_frame, end_frame):
                     frame_set.add(i_frame)
             frame_set = np.sort(np.array([f for f in frame_set]))
             total_frame_lookup[video_key] = frame_set
+            i_frame_to_frame[video_key] = np.array(i_frame_arr)
 
         with h5py.File(self.args['output_path'], 'w') as output_file:
             for video_key in self.video_key_list:
                 frame_set = total_frame_lookup[video_key]
+                i_frame_arr = i_frame_to_frame[video_key]
                 output_file.create_dataset(
                                 video_key,
                                 shape=(len(frame_set),
@@ -262,9 +267,19 @@ class DataCacheGenerator(argschema.ArgSchemaParser):
                                         self.frame_shape[1]),
                                 compression='gzip',
                                 compression_opts=self.args['compression_level'])
+
+                # this will list all of the frame indices as they are in the
+                # original movie
                 output_file.create_dataset(
                             f'{video_key}_index',
                             data=frame_set)
+
+                # this will map i_frame in the training dataset to frame index
+                # in the original movie
+                output_file.create_dataset(
+                            f'{video_key}_i_frame_to_frame',
+                            data=i_frame_arr)
+
         return total_frame_lookup
 
 
