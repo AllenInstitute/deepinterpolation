@@ -1312,6 +1312,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
 
                 i_min = np.where(frame_index==i_min)[0][0]
                 i_max = np.where(frame_index==i_max)[0][0]
+                print(f'loading {i_max-i_min} frames from key {video_key}')
                 all_data = in_file[video_key][i_min:i_max+1, :, :]
                 offset = i_min
 
