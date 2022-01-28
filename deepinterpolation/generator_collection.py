@@ -1204,22 +1204,23 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
 
         self.cache_is_tmp = False
         if 'cache_tmp_dir' in self.json_data:
-            old_path = pathlib.Path(self.cache_path)
-            old_path_name = old_path.name.replace(old_path.suffix, '')
-            new_cache_path = tempfile.mkstemp(
-                                  dir=self.json_data['cache_tmp_dir'],
-                                  prefix=old_path_name+'_',
-                                  suffix='.h5')[1]
-            t0 = time.time()
-            print('copying cache from\n'
-                  f'{self.cache_path}\n'
-                  'to\n'
-                  f'{new_cache_path}')
-            shutil.copy(self.cache_path, new_cache_path)
-            self.cache_path = pathlib.Path(new_cache_path)
-            duration = time.time()-t0
-            print(f'copying took {duration:.2e} seconds')
-            self.cache_is_tmp = True
+            if self.json_data['cache_tmp_dir'] is not None:
+                old_path = pathlib.Path(self.cache_path)
+                old_path_name = old_path.name.replace(old_path.suffix, '')
+                new_cache_path = tempfile.mkstemp(
+                                      dir=self.json_data['cache_tmp_dir'],
+                                      prefix=old_path_name+'_',
+                                      suffix='.h5')[1]
+                t0 = time.time()
+                print('copying cache from\n'
+                      f'{self.cache_path}\n'
+                      'to\n'
+                      f'{new_cache_path}')
+                shutil.copy(self.cache_path, new_cache_path)
+                self.cache_path = pathlib.Path(new_cache_path)
+                duration = time.time()-t0
+                print(f'copying took {duration:.2e} seconds')
+                self.cache_is_tmp = True
 
         self.cached_frames = dict()
         self.io_time = 0.0
