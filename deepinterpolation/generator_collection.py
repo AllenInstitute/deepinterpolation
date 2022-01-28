@@ -1269,6 +1269,7 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
     def load_cache_of_frames(self, frame_list):
         self.cached_frames = dict()
         msg = f"\n{self.cache_path}\n"
+        msg += f"{self.flavor}\n"
         msg += f"{self}\n"
         msg += f"loading {len(frame_list)} frames\n"
         t0 = time.time()
@@ -1342,7 +1343,6 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         this_time = time.time()
         self.io_time += (this_time-t0)
         duration = this_time - self.generator_t0
-        msg += f"read data from {self.cache_path}; "
         msg += "time spent reading from this cache: "
         msg += f"{self.io_time:.2e} seconds of {duration:.2e}\n"
         print(msg)
