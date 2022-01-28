@@ -1193,6 +1193,8 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         "Initialization"
         super().__init__(json_path)
 
+        self.last_frame_loaded = -1
+
         self.generator_t0 = time.time()
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
@@ -1275,6 +1277,8 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
         msg += f"loading {len(frame_list)} frames\n"
         t0 = time.time()
 
+        self.last_frame_loaded = -1
+
         video_key_to_i_video = {k: ii
                    for ii, k in enumerate(self.metadata['video_key_list'])}
 
@@ -1337,6 +1341,8 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
                     output_frame = all_data[i_output-offset, :, :]
                     mean = self.metadata['mean_lookup'][video_key]
                     std = self.metadata['std_lookup'][video_key]
+                    if i_global > self.last_frame_loaded:
+                        self.last_frame_loaded = i_global
                     self.cached_frames[i_global] = {'input': input_frames,
                                                     'output': output_frame,
                                                     'mean': mean,
@@ -1357,6 +1363,10 @@ class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
             self.load_cache_of_frames(to_cache)
 
         data = self.cached_frames[index_frame]
+
+        if index_frame == self.last_frame_loaded:
+            print('clearing cache')
+            self.cached_frames = dict()
 
         local_mean = data['mean']
         local_std = data['std']
