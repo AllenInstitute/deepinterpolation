@@ -7,6 +7,7 @@ import tifffile
 import nibabel as nib
 import s3fs
 import glob
+import warnings
 from deepinterpolation.generic import JsonLoader
 
 
@@ -1171,5 +1172,8 @@ class MovieJSONGenerator(DeepGenerator):
             movie_obj.close()
 
             return input_full, output_full
-        except Exception:
-            print("Issues with " + str(self.lims_id))
+        except Exception as err:
+            msg = f"Issues with {local_lims}\n"
+            msg += f"Error: {str(err)}\n"
+            msg += "moving on\n"
+            warnings.warn(msg)
