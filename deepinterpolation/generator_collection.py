@@ -1117,7 +1117,10 @@ class MovieJSONGenerator(DeepGenerator):
             else:
                 _filenames = ["motion_corrected_video.h5", "concat_31Hz_0.h5"]
                 for _filename in _filenames:
-                    _filepath = os.path.join(local_path, "processed", _filename)
+                    _filepath = os.path.join(local_path,
+                                             "processed",
+                                             _filename)
+
                     if os.path.exists(_filepath) and not os.path.islink(
                         _filepath
                     ):  # Path exists and is not symbolic
@@ -1125,7 +1128,7 @@ class MovieJSONGenerator(DeepGenerator):
                         break
 
             if motion_path is None:
-                msg = f"unable to find valid movie file for path\n"
+                msg = "unable to find valid movie file for path\n"
                 msg += f"{local_path}"
                 raise RuntimeError(msg)
 
@@ -1141,8 +1144,8 @@ class MovieJSONGenerator(DeepGenerator):
                 output_full = np.zeros([1, 512, 512, 1])
 
                 input_index = np.arange(
-                    output_frame - self.pre_frame - self.pre_post_omission,
-                    output_frame + self.post_frame + self.pre_post_omission + 1,
+                  output_frame - self.pre_frame - self.pre_post_omission,
+                  output_frame + self.post_frame + self.pre_post_omission + 1,
                 )
                 input_index = input_index[input_index != output_frame]
 
