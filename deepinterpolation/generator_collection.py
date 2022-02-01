@@ -1115,7 +1115,6 @@ class MovieJSONGenerator(DeepGenerator):
                 motion_path = local_path
             else:
                 _filenames = ["motion_corrected_video.h5", "concat_31Hz_0.h5"]
-                motion_path = []
                 for _filename in _filenames:
                     _filepath = os.path.join(local_path, "processed", _filename)
                     if os.path.exists(_filepath) and not os.path.islink(
