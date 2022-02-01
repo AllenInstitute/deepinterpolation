@@ -1128,47 +1128,46 @@ class MovieJSONGenerator(DeepGenerator):
                 msg += f"{local_path}"
                 raise RuntimeError(msg)
 
-            movie_obj = h5py.File(motion_path, "r")
+            with h5py.File(motion_path, "r") as movie_obj:
 
-            local_frame_data = self.frame_data_location[local_lims]
-            output_frame = local_frame_data["frames"][local_img]
-            local_mean = local_frame_data["mean"]
-            local_std = local_frame_data["std"]
+                local_frame_data = self.frame_data_location[local_lims]
+                output_frame = local_frame_data["frames"][local_img]
+                local_mean = local_frame_data["mean"]
+                local_std = local_frame_data["std"]
 
-            input_full = np.zeros(
-                [1, 512, 512, self.pre_frame + self.post_frame])
-            output_full = np.zeros([1, 512, 512, 1])
+                input_full = np.zeros(
+                    [1, 512, 512, self.pre_frame + self.post_frame])
+                output_full = np.zeros([1, 512, 512, 1])
 
-            input_index = np.arange(
-                output_frame - self.pre_frame - self.pre_post_omission,
-                output_frame + self.post_frame + self.pre_post_omission + 1,
-            )
-            input_index = input_index[input_index != output_frame]
+                input_index = np.arange(
+                    output_frame - self.pre_frame - self.pre_post_omission,
+                    output_frame + self.post_frame + self.pre_post_omission + 1,
+                )
+                input_index = input_index[input_index != output_frame]
 
-            for index_padding in np.arange(self.pre_post_omission + 1):
-                input_index = input_index[input_index !=
-                                          output_frame - index_padding]
-                input_index = input_index[input_index !=
-                                          output_frame + index_padding]
+                for index_padding in np.arange(self.pre_post_omission + 1):
+                    input_index = input_index[input_index !=
+                                              output_frame - index_padding]
+                    input_index = input_index[input_index !=
+                                              output_frame + index_padding]
 
-            data_img_input = movie_obj["data"][input_index, :, :]
-            data_img_output = movie_obj["data"][output_frame, :, :]
+                data_img_input = movie_obj["data"][input_index, :, :]
+                data_img_output = movie_obj["data"][output_frame, :, :]
 
-            data_img_input = np.swapaxes(data_img_input, 1, 2)
-            data_img_input = np.swapaxes(data_img_input, 0, 2)
+                data_img_input = np.swapaxes(data_img_input, 1, 2)
+                data_img_input = np.swapaxes(data_img_input, 0, 2)
 
-            img_in_shape = data_img_input.shape
-            img_out_shape = data_img_output.shape
+                img_in_shape = data_img_input.shape
+                img_out_shape = data_img_output.shape
 
-            data_img_input = (data_img_input.astype(
-                "float") - local_mean) / local_std
-            data_img_output = (data_img_output.astype(
-                "float") - local_mean) / local_std
-            input_full[0, : img_in_shape[0],
-                       : img_in_shape[1], :] = data_img_input
-            output_full[0, : img_out_shape[0],
-                        : img_out_shape[1], 0] = data_img_output
-            movie_obj.close()
+                data_img_input = (data_img_input.astype(
+                    "float") - local_mean) / local_std
+                data_img_output = (data_img_output.astype(
+                    "float") - local_mean) / local_std
+                input_full[0, : img_in_shape[0],
+                           : img_in_shape[1], :] = data_img_input
+                output_full[0, : img_out_shape[0],
+                            : img_out_shape[1], 0] = data_img_output
 
             return input_full, output_full
         except Exception as err:
