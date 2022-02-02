@@ -1132,6 +1132,16 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
         motion_path = self.frame_data_location[video_index]["path"]
+        if not os.path.isfile(motion_path):
+            motion_path = os.path.join(
+                             os.environ['TMPDIR'],
+                             self.frame_data_location[video_index]['path'])
+        if not os.path.isfile(motion_path):
+            msg = 'could not find valid file path for \n'
+            msg += f"{self.frame_data_location[video_index]['path']}\n"
+            msg += f"tried\n{motion_path}\n"
+            raise RuntimeError(msg)
+
         #print(f'opening {pathlib.Path(motion_path).name}')
         with h5py.File(motion_path, "r") as movie_obj:
 
