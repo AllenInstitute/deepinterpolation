@@ -179,6 +179,12 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         inference."
     )
 
+    seed = argschema.fields.Int(
+        required=False,
+        default=235813,
+        description=("Seed used for random number generator used to "
+                     "shuffle samples"))
+
     total_samples = argschema.fields.Int(
         required=False,
         default=-1,

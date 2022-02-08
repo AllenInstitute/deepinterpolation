@@ -440,6 +440,12 @@ class SequentialGenerator(DeepGenerator):
         else:
             self.randomize = True
 
+        if self.randomize:
+            if "seed" in self.json_data.keys():
+                self.rng = np.random.default_rng(self.json_data["seed"])
+            else:
+                self.rng = np.random.default_rng()
+
         if "pre_post_omission" in self.json_data.keys():
             self.pre_post_omission = self.json_data["pre_post_omission"]
         else:
@@ -491,7 +497,7 @@ class SequentialGenerator(DeepGenerator):
         self.list_samples = np.arange(self.start_sample, self.end_sample+1)
 
         if self.randomize:
-            np.random.shuffle(self.list_samples)
+            self.rng.shuffle(self.list_samples)
 
         # We cut the number of samples if asked to
         if (self.total_samples > 0
@@ -1039,6 +1045,15 @@ class MovieJSONGenerator(DeepGenerator):
             self.frame_data_location = json.load(json_handle)
 
         self.lims_id = list(self.frame_data_location.keys())
+
+        self.lims_id.sort()
+        if self.json_data["randomize"]:
+            if "seed" in self.json_data:
+                rng = np.random.default_rng(self.json_data["seed"])
+            else:
+                rng = np.random.default_rng()
+            rng.shuffle(self.lims_id)
+
         self.nb_lims = len(self.lims_id)
         self.img_per_movie = len(
             self.frame_data_location[self.lims_id[0]]["frames"])

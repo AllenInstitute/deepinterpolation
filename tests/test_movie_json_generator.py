@@ -8,6 +8,11 @@ from deepinterpolation.generator_collection import MovieJSONGenerator
 
 
 @pytest.fixture(scope='session')
+def random_seed_fixture():
+    return 221
+
+
+@pytest.fixture(scope='session')
 def frame_list_fixture():
     """
     Indexes of frames returned by MovieJSONGenerator
@@ -61,7 +66,8 @@ def movie_path_list_fixture(tmpdir_factory):
 @pytest.fixture(scope='session')
 def json_frame_specification_fixture(movie_path_list_fixture,
                                      tmpdir_factory,
-                                     frame_list_fixture):
+                                     frame_list_fixture,
+                                     random_seed_fixture):
     """
     yields a dict with the following key/value pairs
 
@@ -106,8 +112,13 @@ def json_frame_specification_fixture(movie_path_list_fixture,
             data = in_file['data'][()]
         path_to_data[movie_path] = data
 
+    # replicate shuffling that happens inside the generator
+    rng = np.random.default_rng(random_seed_fixture)
+    index_list = list(range(len(movie_path_list_fixture)))
+    rng.shuffle(index_list)
+
     for i_frame in range(len(frame_list_fixture)):
-        for ii in range(len(movie_path_list_fixture)):
+        for ii in index_list:
             this_params = params[str(ii)]
             mu = this_params['mean']
             std = this_params['std']
@@ -134,7 +145,8 @@ def json_frame_specification_fixture(movie_path_list_fixture,
 @pytest.fixture(scope='session')
 def json_generator_params_fixture(
         tmpdir_factory,
-        json_frame_specification_fixture):
+        json_frame_specification_fixture,
+        random_seed_fixture):
     """
     yields the path to the JSON configuration file for the MovieJSONGenerator
     """
@@ -158,6 +170,7 @@ def json_generator_params_fixture(
     params['steps_per_epoch'] = -1
     params['train_path'] = json_frame_specification_fixture['json_path']
     params['type'] = 'generator'
+    params['seed'] = random_seed_fixture
 
     with open(json_path, 'w') as out_file:
         out_file.write(json.dumps(params, indent=2))
