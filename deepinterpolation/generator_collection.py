@@ -1039,7 +1039,6 @@ class MovieJSONGenerator(DeepGenerator):
             self.frame_data_location = json.load(json_handle)
 
         self.lims_id = list(self.frame_data_location.keys())
-        self.lims_id.sort()
         self.nb_lims = len(self.lims_id)
         self.img_per_movie = len(
             self.frame_data_location[self.lims_id[0]]["frames"])
