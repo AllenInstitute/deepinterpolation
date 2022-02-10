@@ -1027,10 +1027,11 @@ class MovieJSONMixin():
             indexes = np.arange(index * self.batch_size,
                                 (index + 1) * self.batch_size)
 
+        actual_batch_size = len(indexes)
         input_full = np.zeros(
-            [self.batch_size, 512, 512, self.pre_frame + self.post_frame]
+            [actual_batch_size, 512, 512, self.pre_frame + self.post_frame]
         )
-        output_full = np.zeros([self.batch_size, 512, 512, 1])
+        output_full = np.zeros([actual_batch_size, 512, 512, 1])
 
         for batch_index, frame_index in enumerate(indexes):
             X, Y = self.__data_generation__(frame_index)
