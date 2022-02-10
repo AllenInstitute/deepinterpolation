@@ -1063,7 +1063,7 @@ class MovieJSONMixin():
         self.frame_lookup = dict()
         for video_tag in self.lims_id:
             local_frame_data = self.frame_data_location[video_tag]
-            for img_index in range(self.img_per_movie):
+            for img_index in range(len(local_frame_data['frames'])):
                 output_frame = local_frame_data["frames"][img_index]
 
                 input_index = np.arange(
@@ -1206,8 +1206,8 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
 
     def __len__(self):
         "Denotes the total number of batches"
-        return int(np.ceil(float(self.nb_lims
-                                 * self.img_per_movie) / self.batch_size))
+        n_frames = len(self.shuffled_data_list)
+        return int(np.ceil(n_frames / self.batch_size))
 
 
 class FromCacheGenerator(MovieJSONMixin, DeepGenerator):
