@@ -1018,9 +1018,10 @@ class MovieJSONMixin():
             index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
-        if (index + 1) * self.batch_size > self.nb_lims * self.img_per_movie:
+        n_all_data = len(self.shuffled_data_list)
+        if (index + 1) * self.batch_size > n_all_data:
             indexes = np.arange(
-                index * self.batch_size, self.nb_lims * self.img_per_movie
+                index * self.batch_size, n_all_data
             )
         else:
             indexes = np.arange(index * self.batch_size,
@@ -1131,11 +1132,6 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
 
         self.rng = np.random.default_rng(1234)
         self.rng.shuffle(self.shuffled_data_list)
-
-        self.nb_lims = len(self.lims_id)
-        self.img_per_movie = len(
-            self.frame_data_location[self.lims_id[0]]["frames"])
-
         self._make_index_to_frames()
 
     def get_lims_id_sample_from_index(self, index):
