@@ -1123,11 +1123,23 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
             self.frame_data_location = json.load(json_handle)
 
         self.lims_id = list(self.frame_data_location.keys())
+        self.shuffled_data_list = []
+        for i_frame in range(len(self.frame_data_location[self.lims_id[0]])):
+            for lims_key in self.lims_id:
+                self.shuffled_data_list.append((lims_key, i_frame))
+
+        self.rng = np.random.default_rng(1234)
+        self.rng.shuffle(self.shuffled_data_list)
+
         self.nb_lims = len(self.lims_id)
         self.img_per_movie = len(
             self.frame_data_location[self.lims_id[0]]["frames"])
 
         self._make_index_to_frames()
+
+    def get_lims_id_sample_from_index(self, index):
+        local_lims, local_img = self.shuffled_data_list[index]
+        return local_lims, local_img
 
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
