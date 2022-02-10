@@ -1124,8 +1124,9 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
 
         self.lims_id = list(self.frame_data_location.keys())
         self.shuffled_data_list = []
-        for i_frame in range(len(self.frame_data_location[self.lims_id[0]])):
-            for lims_key in self.lims_id:
+        for lims_key in self.lims_id:
+            n_frames = len(self.frame_data_location[lims_key]['frames'])
+            for i_frame in range(n_frames):
                 self.shuffled_data_list.append((lims_key, i_frame))
 
         self.rng = np.random.default_rng(1234)

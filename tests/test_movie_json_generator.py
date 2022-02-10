@@ -17,7 +17,7 @@ def frame_list_fixture():
     """
     Indexes of frames returned by MovieJSONGenerator
     """
-    return [4, 3, 5, 7]
+    return [4, 3, 5, 7, 6, 8]
 
 
 @pytest.fixture(scope='session')
@@ -113,10 +113,10 @@ def json_frame_specification_fixture(movie_path_list_fixture,
     # replicate shuffling that happens inside the generator
     rng = np.random.default_rng(random_seed_fixture)
     index_list = list(range(len(movie_path_list_fixture)))
-    #rng.shuffle(index_list)
+    # rng.shuffle(index_list)
 
-    for i_frame in range(len(frame_list_fixture)):
-        for ii in index_list:
+    for ii in index_list:
+        for i_frame in range(len(frame_list_fixture)):
             this_params = params[str(ii)]
             mu = this_params['mean']
             std = this_params['std']
