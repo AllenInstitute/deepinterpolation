@@ -1102,6 +1102,12 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
         "Initialization"
         super().__init__(json_path)
 
+        if "cache_data" in self.json_data:
+            self.cache_data = self.json_data["cache_data"]
+            self.data_cache = dict()
+        else:
+            self.cache_data = False
+
         self.sample_data_path_json = self.json_data["train_path"]
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
@@ -1141,6 +1147,14 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
 
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
+
+        if self.cache_data:
+            key_tuple = (video_index, img_index)
+            if key_tuple in self.data_cache:
+                input_full = self.data_cache[key_tuple]['input']
+                output_full = self.data_cache[key_tuple]['output']
+                return input_full, output_full
+
         motion_path = self.frame_data_location[video_index]["path"]
         if not os.path.isfile(motion_path):
             motion_path = os.path.join(
@@ -1184,6 +1198,10 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
                        : img_in_shape[1], :] = data_img_input
             output_full[0, : img_out_shape[0],
                         : img_out_shape[1], 0] = data_img_output
+
+        if self.cache_data:
+            self.data_cache[key_tuple] = {'input': input_full,
+                                          'output': output_full}
 
         return input_full, output_full
 
