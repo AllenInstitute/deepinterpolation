@@ -1102,6 +1102,12 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
         "Initialization"
         super().__init__(json_path)
 
+        if "cache_data" in self.json_data:
+            self.cache_data = self.json_data["cache_data"]
+            self.data_cache = dict()
+        else:
+            self.cache_data = False
+
         self.sample_data_path_json = self.json_data["train_path"]
         self.batch_size = self.json_data["batch_size"]
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
@@ -1141,49 +1147,62 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
 
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
-        motion_path = self.frame_data_location[video_index]["path"]
-        if not os.path.isfile(motion_path):
-            motion_path = os.path.join(
-                             os.environ['TMPDIR'],
-                             self.frame_data_location[video_index]['path'])
-        if not os.path.isfile(motion_path):
-            msg = 'could not find valid file path for \n'
-            msg += f"{self.frame_data_location[video_index]['path']}\n"
-            msg += f"tried\n{motion_path}\n"
-            raise RuntimeError(msg)
 
-        #print(f'opening {pathlib.Path(motion_path).name}')
-        with h5py.File(motion_path, "r") as movie_obj:
+        index_dict = self.frame_lookup[(video_index, img_index)]
+        input_index = index_dict['input_index']
+        output_frame = index_dict['output_frame']
 
-            index_dict = self.frame_lookup[(video_index, img_index)]
-            input_index = index_dict['input_index']
-            output_frame = index_dict['output_frame']
+        data_img_input = None
+        data_img_output = None
+        if self.cache_data:
+            key_tuple = (video_index, img_index)
+            if key_tuple in self.data_cache:
+                data_img_input = self.data_cache[key_tuple]['input']
+                data_img_output = self.data_cache[key_tuple]['output']
 
-            local_frame_data = self.frame_data_location[video_index]
-            local_mean = local_frame_data["mean"]
-            local_std = local_frame_data["std"]
+        if data_img_input is None:
+            motion_path = self.frame_data_location[video_index]["path"]
+            if not os.path.isfile(motion_path):
+                motion_path = os.path.join(
+                                 os.environ['TMPDIR'],
+                                 self.frame_data_location[video_index]['path'])
+            if not os.path.isfile(motion_path):
+                msg = 'could not find valid file path for \n'
+                msg += f"{self.frame_data_location[video_index]['path']}\n"
+                msg += f"tried\n{motion_path}\n"
+                raise RuntimeError(msg)
 
-            input_full = np.zeros(
-                [1, 512, 512, len(input_index)])
-            output_full = np.zeros([1, 512, 512, 1])
+            #print(f'opening {pathlib.Path(motion_path).name}')
+            with h5py.File(motion_path, "r") as movie_obj:
+                data_img_input = movie_obj["data"][input_index, :, :]
+                data_img_output = movie_obj["data"][output_frame, :, :]
 
-            data_img_input = movie_obj["data"][input_index, :, :]
-            data_img_output = movie_obj["data"][output_frame, :, :]
+            if self.cache_data:
+                self.data_cache[key_tuple] = {'input': data_img_input,
+                                              'output': data_img_output}
 
-            data_img_input = np.swapaxes(data_img_input, 1, 2)
-            data_img_input = np.swapaxes(data_img_input, 0, 2)
+        local_frame_data = self.frame_data_location[video_index]
+        local_mean = local_frame_data["mean"]
+        local_std = local_frame_data["std"]
 
-            img_in_shape = data_img_input.shape
-            img_out_shape = data_img_output.shape
+        input_full = np.zeros(
+            [1, 512, 512, len(input_index)])
+        output_full = np.zeros([1, 512, 512, 1])
 
-            data_img_input = (data_img_input.astype(
-                "float") - local_mean) / local_std
-            data_img_output = (data_img_output.astype(
-                "float") - local_mean) / local_std
-            input_full[0, : img_in_shape[0],
-                       : img_in_shape[1], :] = data_img_input
-            output_full[0, : img_out_shape[0],
-                        : img_out_shape[1], 0] = data_img_output
+        data_img_input = np.swapaxes(data_img_input, 1, 2)
+        data_img_input = np.swapaxes(data_img_input, 0, 2)
+
+        img_in_shape = data_img_input.shape
+        img_out_shape = data_img_output.shape
+
+        data_img_input = (data_img_input.astype(
+            "float") - local_mean) / local_std
+        data_img_output = (data_img_output.astype(
+            "float") - local_mean) / local_std
+        input_full[0, : img_in_shape[0],
+                   : img_in_shape[1], :] = data_img_input
+        output_full[0, : img_out_shape[0],
+                    : img_out_shape[1], 0] = data_img_output
 
         return input_full, output_full
 
