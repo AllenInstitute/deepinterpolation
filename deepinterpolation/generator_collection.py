@@ -1148,60 +1148,61 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
 
+        index_dict = self.frame_lookup[(video_index, img_index)]
+        input_index = index_dict['input_index']
+        output_frame = index_dict['output_frame']
+
+        data_img_input = None
+        data_img_output = None
         if self.cache_data:
             key_tuple = (video_index, img_index)
             if key_tuple in self.data_cache:
-                input_full = self.data_cache[key_tuple]['input']
-                output_full = self.data_cache[key_tuple]['output']
-                return input_full, output_full
+                data_img_input = self.data_cache[key_tuple]['input']
+                data_img_output = self.data_cache[key_tuple]['output']
 
-        motion_path = self.frame_data_location[video_index]["path"]
-        if not os.path.isfile(motion_path):
-            motion_path = os.path.join(
-                             os.environ['TMPDIR'],
-                             self.frame_data_location[video_index]['path'])
-        if not os.path.isfile(motion_path):
-            msg = 'could not find valid file path for \n'
-            msg += f"{self.frame_data_location[video_index]['path']}\n"
-            msg += f"tried\n{motion_path}\n"
-            raise RuntimeError(msg)
+        if data_img_input is None:
+            motion_path = self.frame_data_location[video_index]["path"]
+            if not os.path.isfile(motion_path):
+                motion_path = os.path.join(
+                                 os.environ['TMPDIR'],
+                                 self.frame_data_location[video_index]['path'])
+            if not os.path.isfile(motion_path):
+                msg = 'could not find valid file path for \n'
+                msg += f"{self.frame_data_location[video_index]['path']}\n"
+                msg += f"tried\n{motion_path}\n"
+                raise RuntimeError(msg)
 
-        #print(f'opening {pathlib.Path(motion_path).name}')
-        with h5py.File(motion_path, "r") as movie_obj:
+            #print(f'opening {pathlib.Path(motion_path).name}')
+            with h5py.File(motion_path, "r") as movie_obj:
+                data_img_input = movie_obj["data"][input_index, :, :]
+                data_img_output = movie_obj["data"][output_frame, :, :]
 
-            index_dict = self.frame_lookup[(video_index, img_index)]
-            input_index = index_dict['input_index']
-            output_frame = index_dict['output_frame']
+            if self.cache_data:
+                self.data_cache[key_tuple] = {'input': data_img_input,
+                                              'output': data_img_output}
 
-            local_frame_data = self.frame_data_location[video_index]
-            local_mean = local_frame_data["mean"]
-            local_std = local_frame_data["std"]
+        local_frame_data = self.frame_data_location[video_index]
+        local_mean = local_frame_data["mean"]
+        local_std = local_frame_data["std"]
 
-            input_full = np.zeros(
-                [1, 512, 512, len(input_index)])
-            output_full = np.zeros([1, 512, 512, 1])
+        input_full = np.zeros(
+            [1, 512, 512, len(input_index)])
+        output_full = np.zeros([1, 512, 512, 1])
 
-            data_img_input = movie_obj["data"][input_index, :, :]
-            data_img_output = movie_obj["data"][output_frame, :, :]
+        data_img_input = np.swapaxes(data_img_input, 1, 2)
+        data_img_input = np.swapaxes(data_img_input, 0, 2)
 
-            data_img_input = np.swapaxes(data_img_input, 1, 2)
-            data_img_input = np.swapaxes(data_img_input, 0, 2)
+        img_in_shape = data_img_input.shape
+        img_out_shape = data_img_output.shape
 
-            img_in_shape = data_img_input.shape
-            img_out_shape = data_img_output.shape
-
-            data_img_input = (data_img_input.astype(
-                "float") - local_mean) / local_std
-            data_img_output = (data_img_output.astype(
-                "float") - local_mean) / local_std
-            input_full[0, : img_in_shape[0],
-                       : img_in_shape[1], :] = data_img_input
-            output_full[0, : img_out_shape[0],
-                        : img_out_shape[1], 0] = data_img_output
-
-        if self.cache_data:
-            self.data_cache[key_tuple] = {'input': input_full,
-                                          'output': output_full}
+        data_img_input = (data_img_input.astype(
+            "float") - local_mean) / local_std
+        data_img_output = (data_img_output.astype(
+            "float") - local_mean) / local_std
+        input_full[0, : img_in_shape[0],
+                   : img_in_shape[1], :] = data_img_input
+        output_full[0, : img_out_shape[0],
+                    : img_out_shape[1], 0] = data_img_output
 
         return input_full, output_full
 
