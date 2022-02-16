@@ -8,6 +8,7 @@ import json
 import tempfile
 import pathlib
 import numpy as np
+from itertools import product
 from deepinterpolation.generator_collection import MovieJSONGenerator
 
 
@@ -177,18 +178,22 @@ def generator_params_fixture(
     return params
 
 
-@pytest.mark.parametrize("batch_size", (1, 3, 5, 7, 50))
+@pytest.mark.parametrize(
+        "batch_size, cache_data",
+        product((1, 3, 5, 7, 50), (True, False)))
 def test_movie_json_generator(
         movie_path_list_fixture,
         json_frame_specification_fixture,
         generator_params_fixture,
         frame_list_fixture,
         batch_size,
+        cache_data,
         tmpdir):
 
     json_path = tempfile.mkstemp(dir=tmpdir, suffix='.json')[1]
     params = copy.deepcopy(generator_params_fixture)
     params["batch_size"] = batch_size
+    params["cache_data"] = cache_data
     with open(json_path, 'w') as out_file:
         out_file.write(json.dumps(params, indent=2))
 
@@ -199,6 +204,12 @@ def test_movie_json_generator(
     lims_id_list = generator.lims_id
 
     n_frames = len(frame_list_fixture)
+
+    if cache_data:
+        # read through the dataset once to populate the cache
+        for batch in generator:
+            pass
+
     dataset_ct = 0
 
     for batch in generator:
