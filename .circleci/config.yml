@@ -9,7 +9,7 @@ executors:
             - image: cimg/python:<< parameters.tag >>
         parameters:
             tag:
-                default: "3.7"
+                default: "3.8"
                 description: The `cimg/python` Docker image version tag.
                 type: string
 
