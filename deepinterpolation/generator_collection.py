@@ -924,7 +924,7 @@ class OphysGenerator(SequentialGenerator):
         self._update_end_frame(self.total_frame_per_movie)
         self._calculate_list_samples(self.total_frame_per_movie)
 
-        average_nb_samples = np.min([int(raw_data.shape[0]), 1000])
+        average_nb_samples = np.min([int(raw_data.shape[0]), 100])
         local_data = raw_data[0:average_nb_samples, :, :].flatten()
         local_data = local_data.astype("float32")
 
