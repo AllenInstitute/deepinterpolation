@@ -87,9 +87,9 @@ class core_trainer:
         )
 
         if "nb_workers" in json_data.keys():
-            self.workers = json_data["nb_workers"]
+            self.workers = 1 # json_data["nb_workers"]
         else:
-            self.workers = 16
+            self.workers = 1
 
         # These parameters are related to setting up the
         # behavior of learning rates
