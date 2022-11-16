@@ -6,6 +6,7 @@ import tensorflow.keras as keras
 import tifffile
 import nibabel as nib
 import glob
+import warnings
 from deepinterpolation.generic import JsonLoader
 
 
@@ -438,6 +439,12 @@ class SequentialGenerator(DeepGenerator):
         else:
             self.randomize = True
 
+        if self.randomize:
+            if "seed" in self.json_data.keys():
+                self.rng = np.random.default_rng(self.json_data["seed"])
+            else:
+                self.rng = np.random.default_rng()
+
         if "pre_post_omission" in self.json_data.keys():
             self.pre_post_omission = self.json_data["pre_post_omission"]
         else:
@@ -489,7 +496,7 @@ class SequentialGenerator(DeepGenerator):
         self.list_samples = np.arange(self.start_sample, self.end_sample+1)
 
         if self.randomize:
-            np.random.shuffle(self.list_samples)
+            self.rng.shuffle(self.list_samples)
 
         # We cut the number of samples if asked to
         if (self.total_samples > 0
@@ -1021,6 +1028,15 @@ class MovieJSONGenerator(DeepGenerator):
             self.frame_data_location = json.load(json_handle)
 
         self.lims_id = list(self.frame_data_location.keys())
+
+        self.lims_id.sort()
+        if self.json_data["randomize"]:
+            if "seed" in self.json_data:
+                rng = np.random.default_rng(self.json_data["seed"])
+            else:
+                rng = np.random.default_rng()
+            rng.shuffle(self.lims_id)
+
         self.nb_lims = len(self.lims_id)
         self.img_per_movie = len(
             self.frame_data_location[self.lims_id[0]]["frames"])
@@ -1092,17 +1108,26 @@ class MovieJSONGenerator(DeepGenerator):
             # Initialization
             local_path = self.frame_data_location[local_lims]["path"]
 
-            _filenames = ["motion_corrected_video.h5", "concat_31Hz_0.h5"]
-            motion_path = []
-            for _filename in _filenames:
-                _filepath = os.path.join(local_path, "processed", _filename)
-                if os.path.exists(_filepath) and not os.path.islink(
-                    _filepath
-                ):  # Path exists and is not symbolic
-                    motion_path = _filepath
-                    break
+            motion_path = None
+            if os.path.isfile(local_path):
+                motion_path = local_path
+            else:
+                _filenames = ["motion_corrected_video.h5", "concat_31Hz_0.h5"]
+                for _filename in _filenames:
+                    _filepath = os.path.join(local_path,
+                                             "processed",
+                                             _filename)
 
-            movie_obj = h5py.File(motion_path, "r")
+                    if os.path.exists(_filepath) and not os.path.islink(
+                        _filepath
+                    ):  # Path exists and is not symbolic
+                        motion_path = _filepath
+                        break
+
+            if motion_path is None:
+                msg = "unable to find valid movie file for path\n"
+                msg += f"{local_path}"
+                raise RuntimeError(msg)
 
             local_frame_data = self.frame_data_location[local_lims]
             output_frame = local_frame_data["frames"][local_img]
@@ -1114,8 +1139,8 @@ class MovieJSONGenerator(DeepGenerator):
             output_full = np.zeros([1, 512, 512, 1])
 
             input_index = np.arange(
-                output_frame - self.pre_frame - self.pre_post_omission,
-                output_frame + self.post_frame + self.pre_post_omission + 1,
+              output_frame - self.pre_frame - self.pre_post_omission,
+              output_frame + self.post_frame + self.pre_post_omission + 1,
             )
             input_index = input_index[input_index != output_frame]
 
@@ -1125,8 +1150,10 @@ class MovieJSONGenerator(DeepGenerator):
                 input_index = input_index[input_index !=
                                           output_frame + index_padding]
 
-            data_img_input = movie_obj["data"][input_index, :, :]
-            data_img_output = movie_obj["data"][output_frame, :, :]
+            with h5py.File(motion_path, "r") as movie_obj:
+
+                data_img_input = movie_obj["data"][input_index, :, :]
+                data_img_output = movie_obj["data"][output_frame, :, :]
 
             data_img_input = np.swapaxes(data_img_input, 1, 2)
             data_img_input = np.swapaxes(data_img_input, 0, 2)
@@ -1142,8 +1169,11 @@ class MovieJSONGenerator(DeepGenerator):
                        : img_in_shape[1], :] = data_img_input
             output_full[0, : img_out_shape[0],
                         : img_out_shape[1], 0] = data_img_output
-            movie_obj.close()
 
             return input_full, output_full
-        except Exception:
-            print("Issues with " + str(self.lims_id))
+
+        except Exception as err:
+            msg = f"Issues with {local_lims}\n"
+            msg += f"Error: {str(err)}\n"
+            msg += "moving on\n"
+            warnings.warn(msg)
