@@ -243,7 +243,7 @@ class core_inferrence:
             for index_dataset in np.arange(0, self.nb_datasets, 1):
                 local_data = self.generator_obj.__getitem__(index_dataset)
 
-                predictions_data = self.model.predict(local_data[0])
+                predictions_data = self.model.predict_on_batch(local_data[0])
 
                 local_mean, local_std = \
                     self.generator_obj.__get_norm_parameters__(index_dataset)

@@ -468,6 +468,26 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
             checkpoints.",
     )
 
+    use_multiprocessing = argschema.fields.Bool(
+        required=False,
+        default=True,
+        description="whether to use a multiprocessing pool to fetch batch \
+            samples. Setting this to true will increase data generation speed \
+            if the generator is limited by read speed. This will also \
+            increase RAM memory usage. Set to False if your hardware \
+            encounter RAM memory error during training.",
+    )
+
+    nb_workers = argschema.fields.Int(
+        required=False,
+        default=16,
+        description="Nb of workers running on the CPU to fetch \
+            batch samples. This parameter is only relevant if \
+            use_multiprocessing is set to True. Larger number of nb_workers \
+            will increase memory usage. Increase this number until your \
+            training becomes limited either by RAM or CPU usage.",
+    )
+
 
 class FineTuningSchema(argschema.schemas.DefaultSchema):
     name = argschema.fields.String(
@@ -572,6 +592,26 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         default=5,
         description="Period in number of epochs to periodically save model \
             checkpoints.",
+    )
+
+    use_multiprocessing = argschema.fields.Bool(
+        required=False,
+        default=True,
+        description="whether to use a multiprocessing pool to fetch batch \
+            samples. Setting this to true will increase data generation speed \
+            if the generator is limited by read speed. This will also \
+            increase RAM memory usage. Set to False if your hardware \
+            encounter RAM memory error during training.",
+    )
+
+    nb_workers = argschema.fields.Int(
+        required=False,
+        default=16,
+        description="Nb of workers running on the CPU to fetch \
+            batch samples. This parameter is only relevant if \
+            use_multiprocessing is set to True. Larger number of nb_workers \
+            will increase memory usage. Increase this number until your \
+            training becomes limited either by RAM or CPU usage.",
     )
 
 
