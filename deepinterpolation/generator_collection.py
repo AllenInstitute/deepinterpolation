@@ -955,12 +955,7 @@ class OphysGenerator(SequentialGenerator):
     def __data_generation__(self, index_frame):
         "Generates data containing batch_size samples"
 
-        if self.from_s3:
-            s3_filesystem = s3fs.S3FileSystem()
-            movie_obj_point = h5py.File(s3_filesystem.open(
-                self.raw_data_file, "rb"), "r")
-            movie_obj = movie_obj_point['data']
-        elif self.cache_data:
+        if self.cache_data:
             movie_obj = self.raw_data
         else:
             movie_obj_point = h5py.File(self.raw_data_file, "r")
