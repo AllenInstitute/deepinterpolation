@@ -934,7 +934,7 @@ class OphysGenerator(SequentialGenerator):
 
         if self.cache_data:
             print('Caching hdf5 file... \n')
-            self.raw_data = raw_data[0:self.end_frame,:,:]
+            self.raw_data = raw_data[0:self.end_frame, :, :]
             local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
         else:
             local_data = raw_data[0:average_nb_samples, :, :].flatten()
@@ -944,8 +944,6 @@ class OphysGenerator(SequentialGenerator):
 
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
-
-
 
     def __getitem__(self, index):
         shuffle_indexes = self.generate_batch_indexes(index)
@@ -1013,7 +1011,7 @@ class OphysGenerator(SequentialGenerator):
         input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
         output_full[0, : img_out_shape[0],
                     : img_out_shape[1], 0] = data_img_output
-        
+
         if not(self.cache_data):
             movie_obj_point.close()
 

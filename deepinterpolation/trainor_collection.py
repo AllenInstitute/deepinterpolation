@@ -428,7 +428,8 @@ class transfer_trainer(core_trainer):
         # this is expensive so we only do it when asked
         # Default is set to true here to match older behavior
         if "measure_baseline_loss" in self.json_data.keys():
-            self.measure_baseline_loss = self.json_data["measure_baseline_loss"]
+            self.measure_baseline_loss = \
+                self.json_data["measure_baseline_loss"]
         else:
             self.measure_baseline_loss = True
 
@@ -444,7 +445,7 @@ class transfer_trainer(core_trainer):
 
         # save init losses
 
-        if self.measure_baseline_loss: 
+        if self.measure_baseline_loss:
             save_loss_path = os.path.join(
                 self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "init_val_loss.npy",

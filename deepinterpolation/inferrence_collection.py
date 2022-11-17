@@ -56,9 +56,6 @@ class fmri_inferrence:
                 chunks=tuple(chunk_size),
                 dtype=self.output_datatype,
             )
-            # This was used to alter the volume infered and reduce computation
-            # time
-            # np.array([20])
             all_z_values = np.arange(0, self.input_data_size[2])
             all_y_values = np.arange(0, self.input_data_size[1])
 
@@ -240,7 +237,7 @@ class core_inferrence:
                     chunks=tuple(chunk_size),
                     dtype=self.output_datatype,
                 )
-            import time
+
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, 1)):
                 local_data = self.generator_obj.__getitem__(index_dataset)
 
