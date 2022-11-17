@@ -961,7 +961,6 @@ class OphysGenerator(SequentialGenerator):
             movie_obj_point = h5py.File(self.raw_data_file, "r")
             movie_obj = movie_obj_point['data']
 
-
         input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
         output_full = np.zeros([1, 512, 512, 1])
 
