@@ -179,6 +179,14 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         inference."
     )
 
+    cache_data = argschema.fields.Boolean(
+        required=False,
+        default=False,
+        description="Whether to cache the entire dataset.\
+        into memory to accelerate processing. Be mindfull \
+        of memory usage. Currently only impact OphysGenerator"
+    )
+
     total_samples = argschema.fields.Int(
         required=False,
         default=-1,
