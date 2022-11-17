@@ -425,8 +425,16 @@ class transfer_trainer(core_trainer):
 
         # For transfer learning, knowing the
         # baseline validation loss is important
-        self.baseline_val_loss = self.local_model.evaluate(
-            self.local_test_generator)
+        # this is expensive so we only do it when asked
+        # Default is set to true here to match older behavior
+        if "measure_baseline_loss" in self.json_data.keys():
+            self.measure_baseline_loss = self.json_data["measure_baseline_loss"]
+        else:
+            self.measure_baseline_loss = True
+
+        if self.measure_baseline_loss:
+            self.baseline_val_loss = self.local_model.evaluate(
+                self.local_test_generator)
 
     def initialize_network(self):
         self.__load_model()
@@ -435,11 +443,13 @@ class transfer_trainer(core_trainer):
         draw_plot = True
 
         # save init losses
-        save_loss_path = os.path.join(
-            self.checkpoints_dir,
-            self.run_uid + "_" + self.model_string + "init_val_loss.npy",
-        )
-        np.save(save_loss_path, self.baseline_val_loss)
+
+        if self.measure_baseline_loss: 
+            save_loss_path = os.path.join(
+                self.checkpoints_dir,
+                self.run_uid + "_" + self.model_string + "init_val_loss.npy",
+            )
+            np.save(save_loss_path, self.baseline_val_loss)
 
         if "loss" in self.model_train.history.keys():
             loss = self.model_train.history["loss"]

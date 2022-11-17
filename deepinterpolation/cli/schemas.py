@@ -563,6 +563,15 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
             requirement could cause memory issues.",
     )
 
+    measure_baseline_loss = argschema.fields.Bool(
+        required=False,
+        default=False,
+        description="Whether to measure the validation loss \
+            before training using the test data. \
+            This is useful for tracking purposes \
+            but costs compute.",
+    )
+
     multi_gpus = argschema.fields.Bool(
         required=False,
         default=False,
