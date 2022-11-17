@@ -7,6 +7,7 @@ from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
 
+
 class fmri_inferrence:
     # This inferrence is specific to fMRI which is raster scanning for
     # denoising
