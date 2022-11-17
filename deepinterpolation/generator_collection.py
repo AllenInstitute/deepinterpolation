@@ -928,7 +928,12 @@ class OphysGenerator(SequentialGenerator):
 
         # For backward compatibility
         if "cache_data" in self.json_data.keys():
+            self.cache_data = False
+        else:
             self.cache_data = self.json_data["cache_data"]
+
+        if self.cache_data:
+            print('Caching hdf5 file... \n')
             self.raw_data = raw_data[:,:,:]
             local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
         else:
