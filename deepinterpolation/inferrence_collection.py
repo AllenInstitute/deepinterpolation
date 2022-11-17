@@ -5,7 +5,7 @@ import numpy as np
 from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
-
+from tqdm.auto import tqdm
 
 class fmri_inferrence:
     # This inferrence is specific to fMRI which is raster scanning for
@@ -240,7 +240,7 @@ class core_inferrence:
                     dtype=self.output_datatype,
                 )
 
-            for index_dataset in np.arange(0, self.nb_datasets, 1):
+            for index_dataset in tqdm(np.arange(0, self.nb_datasets, 1)):
                 local_data = self.generator_obj.__getitem__(index_dataset)
 
                 predictions_data = self.model.predict_on_batch(local_data[0])

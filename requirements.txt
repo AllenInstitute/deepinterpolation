@@ -8,3 +8,4 @@ tifffile
 s3fs
 argschema==2.0.2
 mlflow==1.14.1
+tqdm
