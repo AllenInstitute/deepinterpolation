@@ -242,18 +242,18 @@ class core_inferrence:
                 )
             import time
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, 1)):
-                start = time.process_time()
+                start_test = time.process_time()
 
                 print("load\n")
 
                 local_data = self.generator_obj.__getitem__(index_dataset)
-                print(time.process_time() - start)
+                print(time.process_time() - start_test)
 
                 print("process\n")
 
                 predictions_data = self.model.predict_on_batch(local_data[0])
-                print(time.process_time() - start)
-                
+                print(time.process_time() - start_test)
+
                 print("save\n")
 
                 local_mean, local_std = \
@@ -280,5 +280,5 @@ class core_inferrence:
                 # We squeeze to remove the feature dimension from tensorflow
                 dset_out[start:end, :] = np.squeeze(corrected_data, -1)
                 
-                print(time.process_time() - start)
+                print(time.process_time() - start_test)
 
