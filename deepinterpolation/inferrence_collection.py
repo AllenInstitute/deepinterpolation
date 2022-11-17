@@ -269,6 +269,3 @@ class core_inferrence:
 
                 # We squeeze to remove the feature dimension from tensorflow
                 dset_out[start:end, :] = np.squeeze(corrected_data, -1)
-                
-                print(time.process_time() - start_test)
-
