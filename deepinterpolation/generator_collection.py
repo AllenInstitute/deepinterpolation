@@ -582,7 +582,7 @@ class EphysGenerator(SequentialGenerator):
             output_full[batch_index, :, :, :] = Y
 
         return input_full, output_full
-
+    
     def __data_generation__(self, index_frame):
         "Generates data containing batch_size samples"
 
@@ -934,6 +934,7 @@ class OphysGenerator(SequentialGenerator):
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
 
+    @profile
     def __getitem__(self, index):
         shuffle_indexes = self.generate_batch_indexes(index)
 
@@ -952,6 +953,7 @@ class OphysGenerator(SequentialGenerator):
 
         return input_full, output_full
 
+    @profile
     def __data_generation__(self, index_frame):
         "Generates data containing batch_size samples"
 
