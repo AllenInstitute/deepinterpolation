@@ -928,9 +928,9 @@ class OphysGenerator(SequentialGenerator):
 
         # For backward compatibility
         if "cache_data" in self.json_data.keys():
-            self.cache_data = False
-        else:
             self.cache_data = self.json_data["cache_data"]
+        else:
+            self.cache_data = False
 
         if self.cache_data:
             print('Caching hdf5 file... \n')
