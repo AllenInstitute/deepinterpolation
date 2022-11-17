@@ -1013,7 +1013,9 @@ class OphysGenerator(SequentialGenerator):
         input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
         output_full[0, : img_out_shape[0],
                     : img_out_shape[1], 0] = data_img_output
-        movie_obj.close()
+        
+        if not(self.cache_data):
+            movie_obj.close()
 
         return input_full, output_full
 
