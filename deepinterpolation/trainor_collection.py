@@ -137,7 +137,7 @@ class core_trainer:
         )  # , metrics=['mae'])
 
     def initialize_optimizer(self):
-        self.optimizer = RMSprop(lr=self.learning_rate)
+        self.optimizer = RMSprop(learning_rate=self.learning_rate)
 
     def initialize_loss(self):
         self.loss = lc.loss_selector(self.loss_type)
