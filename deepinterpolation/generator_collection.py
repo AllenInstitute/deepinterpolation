@@ -934,7 +934,6 @@ class OphysGenerator(SequentialGenerator):
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
 
-    @profile
     def __getitem__(self, index):
         shuffle_indexes = self.generate_batch_indexes(index)
 
@@ -947,13 +946,14 @@ class OphysGenerator(SequentialGenerator):
 
         for batch_index, frame_index in enumerate(shuffle_indexes):
             X, Y = self.__data_generation__(frame_index)
+            X_shape = X.shape
+            Y_shape = Y.shape
 
-            input_full[batch_index, :, :, :] = X
-            output_full[batch_index, :, :, :] = Y
+            input_full[batch_index, : X_shape[0], : X_shape[1], :] = X
+            output_full[batch_index, : Y_shape[0], : Y_shape[1], :] = Y
 
         return input_full, output_full
 
-    @profile
     def __data_generation__(self, index_frame):
         "Generates data containing batch_size samples"
 
@@ -978,7 +978,7 @@ class OphysGenerator(SequentialGenerator):
             input_index = input_index[input_index !=
                                       index_frame + index_padding]
 
-        data_img_input = movie_obj[input_index, :, :]
+        data_img_input = movie_obj[input_index, :, :] 
         data_img_output = movie_obj[index_frame, :, :]
 
         data_img_input = np.swapaxes(data_img_input, 1, 2)
@@ -988,20 +988,20 @@ class OphysGenerator(SequentialGenerator):
         img_out_shape = data_img_output.shape
 
         data_img_input = (
-            data_img_input.astype("float") - self.local_mean
+            data_img_input.astype("float") - self.local_mean 
         ) / self.local_std
         data_img_output = (
             data_img_output.astype("float") - self.local_mean
         ) / self.local_std
 
-        input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0],
-                    : img_out_shape[1], 0] = data_img_output
+        # input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input 
+        # output_full[0, : img_out_shape[0],
+        #            : img_out_shape[1], 0] = data_img_output
 
         if not self.cache_data:
             movie_obj_point.close()
 
-        return input_full, output_full
+        return data_img_input, data_img_output
 
 
 class MovieJSONGenerator(DeepGenerator):
