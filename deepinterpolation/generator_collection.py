@@ -933,6 +933,10 @@ class OphysGenerator(SequentialGenerator):
 
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
+        
+        if self.cache_data:
+            self.raw_data = ( self.raw_data.astype("float") \
+                - self.local_mean ) / self.local_std
 
     def __getitem__(self, index):
         shuffle_indexes = self.generate_batch_indexes(index)
@@ -963,9 +967,6 @@ class OphysGenerator(SequentialGenerator):
             movie_obj_point = h5py.File(self.raw_data_file, "r")
             movie_obj = movie_obj_point['data']
 
-        #input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
-        #output_full = np.zeros([1, 512, 512, 1])
-
         input_index = np.arange(
             index_frame - self.pre_frame - self.pre_post_omission,
             index_frame + self.post_frame + self.pre_post_omission + 1,
@@ -978,25 +979,19 @@ class OphysGenerator(SequentialGenerator):
             input_index = input_index[input_index !=
                                       index_frame + index_padding]
 
-        data_img_input = movie_obj[input_index, :, :] 
-        data_img_output = movie_obj[index_frame, :, :]
+        # If data was cached we do not need to normalize. this was done 
+        # at once to minimize compute
+        if self.cache_data:
+            data_img_input = movie_obj[input_index, :, :]
+            data_img_output = movie_obj[index_frame, :, :]
+        else:
+            data_img_input = (movie_obj[input_index, :, :].astype("float") \
+                - self.local_mean ) / self.local_std
+            data_img_output = (movie_obj[index_frame, :, :].astype("float") \
+                - self.local_mean ) / self.local_std
 
         data_img_input = np.swapaxes(data_img_input, 1, 2)
         data_img_input = np.swapaxes(data_img_input, 0, 2)
-
-        #img_in_shape = data_img_input.shape
-        #img_out_shape = data_img_output.shape
-
-        data_img_input = (
-            data_img_input.astype("float") - self.local_mean 
-        ) / self.local_std
-        data_img_output = (
-            data_img_output.astype("float") - self.local_mean
-        ) / self.local_std
-
-        # input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input 
-        # output_full[0, : img_out_shape[0],
-        #            : img_out_shape[1], 0] = data_img_output
 
         if not self.cache_data:
             movie_obj_point.close()

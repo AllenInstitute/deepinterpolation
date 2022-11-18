@@ -294,6 +294,34 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             with a 'data' field",
     )
 
+    steps_per_epoch = argschema.fields.Int(
+        required=False,
+        default=1000,
+        description="Number of batches ran at one time for inference. \
+            This is used to limit memory used and enable multi-processing \
+            during inferrence. Choose this number to the highest number \
+            that your RAM memory can afford.")
+
+    use_multiprocessing = argschema.fields.Bool(
+        required=False,
+        default=True,
+        description="whether to use a multiprocessing pool to fetch batch \
+            samples. Setting this to true will increase data generation speed \
+            if the generator is limited by read speed. This will also \
+            increase RAM memory usage. Set to False if your hardware \
+            encounter RAM memory error during training.",
+    )
+
+    nb_workers = argschema.fields.Int(
+        required=False,
+        default=16,
+        description="Nb of workers running on the CPU to fetch \
+            batch samples. This parameter is only relevant if \
+            use_multiprocessing is set to True. Larger number of nb_workers \
+            will increase memory usage. Increase this number until your \
+            training becomes limited either by RAM or CPU usage.",
+    )
+
     save_raw = argschema.fields.Bool(
         required=False,
         default=False,
@@ -370,8 +398,8 @@ class InferenceInputSchema(argschema.ArgSchema):
                         Overriding the parameter")
             data["generator_params"]["randomize"] = False
 
-        # To disable rolling samples for inference
-        data["generator_params"]["steps_per_epoch"] = -1
+        data["generator_params"]["steps_per_epoch"] = \
+            data["inference_params"]["steps_per_epoch"]
 
         return data
 
