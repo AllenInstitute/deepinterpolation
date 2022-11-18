@@ -950,7 +950,7 @@ class OphysGenerator(SequentialGenerator):
             Y_shape = Y.shape
 
             input_full[batch_index, : X_shape[0], : X_shape[1], :] = X
-            output_full[batch_index, : Y_shape[0], : Y_shape[1], :] = Y
+            output_full[batch_index, : Y_shape[0], : Y_shape[1], 0] = Y
 
         return input_full, output_full
 
@@ -963,8 +963,8 @@ class OphysGenerator(SequentialGenerator):
             movie_obj_point = h5py.File(self.raw_data_file, "r")
             movie_obj = movie_obj_point['data']
 
-        input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
-        output_full = np.zeros([1, 512, 512, 1])
+        #input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
+        #output_full = np.zeros([1, 512, 512, 1])
 
         input_index = np.arange(
             index_frame - self.pre_frame - self.pre_post_omission,
@@ -984,8 +984,8 @@ class OphysGenerator(SequentialGenerator):
         data_img_input = np.swapaxes(data_img_input, 1, 2)
         data_img_input = np.swapaxes(data_img_input, 0, 2)
 
-        img_in_shape = data_img_input.shape
-        img_out_shape = data_img_output.shape
+        #img_in_shape = data_img_input.shape
+        #img_out_shape = data_img_output.shape
 
         data_img_input = (
             data_img_input.astype("float") - self.local_mean 
