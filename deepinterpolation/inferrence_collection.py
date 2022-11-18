@@ -264,7 +264,6 @@ class core_inferrence:
                         self.generator_obj.__get_norm_parameters__(index_dataset)
                 
                 local_size = predictions_data.shape[0]
-                print(local_size)
                 if self.rescale:
                     corrected_data = predictions_data * local_std + local_mean
                 else:
