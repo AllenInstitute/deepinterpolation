@@ -924,8 +924,8 @@ class OphysGenerator(SequentialGenerator):
         if self.cache_data:
             print('Caching hdf5 file... \n')
             if self.end_frame > 0:
-                self.raw_data = raw_data[0:np.min(self.total_frame_per_movie,
-                    self.end_frame+self.post_frame+self.pre_post_omission), :, :]
+                self.raw_data = raw_data[0:np.min([self.total_frame_per_movie,
+                    self.end_frame+self.post_frame+self.pre_post_omission]), :, :]
             else:
                 self.raw_data = raw_data[:, :, :]
             local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
