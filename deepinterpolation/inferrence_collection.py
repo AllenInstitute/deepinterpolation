@@ -241,19 +241,10 @@ class core_inferrence:
                 dtype=self.output_datatype,
             )
 
-            if self.save_raw:
-                raw_out = file_handle.create_dataset(
-                    "raw",
-                    shape=tuple(final_shape),
-                    chunks=tuple(chunk_size),
-                    dtype=self.output_datatype,
-                )
-
-
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch)):
 
                 predictions_data = self.model.predict(
-                        self.generator_obj, batch_size = self.batch_size,
+                        self.generator_obj,
                         steps = self.steps_per_epoch, max_queue_size = 10,
                         workers = self.workers,
                         use_multiprocessing = self.use_multiprocessing)
@@ -275,34 +266,3 @@ class core_inferrence:
 
                 # We squeeze to remove the feature dimension from tensorflow
                 dset_out[start:end, :] = np.squeeze(corrected_data, -1)
-""" 
-            for index_dataset in tqdm(np.arange(0, self.nb_datasets, 1)):
-
-                local_data = self.generator_obj.__getitem__(index_dataset)
-
-                predictions_data = self.model.predict_on_batch(local_data[0])
-
-                local_mean, local_std = \
-                    self.generator_obj.__get_norm_parameters__(index_dataset)
-                local_size = predictions_data.shape[0]
-
-                if self.rescale:
-                    corrected_data = predictions_data * local_std + local_mean
-                else:
-                    corrected_data = predictions_data
-
-                start = first_sample + index_dataset * self.batch_size
-                end = first_sample + index_dataset * self.batch_size \
-                    + local_size
-
-                if self.save_raw:
-                    if self.rescale:
-                        corrected_raw = local_data[1] * local_std + local_mean
-                    else:
-                        corrected_raw = local_data[1]
-
-                    raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
-
-                # We squeeze to remove the feature dimension from tensorflow
-                dset_out[start:end, :] = np.squeeze(corrected_data, -1)
- """
