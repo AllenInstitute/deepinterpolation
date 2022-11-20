@@ -225,7 +225,8 @@ class core_inferrence:
             first_sample = self.generator_obj.start_sample - \
                 self.generator_obj.start_frame
         else:
-            final_shape = [self.nb_datasets * self.batch_size]
+            final_shape = [self.generator_obj.end_frame -
+                           self.generator_obj.start_frame]
             first_sample = 0
 
         final_shape.extend(self.indiv_shape[:-1])
