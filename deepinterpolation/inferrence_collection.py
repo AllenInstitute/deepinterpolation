@@ -244,12 +244,13 @@ class core_inferrence:
 
             # Initialize onset of output sample movie
             local_start = first_sample
-            
+
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch)):
 
+                local_length = np.min(self.steps_per_epoch, self.nb_datasets-index_dataset)
                 predictions_data = self.model.predict(
                         self.generator_obj,
-                        steps = self.steps_per_epoch, max_queue_size = 10,
+                        steps = local_length, max_queue_size = 10,
                         workers = self.workers,
                         use_multiprocessing = self.use_multiprocessing)
 
