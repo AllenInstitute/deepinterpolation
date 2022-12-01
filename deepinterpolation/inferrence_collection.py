@@ -242,6 +242,9 @@ class core_inferrence:
                 dtype=self.output_datatype,
             )
 
+            # Initialize onset of output sample movie
+            local_start = first_sample
+            
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch)):
 
                 predictions_data = self.model.predict(
@@ -261,9 +264,11 @@ class core_inferrence:
                 else:
                     corrected_data = predictions_data
                 
-                start = first_sample + index_dataset * self.batch_size
-                end = first_sample + index_dataset * self.batch_size \
-                    + local_size
+                start = local_start
+                end = local_start + local_size
+
+                # We adjust for the next for loop run
+                local_start = end + 1
 
                 # We squeeze to remove the feature dimension from tensorflow
                 dset_out[start:end, :] = np.squeeze(corrected_data, -1)
