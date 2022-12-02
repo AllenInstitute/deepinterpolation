@@ -266,6 +266,8 @@ class core_inferrence:
                 
                 start = local_start
                 end = local_start + local_size
+                print(start, end, local_size, local_start, self.nb_datasets, local_length)
+                print("/n")
 
                 # We adjust for the next for loop run
                 local_start = end + 1
