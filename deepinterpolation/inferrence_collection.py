@@ -248,7 +248,7 @@ class core_inferrence:
 
                 local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
                 
-                print(self.generator_obj.epoch_index, local_length, local_start, local_size)
+                print(self.generator_obj.epoch_index)
 
                 predictions_data = self.model.predict(
                         self.generator_obj,
