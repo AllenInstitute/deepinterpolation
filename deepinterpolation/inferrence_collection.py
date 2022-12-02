@@ -253,7 +253,7 @@ class core_inferrence:
                         workers = self.workers,
                         use_multiprocessing = self.use_multiprocessing)
 
-                self.generator_obj.on_epoch_end()
+                self.generator_obj.epoch_index = self.generator_obj.epoch_index + 1
 
                 local_mean, local_std = \
                         self.generator_obj.__get_norm_parameters__(index_dataset)
