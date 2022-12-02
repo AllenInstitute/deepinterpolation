@@ -145,7 +145,7 @@ class CollectorGenerator(DeepGenerator):
         return input_full, output_full
 
     def on_epoch_end(self):
-        if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+        if self.steps_per_epoch * (self.epoch_index + 2) <= self.__len__():
             self.epoch_index = self.epoch_index + 1
         else:
             # if we reach the end of the data, we roll over
@@ -241,7 +241,7 @@ class FmriGenerator(DeepGenerator):
         return int(np.floor(float(len(self.x_list) / self.batch_size)))
 
     def on_epoch_end(self):
-        if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+        if self.steps_per_epoch * (self.epoch_index + 2) <= self.__len__():
             self.epoch_index = self.epoch_index + 1
         else:
             # if we reach the end of the data, we roll over
@@ -500,7 +500,7 @@ class SequentialGenerator(DeepGenerator):
         """We only increase index if steps_per_epoch is set to positive value.
         -1 will force the generator to not iterate at the end of each epoch."""
         if self.steps_per_epoch > 0:
-            if self.steps_per_epoch * (self.epoch_index + 2) < self.__len__():
+            if self.steps_per_epoch * (self.epoch_index + 2) <= self.__len__():
                 self.epoch_index = self.epoch_index + 1
             else:
                 # if we reach the end of the data, we roll over
