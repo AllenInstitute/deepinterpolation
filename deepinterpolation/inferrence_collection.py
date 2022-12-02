@@ -246,13 +246,12 @@ class core_inferrence:
 
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch)):
 
-                local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
+                local_length = np.min([self.steps_per_epoch, self.nb_datasets-1-index_dataset])
                 predictions_data = self.model.predict(
                         self.generator_obj,
                         steps = local_length, max_queue_size = 10,
                         workers = self.workers,
                         use_multiprocessing = self.use_multiprocessing)
-
 
                 local_mean, local_std = \
                         self.generator_obj.__get_norm_parameters__(index_dataset)
