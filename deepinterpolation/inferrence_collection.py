@@ -253,11 +253,12 @@ class core_inferrence:
                         workers = self.workers,
                         use_multiprocessing = self.use_multiprocessing)
 
-                self.generator_obj.epoch_index = self.generator_obj.epoch_index + 1
 
                 local_mean, local_std = \
                         self.generator_obj.__get_norm_parameters__(index_dataset)
                 
+                self.generator_obj.epoch_index = self.generator_obj.epoch_index + 1
+
                 local_size = predictions_data.shape[0]
                 if self.rescale:
                     corrected_data = predictions_data * local_std + local_mean
