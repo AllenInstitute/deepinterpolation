@@ -247,6 +247,9 @@ class core_inferrence:
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch)):
 
                 local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
+                
+                print(self.generator_obj.epoch_index, local_length, local_start, local_size)
+
                 predictions_data = self.model.predict(
                         self.generator_obj,
                         steps = local_length, max_queue_size = 10,
@@ -259,7 +262,7 @@ class core_inferrence:
                 local_size = predictions_data.shape[0]
 
                 print(self.generator_obj.epoch_index, local_length, local_start, local_size)
-                self.generator_obj.epoch_index = self.generator_obj.epoch_index + 1
+                # self.generator_obj.epoch_index = self.generator_obj.epoch_index + 1
 
                 if self.rescale:
                     corrected_data = predictions_data * local_std + local_mean
