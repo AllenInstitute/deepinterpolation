@@ -265,9 +265,7 @@ class core_inferrence:
                     corrected_data = predictions_data
                 
                 start = local_start
-                end = local_start + local_size
-                print(start, end, local_size, local_start, self.nb_datasets, local_length)
-                print("/n")
+                end = local_start + local_size - 1
 
                 # We adjust for the next for loop run
                 local_start = end + 1
