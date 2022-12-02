@@ -243,12 +243,18 @@ class core_inferrence:
 
             # Initialize onset of output sample movie
             local_start = first_sample
+            
+            print("Start : "+str(self.generator_obj.epoch_index)+"\n")
+            
+            # Forcd onset on generator
+            self.generator_obj.epoch_index = 0
+            print("Reset : "+str(self.generator_obj.epoch_index)+"\n")
 
             for index_dataset in tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch)):
 
                 local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
                 
-                print(self.generator_obj.epoch_index)
+                print("Iteration : "+str(self.generator_obj.epoch_index)+"\n")
 
                 predictions_data = self.model.predict(
                         self.generator_obj,
@@ -260,9 +266,10 @@ class core_inferrence:
                         self.generator_obj.__get_norm_parameters__(index_dataset)                
                 
                 local_size = predictions_data.shape[0]
-
+                print("\n")
                 print(self.generator_obj.epoch_index, local_length, local_start, local_size)
                 # self.generator_obj.epoch_index = self.generator_obj.epoch_index + 1
+                print("\n")
 
                 if self.rescale:
                     corrected_data = predictions_data * local_std + local_mean
