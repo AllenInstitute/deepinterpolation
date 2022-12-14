@@ -250,7 +250,7 @@ class core_trainer:
                 shuffle=False,
                 use_multiprocessing=self.use_multiprocessing,
                 callbacks=self.callbacks_list,
-                initial_epoch=0,
+                initial_epoch=0
             )
         else:
             self.model_train = self.local_model.fit(
@@ -437,9 +437,10 @@ class transfer_trainer(core_trainer):
         # baseline validation loss is important
         self.baseline_val_loss = self.local_model.evaluate(
             self.local_test_generator,
-            use_multiprocessing=True,
+            max_queue_size=32,
             workers=self.workers,
-            max_queue_size=32)
+            use_multiprocessing=self.use_multiprocessing
+        )
 
     def initialize_network(self):
         self.__load_model()

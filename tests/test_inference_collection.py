@@ -46,7 +46,8 @@ def _get_inference_params(output_path, mlflow_params=False,
         "type": "inferrence",
         "name": "core_inferrence",
         "model_source": {},
-        "output_file": output_file
+        "output_file": output_file,
+        "n_parallel_workers": 4
     }
 
     if mlflow_params:

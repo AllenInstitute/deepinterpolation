@@ -5,7 +5,6 @@ import h5py
 import tensorflow.keras as keras
 import tifffile
 import nibabel as nib
-import s3fs
 import glob
 import pathlib
 import time
