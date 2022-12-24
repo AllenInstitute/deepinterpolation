@@ -8,6 +8,7 @@ import nibabel as nib
 import glob
 import pathlib
 import time
+import s3fs
 import shutil
 import tempfile
 from deepinterpolation.generic import JsonLoader
@@ -943,62 +944,32 @@ class OphysGenerator(SequentialGenerator):
         return self._movie_data
 
     def __getitem__(self, index):
+        print(f"index: {index}")
         shuffle_indexes = self.generate_batch_indexes(index)
+        print(f"shuffled_indexes {shuffle_indexes}")
+        input_indices = np.vstack(
+            [self.__index_generation__(frame_index)
+                for frame_index in shuffle_indexes])
 
-        input_full = np.zeros(
-            [self.batch_size, 512, 512, self.pre_frame + self.post_frame],
-            dtype="float32",
-        )
+        input_full = self.raw_data[input_indices].astype("float32")
+        output_full = self.raw_data[shuffle_indexes].astype("float32")
+        input_full = np.moveaxis(input_full, 1, -1)
+        output_full = np.expand_dims(output_full, -1)
 
-        output_full = np.zeros([self.batch_size, 512, 512, 1], dtype="float32")
-
-        for batch_index, frame_index in enumerate(shuffle_indexes):
-            X, Y = self.__data_generation__(frame_index)
-
-            input_full[batch_index, :, :, :] = X
-            output_full[batch_index, :, :, :] = Y
-
-        return input_full, output_full
-
-    def __data_generation__(self, index_frame):
-        "Generates data containing batch_size samples"
-
-        input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
-        output_full = np.zeros([1, 512, 512, 1])
-
-        input_index = np.arange(
-            index_frame - self.pre_frame - self.pre_post_omission,
-            index_frame + self.post_frame + self.pre_post_omission + 1,
-        )
-        input_index = input_index[input_index != index_frame]
+    def __index_generation__(self, index_frame):
+        input_index_left = np.arange(
+            index_frame-self.pre_frame-self.pre_post_omission, index_frame)
+        input_index_right = np.arange(
+            index_frame+1, index_frame + self.post_frame
+            + self.pre_post_omission + 1)
+        input_index = np.concatenate([input_index_left, input_index_right])
 
         for index_padding in np.arange(self.pre_post_omission + 1):
             input_index = input_index[input_index !=
                                       index_frame - index_padding]
             input_index = input_index[input_index !=
                                       index_frame + index_padding]
-
-        data_img_input = self.movie_data[input_index, :, :]
-        data_img_output = self.movie_data[index_frame, :, :]
-
-        data_img_input = np.swapaxes(data_img_input, 1, 2)
-        data_img_input = np.swapaxes(data_img_input, 0, 2)
-
-        img_in_shape = data_img_input.shape
-        img_out_shape = data_img_output.shape
-
-        data_img_input = (
-            data_img_input.astype("float") - self.local_mean
-        ) / self.local_std
-        data_img_output = (
-            data_img_output.astype("float") - self.local_mean
-        ) / self.local_std
-
-        input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0],
-                    : img_out_shape[1], 0] = data_img_output
-
-        return input_full, output_full
+        return input_index
 
 
 class MovieJSONMixin():
