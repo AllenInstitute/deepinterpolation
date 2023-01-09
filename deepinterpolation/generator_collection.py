@@ -951,10 +951,11 @@ class OphysGenerator(SequentialGenerator):
             [self.__index_generation__(frame_index)
                 for frame_index in shuffle_indexes])
 
-        input_full = self.raw_data[input_indices].astype("float32")
-        output_full = self.raw_data[shuffle_indexes].astype("float32")
+        input_full = (self.raw_data[input_indices].astype("float32") - self.local_mean) / self.local_std
+        output_full = (self.raw_data[shuffle_indexes].astype("float32") -self.local_mean) / self.local_std
         input_full = np.moveaxis(input_full, 1, -1)
         output_full = np.expand_dims(output_full, -1)
+        return input_full, output_full
 
     def __index_generation__(self, index_frame):
         input_index_left = np.arange(
