@@ -959,17 +959,11 @@ class OphysGenerator(SequentialGenerator):
 
     def __index_generation__(self, index_frame):
         input_index_left = np.arange(
-            index_frame-self.pre_frame-self.pre_post_omission, index_frame)
+            index_frame-self.pre_frame-self.pre_post_omission, index_frame-self.pre_post_omission)
         input_index_right = np.arange(
-            index_frame+1, index_frame + self.post_frame
+            index_frame+self.pre_post_omission+1, index_frame + self.post_frame
             + self.pre_post_omission + 1)
         input_index = np.concatenate([input_index_left, input_index_right])
-
-        for index_padding in np.arange(self.pre_post_omission + 1):
-            input_index = input_index[input_index !=
-                                      index_frame - index_padding]
-            input_index = input_index[input_index !=
-                                      index_frame + index_padding]
         return input_index
 
 
