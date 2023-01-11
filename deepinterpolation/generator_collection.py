@@ -2,6 +2,7 @@ import json
 import os
 import numpy as np
 import h5py
+import tensorflow as tf
 import tensorflow.keras as keras
 import tifffile
 import nibabel as nib
@@ -10,6 +11,7 @@ import pathlib
 import time
 import shutil
 import tempfile
+
 from deepinterpolation.generic import JsonLoader
 
 
@@ -901,7 +903,7 @@ class OphysGenerator(SequentialGenerator):
     def __init__(self, json_path):
         "Initialization"
         super().__init__(json_path)
-
+        self.gpu_available = tf.test.is_gpu_available()
         self._movie_data = None
 
         # For backward compatibility
@@ -918,12 +920,18 @@ class OphysGenerator(SequentialGenerator):
         self._calculate_list_samples(self.total_frame_per_movie)
 
         average_nb_samples = np.min([int(self.movie_data.shape[0]), 1000])
-        local_data = self.movie_data[0:average_nb_samples, :, :].flatten()
+        local_data = self.movie_data[:average_nb_samples].flatten()
         local_data = local_data.astype("float32")
 
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
-
+        self.data_tensor = False
+        start = self.pre_frame + self.pre_post_omission
+        end = start + self.batch_size
+        self.batch_indices = list(range(start,end))
+        self.input_indices = np.vstack(
+            [self.__index_generation__(frame_index) for frame_index in self.batch_indices])
+        
     @property
     def movie_data(self):
         if self._movie_data is None:
@@ -932,16 +940,29 @@ class OphysGenerator(SequentialGenerator):
         return self._movie_data
 
     def __getitem__(self, index):
-        print(f"index: {index}")
-        shuffle_indexes = self.generate_batch_indexes(index)
-        input_indices = np.vstack(
-            [self.__index_generation__(frame_index)
-                for frame_index in shuffle_indexes])
+        if self.gpu_available:
+            start_ind = index*self.batch_size
+            end_ind = start_ind + self.batch_size - 2 + self.pre_frame + self.post_frame + 2*self.pre_post_omission
+            if self.data_tensor is False or self.json_data["randomize"]:
+                self.data_tensor = tf.convert_to_tensor(self.movie_data[start_ind:end_ind], dtype="float")
+                self.data_tensor = (self.data_tensor - self.local_mean) / self.local_std
+            else:
+                self.batch_frames = tf.convert_to_tensor(self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
+                self.batch_frames = (self.batch_frames - self.local_mean) / self.local_std
+                self.data_tensor = tf.concat([self.data_tensor[self.batch_size:], self.batch_frames], 0) 
+            input_full = tf.gather(self.data_tensor, self.input_indices)
+            output_full = tf.gather(self.data_tensor, self.batch_indices)
+            input_full = tf.experimental.numpy.moveaxis(input_full, 1, -1)
+            output_full = tf.expand_dims(output_full, -1)
+        else:
+            shuffle_indexes = self.generate_batch_indexes(index)
+            input_indices = np.vstack(
+                [self.__index_generation__(frame_index) for frame_index in shuffle_indexes])
+            input_full = (self.movie_data[input_indices].astype("float") - self.local_mean) / self.local_std
+            output_full = (self.movie_data[shuffle_indexes].astype("float") -self.local_mean) / self.local_std
+            input_full = np.moveaxis(input_full, 1, -1)
+            output_full = np.expand_dims(output_full, -1)
 
-        input_full = (self._movie_data[input_indices].astype("float") - self.local_mean) / self.local_std
-        output_full = (self._movie_data[shuffle_indexes].astype("float") -self.local_mean) / self.local_std
-        input_full = np.moveaxis(input_full, 1, -1)
-        output_full = np.expand_dims(output_full, -1)
         return input_full, output_full
 
     def __index_generation__(self, index_frame):
