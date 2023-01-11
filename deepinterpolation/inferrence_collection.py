@@ -203,7 +203,7 @@ def __load_local_model(path: str):
     return model
 
 def __load_model_from_mlflow(json_data):
-
+    import mlflow
     mlflow_registry_params = \
         json_data['model_source']['mlflow_registry']
 
