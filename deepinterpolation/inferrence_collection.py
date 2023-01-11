@@ -9,13 +9,13 @@ import deepinterpolation.loss_collection as lc
 import multiprocessing
 from deepinterpolation.utils import _winnow_process_list
 
-import tensorflow.compat.v1.logging
+import tensorflow as tf
 import os
 import time
 import logging
 
-tensorflow.compat.v1.logging.set_verbosity(
-    tensorflow.compat.v1.logging.ERROR)
+tf.compat.v1.logging.set_verbosity(
+    tf.compat.v1.logging.ERROR)
 
 logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
@@ -185,7 +185,6 @@ def core_inference_worker(
             output_dict[k] = local_output.pop(k)
     return None
 
-
 def __get_local_model_path(json_data):
     try:
         model_path = json_data['model_path']
@@ -228,7 +227,6 @@ def __load_model_from_mlflow(json_data):
 
     return model
 
-
 def write_output_to_file(output_dict,
                          output_file_path,
                          raw_dataset_name,
@@ -249,10 +247,11 @@ def write_output_to_file(output_dict,
             local_size = dataset['corrected_data'].shape[0]
             start = first_sample + dataset_index * batch_size
             end = start + local_size
-
-            if dataset['corrected_raw'] is not None:
-                corrected_raw = dataset['corrected_raw']
-                raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
+            
+            if raw_dataset_name is not None:
+                if dataset['corrected_raw'] is not None:
+                    corrected_raw = dataset['corrected_raw']
+                    raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
 
             # We squeeze to remove the feature dimension from tensorflow
             corrected_data = dataset['corrected_data']
@@ -335,11 +334,16 @@ class core_inferrence:
                 )
 
         logger.info(f"Created empty HDF5 file {self.output_file}")
-
-        mgr = multiprocessing.Manager()
-        output_lock = mgr.Lock()
-        output_dict = mgr.dict()
-        process_list = []
+        
+        if self.json_data["multiprocessing"]:
+            tf.config.threading.set_inter_op_parallelism_threads(1)
+            tf.config.threading.set_intra_op_parallelism_threads(1)
+            mgr = multiprocessing.Manager()
+            output_lock = mgr.Lock()
+            output_dict = mgr.dict()
+            process_list = []
+        else:
+            self.model = load_model_worker(self.json_data)
 
         ct = 0
         n_written = 0
@@ -349,7 +353,7 @@ class core_inferrence:
 
         global_t0 = time.time()
 
-        for index_dataset in np.arange(0, self.nb_datasets, 1):
+        for index_dataset in np.arange(self.nb_datasets):
             local_data = self.generator_obj.__getitem__(index_dataset)
             local_mean, local_std = \
                 self.generator_obj.__get_norm_parameters__(index_dataset)
@@ -359,20 +363,31 @@ class core_inferrence:
             this_batch[index_dataset]['local_mean'] = local_mean
             this_batch[index_dataset]['local_std'] = local_std
 
-            process = multiprocessing.Process(
-                        target=core_inference_worker,
-                        args=(self.json_data,
-                              this_batch,
-                              self.rescale,
-                              self.save_raw,
-                              output_dict,
-                              output_lock))
-            process.start()
-            process_list.append(process)
+            if self.json_data["multiprocessing"]:
+                process = multiprocessing.Process(
+                            target=core_inference_worker,
+                            args=(self.json_data,
+                                this_batch,
+                                self.rescale,
+                                self.save_raw,
+                                output_dict,
+                                output_lock))
+                process.start()
+                process_list.append(process)
+            else:
+                predictions_data = self.model.predict_on_batch(local_data[0])
+                local_mean, local_std = \
+                    self.generator_obj.__get_norm_parameters__(index_dataset)
+                local_size = predictions_data.shape[0]
+                if self.rescale:
+                    corrected_data = predictions_data * local_std + local_mean
+                else:
+                    corrected_data = predictions_data
+
             ct += 1
             if ct % log_every == 0:
                 duration = time.time()-global_t0
-                n_done = max(1, len(output_dict)+n_written)
+                n_done = index_dataset+1
                 per = duration/n_done
                 prediction = per*self.nb_datasets
                 msg = f'{n_done} datasets in {duration:.2e} seconds '
@@ -380,32 +395,42 @@ class core_inferrence:
                 msg += f'remaining of {prediction:.2e}'
                 logger.info(msg)
 
-            while len(process_list) >= self.json_data['n_parallel_workers']:
-                process_list = _winnow_process_list(process_list)
+            if self.json_data["multiprocessing"]:
+                while len(process_list) >= self.json_data['n_parallel_workers']:
+                    process_list = _winnow_process_list(process_list)
 
-            if len(output_dict) >= max(1, self.nb_datasets//8):
-                with output_lock:
-                    n0 = len(output_dict)
-                    output_dict = write_output_to_file(
-                                    output_dict,
-                                    self.output_file,
-                                    raw_dataset_name,
-                                    output_dataset_name,
-                                    self.batch_size,
-                                    first_sample)
-                    n_written += n0-len(output_dict)
+                if len(output_dict) >= max(1, self.nb_datasets//8):
+                    with output_lock:
+                        n0 = len(output_dict)
+                        output_dict = write_output_to_file(
+                                        output_dict,
+                                        self.output_file,
+                                        raw_dataset_name,
+                                        output_dataset_name,
+                                        self.batch_size,
+                                        first_sample)
+                        n_written += n0-len(output_dict)
 
         logger.info('processing last datasets')
         for p in process_list:
             p.join()
+            
+        if not self.json_data["multiprocessing"]:
+            start = first_sample + index_dataset * self.batch_size
+            end = first_sample + index_dataset * self.batch_size \
+                + local_size
 
-        output_dict = write_output_to_file(
-                                    output_dict,
-                                    self.output_file,
-                                    raw_dataset_name,
-                                    output_dataset_name,
-                                    self.batch_size,
-                                    first_sample)
+            if self.save_raw:
+                print("saving raw")
+                if self.rescale:
+                    corrected_raw = local_data[1] * local_std + local_mean
+                else:
+                    corrected_raw = local_data[1]
+
+                raw_out[start:end] = np.squeeze(corrected_raw, -1)
+
+            # We squeeze to remove the feature dimension from tensorflow
+            dset_out[start:end] = np.squeeze(corrected_data, -1)
 
         duration = time.time()-global_t0
         logger.info(f"core_inference took {duration:.2e} seconds")

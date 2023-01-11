@@ -362,13 +362,24 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             -1 to 1 for training."
         ),
     )
+    
+    multiprocessing = argschema.fields.Bool(
+        required=False,
+        default="False",
+        description=(
+            "Use the multiprocessing package in model inference. Our testing \
+            shows a performance improvement of about 60%. This option is \
+            memory intensive as it copies the batch data to each process. \
+            Disabled if GPU is used."
+        ),
+    )
 
     n_parallel_workers = argschema.fields.Integer(
         required=False,
         default=8,
         description=(
             "Number of parallel workers to use when farming out "
-            "inference work"
+            "inference work if multiprocessing = True."
         )
     )
 

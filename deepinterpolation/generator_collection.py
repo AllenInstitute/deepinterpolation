@@ -946,13 +946,12 @@ class OphysGenerator(SequentialGenerator):
     def __getitem__(self, index):
         print(f"index: {index}")
         shuffle_indexes = self.generate_batch_indexes(index)
-        print(f"shuffled_indexes {shuffle_indexes}")
         input_indices = np.vstack(
             [self.__index_generation__(frame_index)
                 for frame_index in shuffle_indexes])
 
-        input_full = (self.raw_data[input_indices].astype("float32") - self.local_mean) / self.local_std
-        output_full = (self.raw_data[shuffle_indexes].astype("float32") -self.local_mean) / self.local_std
+        input_full = (self._movie_data[input_indices].astype("float") - self.local_mean) / self.local_std
+        output_full = (self._movie_data[shuffle_indexes].astype("float") -self.local_mean) / self.local_std
         input_full = np.moveaxis(input_full, 1, -1)
         output_full = np.expand_dims(output_full, -1)
         return input_full, output_full
