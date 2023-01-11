@@ -8,7 +8,6 @@ import nibabel as nib
 import glob
 import pathlib
 import time
-import s3fs
 import shutil
 import tempfile
 from deepinterpolation.generic import JsonLoader
@@ -905,11 +904,6 @@ class OphysGenerator(SequentialGenerator):
 
         self._movie_data = None
 
-        if "from_s3" in self.json_data.keys():
-            self.from_s3 = self.json_data["from_s3"]
-        else:
-            self.from_s3 = False
-
         # For backward compatibility
         if "train_path" in self.json_data.keys():
             self.raw_data_file = self.json_data["train_path"]
@@ -933,14 +927,8 @@ class OphysGenerator(SequentialGenerator):
     @property
     def movie_data(self):
         if self._movie_data is None:
-            if self.from_s3:
-                s3_filesystem = s3fs.S3FileSystem()
-                with h5py.File(s3_filesystem.open(
-                         self.raw_data_file, "rb"), "r") as movie_obj:
-                    self._movie_data = movie_obj['data'][()]
-            else:
-                with h5py.File(self.raw_data_file, "r") as movie_obj:
-                    self._movie_data = movie_obj['data'][()]
+            with h5py.File(self.raw_data_file, "r") as movie_obj:
+                self._movie_data = movie_obj['data'][()]
         return self._movie_data
 
     def __getitem__(self, index):
