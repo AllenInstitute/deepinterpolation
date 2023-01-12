@@ -10,7 +10,7 @@ with open("README.rst", encoding='utf-8') as f:
 with open("LICENSE") as f:
     license = f.read()
 
-if platform.system == 'Linux':
+if platform.system == 'Linux' or platform.system == 'Darwin':
     if os.system("grep avx512 /proc/cpuinfo") == 0:
         with open("requirements-avx512.txt", "r") as f:
             required = f.read().splitlines()
