@@ -23,7 +23,7 @@ else:
 
 setup(
     name="deepinterpolation",
-    version="0.1.5",
+    version="0.1.6",
     description="Implemenent DeepInterpolation to denoise data by removing \
 independent noise",
     long_description_content_type='text/x-rst',
