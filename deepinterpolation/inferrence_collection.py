@@ -296,6 +296,7 @@ class core_inferrence:
             self.output_padding = False
         
         if self.json_data["use_mixed_float16"]:
+            logger.info("Tensorflow: using mixed_float16 precision")
             tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
         self.batch_size = self.generator_obj.batch_size
@@ -413,27 +414,26 @@ class core_inferrence:
                                         self.batch_size,
                                         first_sample)
                         n_written += n0-len(output_dict)
+            else:
+                start = first_sample + index_dataset * self.batch_size
+                end = first_sample + index_dataset * self.batch_size \
+                    + local_size
+
+                if self.save_raw:
+                    print("saving raw")
+                    if self.rescale:
+                        corrected_raw = local_data[1] * local_std + local_mean
+                    else:
+                        corrected_raw = local_data[1]
+
+                    raw_out[start:end] = np.squeeze(corrected_raw, -1)
+
+                # We squeeze to remove the feature dimension from tensorflow
+                dset_out[start:end] = np.squeeze(corrected_data, -1)
 
         logger.info('processing last datasets')
         for p in process_list:
             p.join()
-            
-        if not self.json_data["multiprocessing"]:
-            start = first_sample + index_dataset * self.batch_size
-            end = first_sample + index_dataset * self.batch_size \
-                + local_size
-
-            if self.save_raw:
-                print("saving raw")
-                if self.rescale:
-                    corrected_raw = local_data[1] * local_std + local_mean
-                else:
-                    corrected_raw = local_data[1]
-
-                raw_out[start:end] = np.squeeze(corrected_raw, -1)
-
-            # We squeeze to remove the feature dimension from tensorflow
-            dset_out[start:end] = np.squeeze(corrected_data, -1)
 
         duration = time.time()-global_t0
         logger.info(f"core_inference took {duration:.2e} seconds")
