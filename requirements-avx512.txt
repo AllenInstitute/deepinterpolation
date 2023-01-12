@@ -1,0 +1,8 @@
+intel-tensorflow-avx512==2.7
+nibabel
+matplotlib
+python-dateutil
+scipy==1.6.3
+tifffile
+argschema==2.0.2
+mlflow==1.14.1

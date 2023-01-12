@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-
+import platform
+import os
 
 with open("README.rst", encoding='utf-8') as f:
     readme = f.read()
@@ -9,8 +10,16 @@ with open("README.rst", encoding='utf-8') as f:
 with open("LICENSE") as f:
     license = f.read()
 
-with open("requirements.txt", "r") as f:
-    required = f.read().splitlines()
+if platform.system == 'Linux':
+    if os.system("grep avx512 /proc/cpuinfo") == 0:
+        with open("requirements-avx512.txt", "r") as f:
+            required = f.read().splitlines()
+    else:
+        with open("requirements.txt", "r") as f:
+            required = f.read().splitlines()
+else:
+    with open("requirements.txt", "r") as f:
+        required = f.read().splitlines()
 
 setup(
     name="deepinterpolation",
