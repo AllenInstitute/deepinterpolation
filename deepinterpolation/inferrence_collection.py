@@ -294,6 +294,9 @@ class core_inferrence:
             self.output_padding = self.json_data["output_padding"]
         else:
             self.output_padding = False
+        
+        if self.json_data["use_mixed_float16"]:
+            tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)

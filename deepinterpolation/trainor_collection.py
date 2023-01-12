@@ -97,6 +97,9 @@ class core_trainer:
         else:
             self.workers = 16
 
+        if "use_mixed_float16" in json_data.keys():
+            tensorflow.keras.mixed_precision.set_global_policy('mixed_float16')
+
         logger.info(f"set self.workers = {self.workers}")
 
         # These parameters are related to setting up the

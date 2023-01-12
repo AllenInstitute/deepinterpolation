@@ -367,8 +367,8 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         required=False,
         default="False",
         description=(
-            "Use the multiprocessing package in model inference. Our testing \
-            shows a performance improvement of about 60%. This option is \
+            "Use the multiprocessing package in model inference in CPU mode. Our testing \
+            shows a performance improvement of about 60% on 16 cores. This option is \
             memory intensive as it copies the batch data to each process. \
             Disabled if GPU is used."
         ),
@@ -381,6 +381,16 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             "Number of parallel workers to use when farming out "
             "inference work if multiprocessing = True."
         )
+    )
+
+    use_mixed_float16 = argschema.fields.Bool(
+        required=False,
+        default="False",
+        description=(
+            "Use float16 precision for tensorflow. Speeds up inference on devices \
+            with float16 support. Use this if you have an RTX or newer GPU, \
+            disable for most CPU processing"
+        ),
     )
 
 
@@ -536,6 +546,16 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
             will increase memory usage. Increase this number until your \
             training becomes limited either by RAM or CPU usage.",
     )
+    
+    use_mixed_float16 = argschema.fields.Bool(
+        required=False,
+        default="False",
+        description=(
+            "Use float16 precision for tensorflow. Speeds up inference on devices \
+            with float16 support. Use this if you have an RTX or newer GPU, \
+            disable for most CPU processing"
+        ),
+    )
 
 
 class FineTuningSchema(argschema.schemas.DefaultSchema):
@@ -662,6 +682,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
             will increase memory usage. Increase this number until your \
             training becomes limited either by RAM or CPU usage.",
     )
+
 
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
