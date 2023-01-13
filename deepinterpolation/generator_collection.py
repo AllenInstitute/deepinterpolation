@@ -968,7 +968,7 @@ class OphysGenerator(SequentialGenerator):
             batch_frames = tf.convert_to_tensor(
                 self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
             batch_frames = (
-                self.batch_frames - self.local_mean) / self.local_std
+                batch_frames - self.local_mean) / self.local_std
             self.data_tensor = tf.concat(
                 [self.data_tensor[self.batch_size:], batch_frames], 0)
 

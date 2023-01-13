@@ -424,19 +424,19 @@ class core_inferrence:
                 end = first_sample + index_dataset * self.batch_size \
                     + local_size
         
-            with h5py.File(self.output_file, "a") as file_handle:
-                dset_out = file_handle[output_dataset_name]
-                if self.save_raw:
-                    raw_out = file_handle[raw_dataset_name]
-                    if self.rescale:
-                        corrected_raw = local_data[1] * local_std + local_mean
-                    else:
-                        corrected_raw = local_data[1]
+                with h5py.File(self.output_file, "a") as file_handle:
+                    dset_out = file_handle[output_dataset_name]
+                    if self.save_raw:
+                        raw_out = file_handle[raw_dataset_name]
+                        if self.rescale:
+                            corrected_raw = local_data[1] * local_std + local_mean
+                        else:
+                            corrected_raw = local_data[1]
 
-                    raw_out[start:end] = np.squeeze(corrected_raw, -1)
+                        raw_out[start:end] = np.squeeze(corrected_raw, -1)
 
-                # We squeeze to remove the feature dimension from tensorflow
-                dset_out[start:end] = np.squeeze(corrected_data, -1)
+                    # We squeeze to remove the feature dimension from tensorflow
+                    dset_out[start:end] = np.squeeze(corrected_data, -1)
 
         logger.info('processing last datasets')
 
