@@ -295,9 +295,14 @@ class core_inferrence:
         else:
             self.output_padding = False
         
-        if self.json_data["use_mixed_float16"]:
+        if self.json_data.get("use_mixed_float16"):
             logger.info("Tensorflow: using mixed_float16 precision")
             tf.keras.mixed_precision.set_global_policy('mixed_float16')
+
+        if "multiprocessing" in self.json_data.keys():
+            self.multiprocessing = self.json_data["multiprocessing"]
+        else:
+            self.multiprocessing = False
 
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
@@ -339,7 +344,7 @@ class core_inferrence:
 
         logger.info(f"Created empty HDF5 file {self.output_file}")
         
-        if self.json_data["multiprocessing"]:
+        if self.json_data.get("multiprocessing"):
             tf.config.threading.set_inter_op_parallelism_threads(1)
             tf.config.threading.set_intra_op_parallelism_threads(1)
             mgr = multiprocessing.Manager()
@@ -367,7 +372,7 @@ class core_inferrence:
             this_batch[index_dataset]['local_mean'] = local_mean
             this_batch[index_dataset]['local_std'] = local_std
 
-            if self.json_data["multiprocessing"]:
+            if self.multiprocessing:
                 process = multiprocessing.Process(
                             target=core_inference_worker,
                             args=(self.json_data,
@@ -399,7 +404,7 @@ class core_inferrence:
                 msg += f'remaining of {prediction:.2e}'
                 logger.info(msg)
 
-            if self.json_data["multiprocessing"]:
+            if self.multiprocessing:
                 while len(process_list) >= self.json_data['n_parallel_workers']:
                     process_list = _winnow_process_list(process_list)
 
@@ -418,9 +423,11 @@ class core_inferrence:
                 start = first_sample + index_dataset * self.batch_size
                 end = first_sample + index_dataset * self.batch_size \
                     + local_size
-
+        
+            with h5py.File(self.output_file, "a") as file_handle:
+                dset_out = file_handle[output_dataset_name]
                 if self.save_raw:
-                    print("saving raw")
+                    raw_out = file_handle[raw_dataset_name]
                     if self.rescale:
                         corrected_raw = local_data[1] * local_std + local_mean
                     else:
@@ -432,8 +439,10 @@ class core_inferrence:
                 dset_out[start:end] = np.squeeze(corrected_data, -1)
 
         logger.info('processing last datasets')
-        for p in process_list:
-            p.join()
+
+        if self.multiprocessing:
+            for p in process_list:
+                p.join()
 
         duration = time.time()-global_t0
         logger.info(f"core_inference took {duration:.2e} seconds")
