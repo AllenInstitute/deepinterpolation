@@ -911,6 +911,11 @@ class OphysGenerator(SequentialGenerator):
             self.raw_data_file = self.json_data["train_path"]
         else:
             self.raw_data_file = self.json_data["movie_path"]
+        
+        if "gpu_cache_full" in self.json_data.keys():
+            self.gpu_cache_full = self.json_data["gpu_cache_full"]
+        else:
+            self.gpu_cache_full = False
 
         self.batch_size = self.json_data["batch_size"]
 
@@ -928,9 +933,16 @@ class OphysGenerator(SequentialGenerator):
         self.data_tensor = False
         start = self.pre_frame + self.pre_post_omission
         end = start + self.batch_size
-        self.batch_indices = list(range(start,end))
-        self.input_indices = np.vstack(
-            [self.__index_generation__(frame_index) for frame_index in self.batch_indices])
+        if self.gpu_cache_full:
+            print("Caching full movie onto GPU")
+            self.data_tensor = tf.convert_to_tensor(
+                self.movie_data, dtype="float")
+            self.data_tensor = (self.data_tensor - self.local_mean) / self.local_std
+        else:
+            self.batch_indices = list(range(start,end))
+            self.input_indices = np.vstack(
+                [self.__index_generation__(frame_index) \
+                    for frame_index in self.batch_indices])
         
     @property
     def movie_data(self):
@@ -939,27 +951,53 @@ class OphysGenerator(SequentialGenerator):
                 self._movie_data = movie_obj['data'][()]
         return self._movie_data
 
+    def __gpu_cache__(self, index):
+        '''Slices minimum movie required to generate batch for a given batch
+         index and caches it onto the GPU.
+        '''
+        start_ind = index*self.batch_size
+        end_ind = start_ind + self.batch_size + self.pre_frame \
+         + self.post_frame + 2*self.pre_post_omission - 2
+        if self.data_tensor is False or self.json_data["randomize"]:
+            self.data_tensor = tf.convert_to_tensor(
+                self.movie_data[start_ind:end_ind], dtype="float")
+            self.data_tensor = (
+                self.data_tensor - self.local_mean) / self.local_std
+        else:
+            self.batch_frames = tf.convert_to_tensor(
+                self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
+            self.batch_frames = (
+                self.batch_frames - self.local_mean) / self.local_std
+            self.data_tensor = tf.concat(
+                [self.data_tensor[self.batch_size:], self.batch_frames], 0)
+
     def __getitem__(self, index):
         if self.gpu_available:
-            start_ind = index*self.batch_size
-            end_ind = start_ind + self.batch_size - 2 + self.pre_frame + self.post_frame + 2*self.pre_post_omission
-            if self.data_tensor is False or self.json_data["randomize"]:
-                self.data_tensor = tf.convert_to_tensor(self.movie_data[start_ind:end_ind], dtype="float")
-                self.data_tensor = (self.data_tensor - self.local_mean) / self.local_std
+            if self.gpu_cache_full:
+                batch_indices = self.generate_batch_indexes(index)
+                input_indices = np.vstack(
+                    [self.__index_generation__(frame_index) \
+                        for frame_index in batch_indices])
             else:
-                self.batch_frames = tf.convert_to_tensor(self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
-                self.batch_frames = (self.batch_frames - self.local_mean) / self.local_std
-                self.data_tensor = tf.concat([self.data_tensor[self.batch_size:], self.batch_frames], 0) 
-            input_full = tf.gather(self.data_tensor, self.input_indices)
-            output_full = tf.gather(self.data_tensor, self.batch_indices)
+                self.__gpu_cache__(index)
+                input_indices = self.input_indices
+                batch_indices = self.batch_indices
+
+            input_full = tf.gather(self.data_tensor, input_indices)
+            output_full = tf.gather(self.data_tensor, batch_indices)
             input_full = tf.experimental.numpy.moveaxis(input_full, 1, -1)
             output_full = tf.expand_dims(output_full, -1)
         else:
-            shuffle_indexes = self.generate_batch_indexes(index)
+            batch_indices = self.generate_batch_indexes(index)
             input_indices = np.vstack(
-                [self.__index_generation__(frame_index) for frame_index in shuffle_indexes])
-            input_full = (self.movie_data[input_indices].astype("float") - self.local_mean) / self.local_std
-            output_full = (self.movie_data[shuffle_indexes].astype("float") -self.local_mean) / self.local_std
+                [self.__index_generation__(frame_index) \
+                    for frame_index in batch_indices])
+            input_full = (
+                self.movie_data[input_indices].astype("float") - self.local_mean
+                ) / self.local_std
+            output_full = (
+                self.movie_data[batch_indices].astype("float") -self.local_mean
+                ) / self.local_std
             input_full = np.moveaxis(input_full, 1, -1)
             output_full = np.expand_dims(output_full, -1)
 
@@ -967,11 +1005,14 @@ class OphysGenerator(SequentialGenerator):
 
     def __index_generation__(self, index_frame):
         input_index_left = np.arange(
-            index_frame-self.pre_frame-self.pre_post_omission, index_frame-self.pre_post_omission)
+            index_frame-self.pre_frame-self.pre_post_omission,
+            index_frame-self.pre_post_omission)
         input_index_right = np.arange(
-            index_frame+self.pre_post_omission+1, index_frame + self.post_frame
+            index_frame+self.pre_post_omission+1, index_frame \
+                + self.post_frame
             + self.pre_post_omission + 1)
-        input_index = np.concatenate([input_index_left, input_index_right])
+        input_index = np.concatenate(
+            [input_index_left, input_index_right])
         return input_index
 
 

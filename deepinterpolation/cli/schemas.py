@@ -218,6 +218,14 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             the maximal number."
     )
 
+    gpu_cache_full = argschema.fields.Boolean(
+        required=False,
+        default=False,
+        description="Cache full movie onto GPU memory for batch generation.\
+        Enabling this will lead to faster batch generation, training, and \
+        inference. Disable if GPU memory does not have the capacity."
+    )
+
     @mm.pre_load
     def generator_specific_settings(self, data, **kwargs):
         # This is for backward compatibility
@@ -546,7 +554,7 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
             will increase memory usage. Increase this number until your \
             training becomes limited either by RAM or CPU usage.",
     )
-    
+
     use_mixed_float16 = argschema.fields.Bool(
         required=False,
         default="False",
