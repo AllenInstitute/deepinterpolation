@@ -930,19 +930,21 @@ class OphysGenerator(SequentialGenerator):
 
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
-        self.data_tensor = False
-        start = self.pre_frame + self.pre_post_omission
-        end = start + self.batch_size
-        if self.gpu_cache_full:
-            print("Caching full movie onto GPU")
-            self.data_tensor = tf.convert_to_tensor(
-                self.movie_data, dtype="float")
-            self.data_tensor = (self.data_tensor - self.local_mean) / self.local_std
-        else:
-            self.batch_indices = list(range(start,end))
-            self.input_indices = np.vstack(
-                [self.__index_generation__(frame_index) \
-                    for frame_index in self.batch_indices])
+
+        if self.gpu_available:
+            self.data_tensor = False
+            start = self.pre_frame + self.pre_post_omission
+            end = start + self.batch_size
+            if self.gpu_cache_full:
+                print("Caching full movie onto GPU")
+                self.data_tensor = tf.convert_to_tensor(
+                    self.movie_data, dtype="float")
+                self.data_tensor = (self.data_tensor - self.local_mean) / self.local_std
+            else:
+                self.batch_indices = list(range(start,end))
+                self.input_indices = np.vstack(
+                    [self.__index_generation__(frame_index) \
+                        for frame_index in self.batch_indices])
         
     @property
     def movie_data(self):
@@ -973,6 +975,7 @@ class OphysGenerator(SequentialGenerator):
                 [self.data_tensor[self.batch_size:], batch_frames], 0)
 
     def __getitem__(self, index):
+        print(f"generating index {index}")
         if self.gpu_available:
             if self.gpu_cache_full:
                 batch_indices = self.generate_batch_indexes(index)

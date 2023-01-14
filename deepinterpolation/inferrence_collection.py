@@ -344,7 +344,7 @@ class core_inferrence:
 
         logger.info(f"Created empty HDF5 file {self.output_file}")
         
-        if self.json_data.get("multiprocessing"):
+        if self.multiprocessing:
             tf.config.threading.set_inter_op_parallelism_threads(1)
             tf.config.threading.set_intra_op_parallelism_threads(1)
             mgr = multiprocessing.Manager()
