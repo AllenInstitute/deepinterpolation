@@ -975,7 +975,6 @@ class OphysGenerator(SequentialGenerator):
                 [self.data_tensor[self.batch_size:], batch_frames], 0)
 
     def __getitem__(self, index):
-        print(f"generating index {index}")
         if self.gpu_available:
             if self.gpu_cache_full:
                 batch_indices = self.generate_batch_indexes(index)

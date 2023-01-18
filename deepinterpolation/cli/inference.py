@@ -4,7 +4,7 @@ from pathlib import Path
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
 from deepinterpolation.generic import ClassLoader
-import os
+import tensorflow as tf
 
 class Inference(argschema.ArgSchemaParser):
     default_schema = InferenceInputSchema
@@ -28,6 +28,10 @@ class Inference(argschema.ArgSchemaParser):
         # To be removed once fully transitioned to CLI
         self.args["generator_params"]["train_path"] = \
             self.args["generator_params"]["data_path"]
+
+        # disable multiprocessing if gpu_available
+        if tf.test.is_gpu_available():
+            self.args["inference_params"]["multiprocessing"] = False
 
         # save the json parameters to 2 different files
         inference_json_path = outdir / f"{uid}_inference.json"
