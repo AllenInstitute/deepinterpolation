@@ -361,18 +361,17 @@ class core_inferrence:
             log_every = 5
 
         global_t0 = time.time()
-
         for index_dataset in np.arange(self.nb_datasets):
             local_data = self.generator_obj.__getitem__(index_dataset)
             local_mean, local_std = \
                 self.generator_obj.__get_norm_parameters__(index_dataset)
-            this_batch = dict()
-            this_batch[index_dataset] = dict()
-            this_batch[index_dataset]['local_data'] = local_data
-            this_batch[index_dataset]['local_mean'] = local_mean
-            this_batch[index_dataset]['local_std'] = local_std
 
             if self.multiprocessing:
+                this_batch = dict()
+                this_batch[index_dataset] = dict()
+                this_batch[index_dataset]['local_data'] = local_data
+                this_batch[index_dataset]['local_mean'] = local_mean
+                this_batch[index_dataset]['local_std'] = local_std
                 process = multiprocessing.Process(
                             target=core_inference_worker,
                             args=(self.json_data,
@@ -385,8 +384,6 @@ class core_inferrence:
                 process_list.append(process)
             else:
                 predictions_data = self.model.predict_on_batch(local_data[0])
-                local_mean, local_std = \
-                    self.generator_obj.__get_norm_parameters__(index_dataset)
                 local_size = predictions_data.shape[0]
                 if self.rescale:
                     corrected_data = predictions_data * local_std + local_mean
