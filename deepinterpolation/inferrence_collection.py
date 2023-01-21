@@ -361,8 +361,18 @@ class core_inferrence:
             log_every = 5
 
         global_t0 = time.time()
+        gen_times = []
+        inference_times = []
         for index_dataset in np.arange(self.nb_datasets):
+            print(f"index_dataset - {index_dataset}")
+            t0 = time.time()
             local_data = self.generator_obj.__getitem__(index_dataset)
+            t1 = time.time()
+            if index_dataset > 2:
+                gen_times.append(t1-t0)
+                gen_time_avg_per_ind = sum(gen_times) / len(gen_times) / self.batch_size
+                print(f"generating data - avg time per ind {gen_time_avg_per_ind}")
+                
             local_mean, local_std = \
                 self.generator_obj.__get_norm_parameters__(index_dataset)
 
@@ -384,6 +394,11 @@ class core_inferrence:
                 process_list.append(process)
             else:
                 predictions_data = self.model.predict_on_batch(local_data[0])
+                t2=time.time()
+                if index_dataset > 2:
+                    inference_times.append(t2-t1)
+                    inf_time_avg_per_ind = sum(inference_times) / len(inference_times) / self.batch_size
+                    print(f"model.predict_on_batch - avg time per ind {inf_time_avg_per_ind}")
                 local_size = predictions_data.shape[0]
                 if self.rescale:
                     corrected_data = predictions_data * local_std + local_mean

@@ -226,6 +226,13 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         inference. Disable if GPU memory does not have the capacity."
     )
 
+    normalize_cache = argschema.fields.Boolean(
+        required=False,
+        default=True,
+        description="Normalize movie after caching. This requires converting"
+        "the movie to float32 which will double the caching memory requirements."
+    )
+
     @mm.pre_load
     def generator_specific_settings(self, data, **kwargs):
         # This is for backward compatibility
