@@ -244,18 +244,14 @@ class core_inferrence:
             # Initialize onset of output sample movie
             local_start = first_sample
 
-            for epoch_index, index_dataset in enumerate(tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch))):
-
+            for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
+                local_data = self.generator_obj.__getitem__(index_dataset)
                 local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
                 
                 # We overwrite epoch_index to allow the last unfilled epoch
                 self.generator_obj.epoch_index = epoch_index
 
-                predictions_data = self.model.predict(
-                        self.generator_obj,
-                        steps = local_length, max_queue_size = 10,
-                        workers = self.workers,
-                        use_multiprocessing = self.use_multiprocessing)
+                predictions_data = self.model.predict_on_batch(local_data[0])
 
                 local_mean, local_std = \
                         self.generator_obj.__get_norm_parameters__(index_dataset)                
