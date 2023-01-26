@@ -8,6 +8,14 @@ import nibabel as nib
 import glob
 from deepinterpolation.generic import JsonLoader
 import tensorflow as tf
+from numba import njit
+
+@njit(parallel=True)
+def normalize_parallel(arr, mean, std):
+    return (arr - mean) / float(std)
+
+def normalize(arr, mean, std):
+    return (arr - mean) / std
 
 class MaxRetryException(Exception):
     # This is helper class for EmGenerator
@@ -945,24 +953,19 @@ class OphysGenerator(SequentialGenerator):
                 self.input_indices = np.vstack(
                     [self.__index_generation__(frame_index) \
                         for frame_index in self.batch_indices])
-    
-    def norm_cpu(self, arr):
-        if arr.dtype != np.float32:
-            arr=arr.astype("float32")
-        return (arr - self.local_mean) / self.local_std
-
-    def norm_gpu(self, arr):
-        return (arr - self.local_mean) / self.local_std
 
     @property
     def movie_data(self):
         if self._movie_data is None:
             with h5py.File(self.raw_data_file, "r") as movie_obj:
-                self._movie_data = self.norm_cpu(movie_obj['data'][()][:self.end_frame])
-        if self.normalize_cache:
-            return self.norm_cpu(self._movie_data)
-        else:
-            return self._movie_data
+                self._movie_data = movie_obj['data'][()][:self.end_frame]
+            if self.normalize_cache:
+                self._movie_data = self._movie_data.astype("float32")
+                self._movie_data = normalize_parallel(self._movie_data,
+                        self.local_mean,
+                        self.local_std)
+        return self._movie_data
+
 
     def __gpu_cache__(self, index):
         '''Slices minimum movie required to generate batch for a given batch
@@ -976,12 +979,12 @@ class OphysGenerator(SequentialGenerator):
             self.data_tensor = tf.convert_to_tensor(
                 self.movie_data[start_ind:end_ind], dtype="float")
             if not self.normalize_cache:
-                self.data_tensor = self.norm_gpu(self.data_tensor)
+                self.data_tensor = normalize(self.data_tensor, self.local_mean, self.local_std)
         else:
             batch_frames = tf.convert_to_tensor(
                 self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
             if not self.normalize_cache:
-                batch_frames = self.norm_gpu(batch_frames)
+                batch_frames = normalize(batch_frames, self.local_mean, self.local_std)
             self.data_tensor = tf.concat(
                 [self.data_tensor[self.batch_size:], batch_frames], 0)
 
@@ -1010,8 +1013,10 @@ class OphysGenerator(SequentialGenerator):
             input_full = self.movie_data[input_indices].astype("float")
             output_full = self.movie_data[batch_indices].astype("float")
             if not self.normalize_cache:
-                input_full = self.norm_cpu(input_full)
-                output_full = self.norm_cpu(output_full)
+                input_full = normalize_parallel(input_full, self.local_mean,
+                    self.local_std)
+                output_full = normalize_parallel(output_full, self.local_mean,
+                    self.local_std)
             input_full = np.moveaxis(input_full, 1, -1)
             output_full = np.expand_dims(output_full, -1)
 

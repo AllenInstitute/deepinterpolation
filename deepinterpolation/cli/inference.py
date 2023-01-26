@@ -1,6 +1,7 @@
 import argschema
 import json
 from pathlib import Path
+import numba
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
 from deepinterpolation.generic import ClassLoader
