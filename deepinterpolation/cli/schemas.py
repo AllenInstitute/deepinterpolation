@@ -197,6 +197,21 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             the maximal number."
     )
 
+    gpu_cache_full = argschema.fields.Boolean(
+        required=False,
+        default=False,
+        description="Cache full movie onto GPU memory for batch generation.\
+        Enabling this will lead to faster batch generation, training, and \
+        inference. Disable if GPU memory does not have the capacity."
+    )
+
+    normalize_cache = argschema.fields.Boolean(
+        required=False,
+        default=True,
+        description="Normalize movie after caching. This requires converting"
+        "the movie to float32 which will double the caching memory requirements."
+    )
+
     @mm.pre_load
     def generator_specific_settings(self, data, **kwargs):
         # This is for backward compatibility
@@ -367,6 +382,16 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
             "Whether to bring back infered data to the original data range. \
             DeepInterpolation networks initially rescale all datasets within \
             -1 to 1 for training."
+        ),
+    )
+
+    use_mixed_float16 = argschema.fields.Bool(
+        required=False,
+        default="False",
+        description=(
+            "Use float16 precision for tensorflow. Speeds up inference on devices \
+            with float16 support. Use this if you have an RTX or newer GPU, \
+            disable for most CPU processing"
         ),
     )
 
