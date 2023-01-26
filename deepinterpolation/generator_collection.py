@@ -909,6 +909,11 @@ class OphysGenerator(SequentialGenerator):
         self._movie_data = None
 
         # For backward compatibility
+        if "cache_data" in self.json_data.keys():
+            self.cache_data = self.json_data["cache_data"]
+        else:
+            self.cache_data = False
+
         if "train_path" in self.json_data.keys():
             self.raw_data_file = self.json_data["train_path"]
         else:
@@ -958,7 +963,12 @@ class OphysGenerator(SequentialGenerator):
     def movie_data(self):
         if self._movie_data is None:
             with h5py.File(self.raw_data_file, "r") as movie_obj:
-                self._movie_data = movie_obj['data'][()][:self.end_frame]
+                end_ind = self.end_frame+self.post_frame+self.pre_post_omission+1
+                total_frame_per_movie = movie_obj['data'].shape[0]
+                if self.end_frame > 0 and  total_frame_per_movie > end_ind:
+                    self._movie_data = movie_obj['data'][:end_ind]
+                else:
+                    self._movie_data = movie_obj['data'][()]
             if self.normalize_cache:
                 self._movie_data = self._movie_data.astype("float32")
                 self._movie_data = normalize_parallel(self._movie_data,
