@@ -1005,54 +1005,7 @@ class OphysGenerator(SequentialGenerator):
         return data_img_input, data_img_output
 
 
-class MovieJSONGenerator(DeepGenerator):
-    """This generator is used when dealing with a large number of hdf5 files
-    referenced into a json file with pre-computed mean and std value. The json
-    file is passed to the generator in place of the movie file themselves. Each
-    frame is expected to be smaller than (512,512).
-    Each individual hdf5 movie is recorded into a 'data' field
-    as [time, x, y]. The json files is pre-calculated and have the following
-    fields (replace <...> appropriately):
-    {"<id>": {"path": <string path to the hdf5 file>,
-    "frames": <[int frame1, int frame2,...]>,
-    "mean": <float value>,
-    "std": <float_value>}}"""
-
-    def __init__(self, json_path):
-        "Initialization"
-        super().__init__(json_path)
-
-        self.sample_data_path_json = self.json_data["train_path"]
-        self.batch_size = self.json_data["batch_size"]
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
-        self.epoch_index = 0
-
-        # For backward compatibility
-        if "pre_post_frame" in self.json_data.keys():
-            self.pre_frame = self.json_data["pre_post_frame"]
-            self.post_frame = self.json_data["pre_post_frame"]
-        else:
-            self.pre_frame = self.json_data["pre_frame"]
-            self.post_frame = self.json_data["post_frame"]
-
-        # For backward compatibility
-        if "pre_post_omission" in self.json_data.keys():
-            self.pre_post_omission = self.json_data["pre_post_omission"]
-        else:
-            self.pre_post_omission = 0
-
-        with open(self.sample_data_path_json, "r") as json_handle:
-            self.frame_data_location = json.load(json_handle)
-
-        self.lims_id = list(self.frame_data_location.keys())
-        self.nb_lims = len(self.lims_id)
-        self.img_per_movie = len(
-            self.frame_data_location[self.lims_id[0]]["frames"])
-
-    def __len__(self):
-        "Denotes the total number of batches"
-        return int(np.ceil(float(self.nb_lims
-                                 * self.img_per_movie) / self.batch_size))
+class MovieJSONMixin():
 
     def on_epoch_end(self):
         # We only increase index if steps_per_epoch
@@ -1068,18 +1021,20 @@ class MovieJSONGenerator(DeepGenerator):
             index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
-        if (index + 1) * self.batch_size > self.nb_lims * self.img_per_movie:
+        n_all_data = len(self.shuffled_data_list)
+        if (index + 1) * self.batch_size > n_all_data:
             indexes = np.arange(
-                index * self.batch_size, self.nb_lims * self.img_per_movie
+                index * self.batch_size, n_all_data
             )
         else:
             indexes = np.arange(index * self.batch_size,
                                 (index + 1) * self.batch_size)
 
+        actual_batch_size = len(indexes)
         input_full = np.zeros(
-            [self.batch_size, 512, 512, self.pre_frame + self.post_frame]
+            [actual_batch_size, 512, 512, self.pre_frame + self.post_frame]
         )
-        output_full = np.zeros([self.batch_size, 512, 512, 1])
+        output_full = np.zeros([actual_batch_size, 512, 512, 1])
 
         for batch_index, frame_index in enumerate(indexes):
             X, Y = self.__data_generation__(frame_index)
@@ -1105,6 +1060,155 @@ class MovieJSONGenerator(DeepGenerator):
 
         return local_mean, local_std
 
+    def _make_index_to_frames(self):
+        """
+        Construct a lookup that goes from video_index, img_index
+        to an index of input and outputframes
+        """
+        self.frame_lookup = dict()
+        for video_tag in self.lims_id:
+            local_frame_data = self.frame_data_location[video_tag]
+            for img_index in range(len(local_frame_data['frames'])):
+                output_frame = local_frame_data["frames"][img_index]
+
+                input_index = np.arange(
+                    output_frame - self.pre_frame - self.pre_post_omission,
+                    output_frame + self.post_frame + self.pre_post_omission + 1,
+                )
+                input_index = input_index[input_index != output_frame]
+
+                for index_padding in np.arange(self.pre_post_omission + 1):
+                    input_index = input_index[input_index !=
+                                              output_frame - index_padding]
+                    input_index = input_index[input_index !=
+                                              output_frame + index_padding]
+
+                this_dict = {'output_frame': output_frame,
+                             'input_index': input_index}
+                self.frame_lookup[(video_tag, img_index)] = this_dict
+
+
+class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
+    """This generator is used when dealing with a large number of hdf5 files
+    referenced into a json file with pre-computed mean and std value. The json
+    file is passed to the generator in place of the movie file themselves. Each
+    frame is expected to be smaller than (512,512).
+    Each individual hdf5 movie is recorded into a 'data' field
+    as [time, x, y]. The json files is pre-calculated and have the following
+    fields (replace <...> appropriately):
+    {"<id>": {"path": <string path to the hdf5 file>,
+    "frames": <[int frame1, int frame2,...]>,
+    "mean": <float value>,
+    "std": <float_value>}}"""
+
+    def __init__(self, json_path):
+        "Initialization"
+        super().__init__(json_path)
+
+        if "cache_data" in self.json_data:
+            self.cache_data = self.json_data["cache_data"]
+            self.data_cache = dict()
+        else:
+            self.cache_data = False
+
+        self.sample_data_path_json = self.json_data["train_path"]
+        self.batch_size = self.json_data["batch_size"]
+        self.steps_per_epoch = self.json_data["steps_per_epoch"]
+        self.epoch_index = 0
+
+        # For backward compatibility
+        if "pre_post_frame" in self.json_data.keys():
+            self.pre_frame = self.json_data["pre_post_frame"]
+            self.post_frame = self.json_data["pre_post_frame"]
+        else:
+            self.pre_frame = self.json_data["pre_frame"]
+            self.post_frame = self.json_data["post_frame"]
+
+        # For backward compatibility
+        if "pre_post_omission" in self.json_data.keys():
+            self.pre_post_omission = self.json_data["pre_post_omission"]
+        else:
+            self.pre_post_omission = 0
+
+        with open(self.sample_data_path_json, "r") as json_handle:
+            self.frame_data_location = json.load(json_handle)
+
+        self.lims_id = list(self.frame_data_location.keys())
+        self.shuffled_data_list = []
+        for lims_key in self.lims_id:
+            n_frames = len(self.frame_data_location[lims_key]['frames'])
+            for i_frame in range(n_frames):
+                self.shuffled_data_list.append((lims_key, i_frame))
+
+        self.rng = np.random.default_rng(1234)
+        self.rng.shuffle(self.shuffled_data_list)
+        self._make_index_to_frames()
+
+    def get_lims_id_sample_from_index(self, index):
+        local_lims, local_img = self.shuffled_data_list[index]
+        return local_lims, local_img
+
+    def _data_from_indexes(self, video_index, img_index):
+        # Initialization
+
+        index_dict = self.frame_lookup[(video_index, img_index)]
+        input_index = index_dict['input_index']
+        output_frame = index_dict['output_frame']
+
+        data_img_input = None
+        data_img_output = None
+        if self.cache_data:
+            key_tuple = (video_index, img_index)
+            if key_tuple in self.data_cache:
+                data_img_input = self.data_cache[key_tuple]['input']
+                data_img_output = self.data_cache[key_tuple]['output']
+
+        if data_img_input is None:
+            motion_path = self.frame_data_location[video_index]["path"]
+            if not os.path.isfile(motion_path):
+                motion_path = os.path.join(
+                                 os.environ['TMPDIR'],
+                                 self.frame_data_location[video_index]['path'])
+            if not os.path.isfile(motion_path):
+                msg = 'could not find valid file path for \n'
+                msg += f"{self.frame_data_location[video_index]['path']}\n"
+                msg += f"tried\n{motion_path}\n"
+                raise RuntimeError(msg)
+
+            #print(f'opening {pathlib.Path(motion_path).name}')
+            with h5py.File(motion_path, "r") as movie_obj:
+                data_img_input = movie_obj["data"][input_index, :, :]
+                data_img_output = movie_obj["data"][output_frame, :, :]
+
+            if self.cache_data:
+                self.data_cache[key_tuple] = {'input': data_img_input,
+                                              'output': data_img_output}
+
+        local_frame_data = self.frame_data_location[video_index]
+        local_mean = local_frame_data["mean"]
+        local_std = local_frame_data["std"]
+
+        input_full = np.zeros(
+            [1, 512, 512, len(input_index)])
+        output_full = np.zeros([1, 512, 512, 1])
+
+        data_img_input = np.swapaxes(data_img_input, 1, 2)
+        data_img_input = np.swapaxes(data_img_input, 0, 2)
+
+        img_in_shape = data_img_input.shape
+        img_out_shape = data_img_output.shape
+
+        data_img_input = (data_img_input.astype(
+            "float") - local_mean) / local_std
+        data_img_output = (data_img_output.astype(
+            "float") - local_mean) / local_std
+        input_full[0, : img_in_shape[0],
+                   : img_in_shape[1], :] = data_img_input
+        output_full[0, : img_out_shape[0],
+                    : img_out_shape[1], 0] = data_img_output
+
+        return input_full, output_full
+
     def __data_generation__(self, index_frame):
         "Generates data containing batch_size samples"
 
@@ -1113,61 +1217,13 @@ class MovieJSONGenerator(DeepGenerator):
             local_lims, local_img = self.get_lims_id_sample_from_index(
                 index_frame)
 
-            # Initialization
-            local_path = self.frame_data_location[local_lims]["path"]
+            return self._data_from_indexes(local_lims, local_img)
 
-            _filenames = ["motion_corrected_video.h5", "concat_31Hz_0.h5"]
-            motion_path = []
-            for _filename in _filenames:
-                _filepath = os.path.join(local_path, "processed", _filename)
-                if os.path.exists(_filepath) and not os.path.islink(
-                    _filepath
-                ):  # Path exists and is not symbolic
-                    motion_path = _filepath
-                    break
-
-            movie_obj = h5py.File(motion_path, "r")
-
-            local_frame_data = self.frame_data_location[local_lims]
-            output_frame = local_frame_data["frames"][local_img]
-            local_mean = local_frame_data["mean"]
-            local_std = local_frame_data["std"]
-
-            input_full = np.zeros(
-                [1, 512, 512, self.pre_frame + self.post_frame])
-            output_full = np.zeros([1, 512, 512, 1])
-
-            input_index = np.arange(
-                output_frame - self.pre_frame - self.pre_post_omission,
-                output_frame + self.post_frame + self.pre_post_omission + 1,
-            )
-            input_index = input_index[input_index != output_frame]
-
-            for index_padding in np.arange(self.pre_post_omission + 1):
-                input_index = input_index[input_index !=
-                                          output_frame - index_padding]
-                input_index = input_index[input_index !=
-                                          output_frame + index_padding]
-
-            data_img_input = movie_obj["data"][input_index, :, :]
-            data_img_output = movie_obj["data"][output_frame, :, :]
-
-            data_img_input = np.swapaxes(data_img_input, 1, 2)
-            data_img_input = np.swapaxes(data_img_input, 0, 2)
-
-            img_in_shape = data_img_input.shape
-            img_out_shape = data_img_output.shape
-
-            data_img_input = (data_img_input.astype(
-                "float") - local_mean) / local_std
-            data_img_output = (data_img_output.astype(
-                "float") - local_mean) / local_std
-            input_full[0, : img_in_shape[0],
-                       : img_in_shape[1], :] = data_img_input
-            output_full[0, : img_out_shape[0],
-                        : img_out_shape[1], 0] = data_img_output
-            movie_obj.close()
-
-            return input_full, output_full
         except Exception:
             print("Issues with " + str(self.lims_id))
+            raise
+
+    def __len__(self):
+        "Denotes the total number of batches"
+        n_frames = len(self.shuffled_data_list)
+        return int(np.ceil(n_frames / self.batch_size))
