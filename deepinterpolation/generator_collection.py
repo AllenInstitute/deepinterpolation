@@ -8,11 +8,6 @@ import nibabel as nib
 import glob
 from deepinterpolation.generic import JsonLoader
 import tensorflow as tf
-from numba import njit
-
-@njit(parallel=True)
-def normalize_parallel(arr, mean, std):
-    return (arr - mean) / float(std)
 
 def normalize(arr, mean, std):
     return (arr - mean) / std
@@ -971,7 +966,7 @@ class OphysGenerator(SequentialGenerator):
                     self._movie_data = movie_obj['data'][()]
             if self.normalize_cache:
                 self._movie_data = self._movie_data.astype("float32")
-                self._movie_data = normalize_parallel(self._movie_data,
+                self._movie_data = normalize(self._movie_data,
                         self.local_mean,
                         self.local_std)
         return self._movie_data
@@ -1023,9 +1018,9 @@ class OphysGenerator(SequentialGenerator):
             input_full = self.movie_data[input_indices].astype("float")
             output_full = self.movie_data[batch_indices].astype("float")
             if not self.normalize_cache:
-                input_full = normalize_parallel(input_full, self.local_mean,
+                input_full = normalize(input_full, self.local_mean,
                     self.local_std)
-                output_full = normalize_parallel(output_full, self.local_mean,
+                output_full = normalize(output_full, self.local_mean,
                     self.local_std)
             input_full = np.moveaxis(input_full, 1, -1)
             output_full = np.expand_dims(output_full, -1)
