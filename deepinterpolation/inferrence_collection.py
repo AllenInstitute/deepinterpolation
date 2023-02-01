@@ -1,13 +1,22 @@
 import warnings
 
 import h5py
+import logging
 import numpy as np
 from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
+import tensorflow as tf
+import multiprocessing
+from deepinterpolation.utils import _winnow_process_list
 
+tf.compat.v1.logging.set_verbosity(
+    tf.compat.v1.logging.ERROR)
 
+logger = logging.getLogger(__name__)
+logging.captureWarnings(True)
+logging.basicConfig(level=logging.INFO)
 class fmri_inferrence:
     # This inferrence is specific to fMRI which is raster scanning for
     # denoising
@@ -118,6 +127,128 @@ class fmri_inferrence:
                                 :,
                             ]
 
+def load_model_worker(json_data):
+    try:
+        local_model_path = __get_local_model_path(json_data)
+        model = __load_local_model(path=local_model_path)
+    except KeyError:
+        model = __load_model_from_mlflow(json_data)
+    return model
+
+
+def core_inference_worker(
+        json_data,
+        input_lookup,
+        rescale,
+        save_raw,
+        output_dict,
+        output_lock):
+
+    model = load_model_worker(json_data)
+    local_output = {}
+    for dataset_index in input_lookup:
+        local_lookup = input_lookup[dataset_index]
+        local_data = local_lookup['local_data']
+        local_mean = local_lookup['local_mean']
+        local_std = local_lookup['local_std']
+
+        predictions_data = model.predict(local_data[0])
+        local_size = predictions_data.shape[0]
+
+        if rescale:
+            corrected_data = predictions_data * local_std + local_mean
+        else:
+            corrected_data = predictions_data
+
+        corrected_raw = None
+        if save_raw:
+            if rescale:
+                corrected_raw = local_data[1] * local_std + local_mean
+            else:
+                corrected_raw = local_data[1]
+
+        local_output[dataset_index] = {'corrected_raw': corrected_raw,
+                                       'corrected_data': corrected_data}
+
+    with output_lock:
+        k_list = list(local_output.keys())
+        for k in k_list:
+            output_dict[k] = local_output.pop(k)
+    return None
+
+def __get_local_model_path(json_data):
+    try:
+        model_path = json_data['model_path']
+        warnings.warn('Loading model from model_path will be deprecated '
+                      'in a future release')
+    except KeyError:
+        model_path = json_data['model_source']['local_path']
+    return model_path
+
+def __load_local_model(path: str):
+    model = load_model(
+        path,
+        custom_objects={
+            "annealed_loss": lc.loss_selector("annealed_loss")},
+    )
+    return model
+
+def __load_model_from_mlflow(json_data):
+    import mlflow
+    mlflow_registry_params = \
+        json_data['model_source']['mlflow_registry']
+
+    model_name = mlflow_registry_params['model_name']
+    model_version = mlflow_registry_params.get('model_version')
+    model_stage = mlflow_registry_params.get('model_stage')
+
+    mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
+
+    if model_version is not None:
+        model_uri = f"models:/{model_name}/{model_version}"
+    elif model_stage:
+        model_uri = f"models:/{model_name}/{model_stage}"
+    else:
+        # Gets the latest version without any stage
+        model_uri = f"models:/{model_name}/None"
+
+    model = mlflow.keras.load_model(
+        model_uri=model_uri
+    )
+
+    return model
+
+def write_output_to_file(output_dict,
+                         output_file_path,
+                         raw_dataset_name,
+                         output_dataset_name,
+                         batch_size,
+                         first_sample):
+    index_list = list(output_dict.keys())
+
+    with h5py.File(output_file_path, 'a') as out_file:
+
+        if output_dict[index_list[0]]['corrected_raw'] is not None:
+            raw_out = out_file[raw_dataset_name]
+
+        dset_out = out_file[output_dataset_name]
+
+        for dataset_index in index_list:
+            dataset = output_dict.pop(dataset_index)
+            local_size = dataset['corrected_data'].shape[0]
+            start = first_sample + dataset_index * batch_size
+            end = start + local_size
+            
+            if raw_dataset_name is not None:
+                if dataset['corrected_raw'] is not None:
+                    corrected_raw = dataset['corrected_raw']
+                    raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
+
+            # We squeeze to remove the feature dimension from tensorflow
+            corrected_data = dataset['corrected_data']
+            dset_out[start:end, :] = np.squeeze(corrected_data, -1)
+
+    return output_dict
 
 class core_inferrence:
     # This is the generic inferrence class
@@ -169,55 +300,6 @@ class core_inferrence:
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
 
-        self.__load_model()
-
-    def __load_model(self):
-        try:
-            local_model_path = self.__get_local_model_path()
-            self.__load_local_model(path=local_model_path)
-        except KeyError:
-            self.__load_model_from_mlflow()
-
-    def __get_local_model_path(self):
-        try:
-            model_path = self.json_data['model_path']
-            warnings.warn('Loading model from model_path will be deprecated '
-                          'in a future release')
-        except KeyError:
-            model_path = self.json_data['model_source']['local_path']
-        return model_path
-
-    def __load_local_model(self, path: str):
-        self.model = load_model(
-            path,
-            custom_objects={
-                "annealed_loss": lc.loss_selector("annealed_loss")},
-        )
-
-    def __load_model_from_mlflow(self):
-        import mlflow
-
-        mlflow_registry_params = \
-            self.json_data['model_source']['mlflow_registry']
-
-        model_name = mlflow_registry_params['model_name']
-        model_version = mlflow_registry_params.get('model_version')
-        model_stage = mlflow_registry_params.get('model_stage')
-
-        mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
-
-        if model_version is not None:
-            model_uri = f"models:/{model_name}/{model_version}"
-        elif model_stage:
-            model_uri = f"models:/{model_name}/{model_stage}"
-        else:
-            # Gets the latest version without any stage
-            model_uri = f"models:/{model_name}/None"
-
-        self.model = mlflow.keras.load_model(
-            model_uri=model_uri
-        )
-
     def run(self):
         if self.output_padding:
             first_sample = self.generator_obj.start_sample - \
@@ -233,45 +315,107 @@ class core_inferrence:
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape[:-1])
 
+        output_dataset_name = "data"
+        raw_dataset_name = "raw"
+
         with h5py.File(self.output_file, "w") as file_handle:
             dset_out = file_handle.create_dataset(
-                "data",
+                output_dataset_name,
                 shape=tuple(final_shape),
                 chunks=tuple(chunk_size),
                 dtype=self.output_datatype,
             )
 
-            # Initialize onset of output sample movie
-            local_start = first_sample
+            if self.save_raw:
+                raw_out = file_handle.create_dataset(
+                    raw_dataset_name,
+                    shape=tuple(final_shape),
+                    chunks=tuple(chunk_size),
+                    dtype=self.output_datatype,
+                )
 
-            for epoch_index, index_dataset in enumerate(tqdm(np.arange(0, self.nb_datasets, self.steps_per_epoch))):
+        logger.info(f"Created empty HDF5 file {self.output_file}")
+        
+        if self.use_multiprocessing:
+            tf.config.threading.set_inter_op_parallelism_threads(1)
+            tf.config.threading.set_intra_op_parallelism_threads(1)
+            mgr = multiprocessing.Manager()
+            output_lock = mgr.Lock()
+            output_dict = mgr.dict()
+            process_list = []
+        else:
+            self.model = load_model_worker(self.json_data)
 
-                local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
-                
-                # We overwrite epoch_index to allow the last unfilled epoch
-                self.generator_obj.epoch_index = epoch_index
+        # Initialize onset of output sample movie
+        local_start = first_sample
 
-                predictions_data = self.model.predict(
-                        self.generator_obj,
-                        steps = local_length, max_queue_size = 10,
-                        workers = self.workers,
-                        use_multiprocessing = self.use_multiprocessing)
+        for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
+            local_data = self.generator_obj.__getitem__(index_dataset)
 
-                local_mean, local_std = \
-                        self.generator_obj.__get_norm_parameters__(index_dataset)                
-                
-                local_size = predictions_data.shape[0]
-
+            # We overwrite epoch_index to allow the last unfilled epoch
+            self.generator_obj.epoch_index = epoch_index
+            local_mean, local_std = \
+                    self.generator_obj.__get_norm_parameters__(index_dataset)  
+            
+            if self.use_multiprocessing:
+                this_batch = dict()
+                this_batch[index_dataset] = dict()
+                this_batch[index_dataset]['local_data'] = local_data
+                this_batch[index_dataset]['local_mean'] = local_mean
+                this_batch[index_dataset]['local_std'] = local_std
+                process = multiprocessing.Process(
+                            target=core_inference_worker,
+                            args=(self.json_data,
+                                this_batch,
+                                self.rescale,
+                                self.save_raw,
+                                output_dict,
+                                output_lock))
+                process.start()
+                process_list.append(process)
+            else:
+                predictions_data = self.model.predict_on_batch(local_data[0])
                 if self.rescale:
                     corrected_data = predictions_data * local_std + local_mean
                 else:
-                    corrected_data = predictions_data
-                
+                    corrected_data = predictions_data              
+                local_size = predictions_data.shape[0]
                 start = local_start
                 end = local_start + local_size - 1
-
                 # We adjust for the next for loop run
                 local_start = end + 1
 
+            
+        if self.use_multiprocessing:
+            while len(process_list) >= self.workers:
+                process_list = _winnow_process_list(process_list)
+
+            if len(output_dict) >= max(1, self.nb_datasets//8):
+                with output_lock:
+                    n0 = len(output_dict)
+                    output_dict = write_output_to_file(
+                                    output_dict,
+                                    self.output_file,
+                                    raw_dataset_name,
+                                    output_dataset_name,
+                                    self.batch_size,
+                                    first_sample)
+                    n_written += n0-len(output_dict)
+        else:
+            start = first_sample + index_dataset * self.batch_size
+            end = first_sample + index_dataset * self.batch_size \
+                + local_size
+    
+            with h5py.File(self.output_file, "a") as file_handle:
+                dset_out = file_handle[output_dataset_name]
+                if self.save_raw:
+                    raw_out = file_handle[raw_dataset_name]
+                    if self.rescale:
+                        corrected_raw = local_data[1] * local_std + local_mean
+                    else:
+                        corrected_raw = local_data[1]
+
+                    raw_out[start:end] = np.squeeze(corrected_raw, -1)
+
                 # We squeeze to remove the feature dimension from tensorflow
-                dset_out[start:end+1, :] = np.squeeze(corrected_data, -1)
+                dset_out[start:end] = np.squeeze(corrected_data, -1)

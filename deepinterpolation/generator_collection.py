@@ -908,6 +908,8 @@ class OphysGenerator(SequentialGenerator):
         movie_obj_point = h5py.File(self.raw_data_file, "r")
         raw_data = movie_obj_point["data"]
 
+        self.steps_per_epoch = 0 
+        
         self.total_frame_per_movie = int(raw_data.shape[0])
 
         self._update_end_frame(self.total_frame_per_movie)
