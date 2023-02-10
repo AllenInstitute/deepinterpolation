@@ -5,7 +5,8 @@ import tensorflow as tf
 
 from deepinterpolation.cli.schemas import InferenceInputSchema
 from deepinterpolation.generic import ClassLoader
-
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 class Inference(argschema.ArgSchemaParser):
     default_schema = InferenceInputSchema
 

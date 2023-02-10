@@ -127,7 +127,7 @@ class fmri_inferrence:
                                 :,
                             ]
 
-def load_model_worker(json_data):
+def __load_model(json_data):
     try:
         local_model_path = __get_local_model_path(json_data)
         model = __load_local_model(path=local_model_path)
@@ -144,7 +144,7 @@ def core_inference_worker(
         output_dict,
         output_lock):
 
-    model = load_model_worker(json_data)
+    model = __load_model(json_data)
     local_output = {}
     for dataset_index in input_lookup:
         local_lookup = input_lookup[dataset_index]
@@ -153,7 +153,6 @@ def core_inference_worker(
         local_std = local_lookup['local_std']
 
         predictions_data = model.predict(local_data[0])
-        local_size = predictions_data.shape[0]
 
         if rescale:
             corrected_data = predictions_data * local_std + local_mean
@@ -224,6 +223,9 @@ def write_output_to_file(output_dict,
                          output_dataset_name,
                          batch_size,
                          first_sample):
+    """Function to output results to a h5py file when used in
+    conjunction with multiprocessing.process for inference.
+    """
     index_list = list(output_dict.keys())
 
     with h5py.File(output_file_path, 'a') as out_file:
@@ -319,7 +321,7 @@ class core_inferrence:
         raw_dataset_name = "raw"
 
         with h5py.File(self.output_file, "w") as file_handle:
-            dset_out = file_handle.create_dataset(
+            file_handle.create_dataset(
                 output_dataset_name,
                 shape=tuple(final_shape),
                 chunks=tuple(chunk_size),
@@ -327,7 +329,7 @@ class core_inferrence:
             )
 
             if self.save_raw:
-                raw_out = file_handle.create_dataset(
+                file_handle.create_dataset(
                     raw_dataset_name,
                     shape=tuple(final_shape),
                     chunks=tuple(chunk_size),
@@ -344,7 +346,7 @@ class core_inferrence:
             output_dict = mgr.dict()
             process_list = []
         else:
-            self.model = load_model_worker(self.json_data)
+            self.model = __load_model(self.json_data)
 
         # Initialize onset of output sample movie
         local_start = first_sample
@@ -358,11 +360,14 @@ class core_inferrence:
                     self.generator_obj.__get_norm_parameters__(index_dataset)  
             
             if self.use_multiprocessing:
-                this_batch = dict()
-                this_batch[index_dataset] = dict()
-                this_batch[index_dataset]['local_data'] = local_data
-                this_batch[index_dataset]['local_mean'] = local_mean
-                this_batch[index_dataset]['local_std'] = local_std
+                this_batch = {
+                    index_dataset: {
+                        'local_data': local_data,
+                        'local_mean': local_mean,
+                        'local_std': local_std,
+                    }
+                }
+
                 process = multiprocessing.Process(
                             target=core_inference_worker,
                             args=(self.json_data,
@@ -386,36 +391,47 @@ class core_inferrence:
                 local_start = end + 1
 
             
+            if self.use_multiprocessing:
+                while len(process_list) >= self.workers:
+                    process_list = _winnow_process_list(process_list)
+
+                if len(output_dict) >= max(1, self.nb_datasets//8):
+                    with output_lock:
+                        output_dict = write_output_to_file(
+                                        output_dict,
+                                        self.output_file,
+                                        raw_dataset_name,
+                                        output_dataset_name,
+                                        self.batch_size,
+                                        first_sample)
+            else:
+                start = first_sample + index_dataset * self.batch_size
+                end = first_sample + index_dataset * self.batch_size \
+                    + local_size
+        
+                with h5py.File(self.output_file, "a") as file_handle:
+                    dset_out = file_handle[output_dataset_name]
+                    if self.save_raw:
+                        raw_out = file_handle[raw_dataset_name]
+                        if self.rescale:
+                            corrected_raw = local_data[1] * local_std + local_mean
+                        else:
+                            corrected_raw = local_data[1]
+
+                        raw_out[start:end] = np.squeeze(corrected_raw, -1)
+
+                    # We squeeze to remove the feature dimension from tensorflow
+                    dset_out[start:end] = np.squeeze(corrected_data, -1)
+
         if self.use_multiprocessing:
-            while len(process_list) >= self.workers:
-                process_list = _winnow_process_list(process_list)
+            logger.info('processing last datasets')
+            for p in process_list:
+                p.join()
 
-            if len(output_dict) >= max(1, self.nb_datasets//8):
-                with output_lock:
-                    n0 = len(output_dict)
-                    output_dict = write_output_to_file(
-                                    output_dict,
-                                    self.output_file,
-                                    raw_dataset_name,
-                                    output_dataset_name,
-                                    self.batch_size,
-                                    first_sample)
-                    n_written += n0-len(output_dict)
-        else:
-            start = first_sample + index_dataset * self.batch_size
-            end = first_sample + index_dataset * self.batch_size \
-                + local_size
-    
-            with h5py.File(self.output_file, "a") as file_handle:
-                dset_out = file_handle[output_dataset_name]
-                if self.save_raw:
-                    raw_out = file_handle[raw_dataset_name]
-                    if self.rescale:
-                        corrected_raw = local_data[1] * local_std + local_mean
-                    else:
-                        corrected_raw = local_data[1]
-
-                    raw_out[start:end] = np.squeeze(corrected_raw, -1)
-
-                # We squeeze to remove the feature dimension from tensorflow
-                dset_out[start:end] = np.squeeze(corrected_data, -1)
+            output_dict = write_output_to_file(
+                                        output_dict,
+                                        self.output_file,
+                                        raw_dataset_name,
+                                        output_dataset_name,
+                                        self.batch_size,
+                                        first_sample)
