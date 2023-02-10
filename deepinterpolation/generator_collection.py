@@ -1136,7 +1136,6 @@ class MovieJSONGenerator(DeepGenerator):
                     }
 
     def _data_from_indexes(self, video_index, img_index):
-        # Initialization
 
         index_dict = self.frame_lookup[(video_index, img_index)]
         input_index = index_dict['input_index']
@@ -1162,7 +1161,6 @@ class MovieJSONGenerator(DeepGenerator):
                 msg += f"tried\n{motion_path}\n"
                 raise RuntimeError(msg)
 
-            #print(f'opening {pathlib.Path(motion_path).name}')
             with h5py.File(motion_path, "r") as movie_obj:
                 data_img_input = movie_obj["data"][input_index, :, :]
                 data_img_output = movie_obj["data"][output_frame, :, :]
