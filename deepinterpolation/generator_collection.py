@@ -1007,90 +1007,7 @@ class OphysGenerator(SequentialGenerator):
         return data_img_input, data_img_output
 
 
-class MovieJSONMixin():
-
-    def on_epoch_end(self):
-        # We only increase index if steps_per_epoch
-        # is set to positive value. -1 will force the generator
-        # to not iterate at the end of each epoch
-        if self.steps_per_epoch > 0:
-            self.epoch_index = self.epoch_index + 1
-
-    def __getitem__(self, index):
-        # This is to ensure we are going through
-        # the entire data when steps_per_epoch<self.__len__
-        if self.steps_per_epoch > 0:
-            index = index + self.steps_per_epoch * self.epoch_index
-
-        # Generate indexes of the batch
-        n_all_data = len(self.shuffled_data_list)
-        if (index + 1) * self.batch_size > n_all_data:
-            indexes = np.arange(
-                index * self.batch_size, n_all_data
-            )
-        else:
-            indexes = np.arange(index * self.batch_size,
-                                (index + 1) * self.batch_size)
-
-        actual_batch_size = len(indexes)
-        input_full = np.zeros(
-            [actual_batch_size, 512, 512, self.pre_frame + self.post_frame]
-        )
-        output_full = np.zeros([actual_batch_size, 512, 512, 1])
-
-        for batch_index, frame_index in enumerate(indexes):
-            X, Y = self.__data_generation__(frame_index)
-
-            input_full[batch_index, :, :, :] = X
-            output_full[batch_index, :, :, :] = Y
-
-        return input_full, output_full
-
-    def get_lims_id_sample_from_index(self, index):
-        local_img = int(np.floor(index / self.nb_lims))
-
-        local_lims_index = int(index - self.nb_lims * local_img)
-
-        local_lims = self.lims_id[local_lims_index]
-
-        return local_lims, local_img
-
-    def __get_norm_parameters__(self, index_frame):
-        local_lims, local_img = self.get_lims_id_sample_from_index(index_frame)
-        local_mean = self.frame_data_location[local_lims]["mean"]
-        local_std = self.frame_data_location[local_lims]["std"]
-
-        return local_mean, local_std
-
-    def _make_index_to_frames(self):
-        """
-        Construct a lookup that goes from video_index, img_index
-        to an index of input and outputframes
-        """
-        self.frame_lookup = dict()
-        for video_tag in self.lims_id:
-            local_frame_data = self.frame_data_location[video_tag]
-            for img_index in range(len(local_frame_data['frames'])):
-                output_frame = local_frame_data["frames"][img_index]
-
-                input_index = np.arange(
-                    output_frame - self.pre_frame - self.pre_post_omission,
-                    output_frame + self.post_frame + self.pre_post_omission + 1,
-                )
-                input_index = input_index[input_index != output_frame]
-
-                for index_padding in np.arange(self.pre_post_omission + 1):
-                    input_index = input_index[input_index !=
-                                              output_frame - index_padding]
-                    input_index = input_index[input_index !=
-                                              output_frame + index_padding]
-
-                this_dict = {'output_frame': output_frame,
-                             'input_index': input_index}
-                self.frame_lookup[(video_tag, img_index)] = this_dict
-
-
-class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
+class MovieJSONGenerator(DeepGenerator):
     """This generator is used when dealing with a large number of hdf5 files
     referenced into a json file with pre-computed mean and std value. The json
     file is passed to the generator in place of the movie file themselves. Each
@@ -1137,18 +1054,86 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
 
         self.lims_id = list(self.frame_data_location.keys())
         self.shuffled_data_list = []
-        for lims_key in self.lims_id:
-            n_frames = len(self.frame_data_location[lims_key]['frames'])
+        for ophys_experiment_id in self.lims_id:
+            n_frames = len(self.frame_data_location[ophys_experiment_id]['frames'])
             for i_frame in range(n_frames):
-                self.shuffled_data_list.append((lims_key, i_frame))
+                self.shuffled_data_list.append((ophys_experiment_id, i_frame))
 
         self.rng = np.random.default_rng(1234)
         self.rng.shuffle(self.shuffled_data_list)
         self._make_index_to_frames()
 
-    def get_lims_id_sample_from_index(self, index):
-        local_lims, local_img = self.shuffled_data_list[index]
-        return local_lims, local_img
+    def on_epoch_end(self):
+        # We only increase index if steps_per_epoch
+        # is set to positive value. -1 will force the generator
+        # to not iterate at the end of each epoch
+        if self.steps_per_epoch > 0:
+            self.epoch_index = self.epoch_index + 1
+
+    def __getitem__(self, index):
+        # This is to ensure we are going through
+        # the entire data when steps_per_epoch<self.__len__
+        if self.steps_per_epoch > 0:
+            index = index + self.steps_per_epoch * self.epoch_index
+
+        # Generate indexes of the batch
+        n_all_data = len(self.shuffled_data_list)
+        if (index + 1) * self.batch_size > n_all_data:
+            indexes = np.arange(
+                index * self.batch_size, n_all_data
+            )
+        else:
+            indexes = np.arange(index * self.batch_size,
+                                (index + 1) * self.batch_size)
+
+        actual_batch_size = len(indexes)
+        input_full = np.zeros(
+            [actual_batch_size, 512, 512, self.pre_frame + self.post_frame]
+        )
+        output_full = np.zeros([actual_batch_size, 512, 512, 1])
+
+        for batch_index, frame_index in enumerate(indexes):
+            X, Y = self.__data_generation__(frame_index)
+
+            input_full[batch_index, :, :, :] = X
+            output_full[batch_index, :, :, :] = Y
+
+        return input_full, output_full
+
+    def _get_norm_parameters(self, index_frame):
+        local_lims, local_img = self.shuffled_data_list[index_frame]
+        local_mean = self.frame_data_location[local_lims]["mean"]
+        local_std = self.frame_data_location[local_lims]["std"]
+
+        return local_mean, local_std
+
+    def _make_index_to_frames(self):
+        """
+        Construct a lookup that goes from video_index, img_index
+        to an index of input and outputframes
+        """
+        self.frame_lookup = dict()
+        for ophys_experiment_id in self.lims_id:
+            local_frame_data = self.frame_data_location[ophys_experiment_id]
+            for img_index in range(len(local_frame_data['frames'])):
+                output_frame = local_frame_data["frames"][img_index]
+                
+                input_index_left = np.arange(
+                    output_frame-self.pre_frame-self.pre_post_omission,
+                    output_frame-self.pre_post_omission)
+
+                input_index_right = np.arange(
+                    output_frame+self.pre_post_omission+1, output_frame \
+                        + self.post_frame
+                    + self.pre_post_omission + 1)
+                
+                input_index = np.concatenate(
+                    [input_index_left, input_index_right])
+
+                self.frame_lookup[(ophys_experiment_id, img_index)] = {
+                    'output_frame': output_frame,
+                    'input_index': input_index
+                    }
 
     def _data_from_indexes(self, video_index, img_index):
         # Initialization
@@ -1216,8 +1201,7 @@ class MovieJSONGenerator(MovieJSONMixin, DeepGenerator):
 
         # X : (n_samples, *dim, n_channels)
         try:
-            local_lims, local_img = self.get_lims_id_sample_from_index(
-                index_frame)
+            local_lims, local_img = self.shuffled_data_list[index_frame]
 
             return self._data_from_indexes(local_lims, local_img)
 

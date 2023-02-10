@@ -507,11 +507,10 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
     use_multiprocessing = argschema.fields.Bool(
         required=False,
         default=True,
-        description="whether to use a multiprocessing pool to fetch batch \
-            samples. Setting this to true will increase data generation speed \
-            if the generator is limited by read speed. This will also \
-            increase RAM memory usage. Set to False if your hardware \
-            encounter RAM memory error during training.",
+        description="Use multiprocessing pool to perform CPU inference. \
+            This has high RAM requirements as the batch object is duplicated \
+            across workers. Disable if you encounter RAM memory error during \
+            training. Automatically disabled if GPU is detected.",
     )
 
     nb_workers = argschema.fields.Int(
@@ -642,10 +641,11 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
     use_multiprocessing = argschema.fields.Bool(
         required=False,
         default=True,
-        description="Use multiprocessing pool to perform CPU inference. \
-            This has high RAM requirements as the batch object is duplicated \
-            across workers. Disable if you encounter RAM memory error during \
-            training. Automatically disabled if GPU is detected.",
+        description="whether to use a multiprocessing pool to fetch batch \
+            samples. Setting this to true will increase data generation speed \
+            if the generator is limited by read speed. This will also \
+            increase RAM memory usage. Set to False if your hardware \
+            encounter RAM memory error during training.",
     )
 
     nb_workers = argschema.fields.Int(
