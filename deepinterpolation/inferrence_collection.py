@@ -9,7 +9,7 @@ import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
 import tensorflow as tf
 import multiprocessing
-from deepinterpolation.utils import _winnow_process_list
+from deepinterpolation.multiprocessing_utils import _winnow_process_list
 
 tf.compat.v1.logging.set_verbosity(
     tf.compat.v1.logging.ERROR)
