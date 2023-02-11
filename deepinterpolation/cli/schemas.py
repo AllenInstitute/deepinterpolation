@@ -200,9 +200,11 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
     gpu_cache_full = argschema.fields.Boolean(
         required=False,
         default=False,
-        description="Cache full movie onto GPU memory for batch generation.\
-        Enabling this will lead to faster batch generation, training, and \
-        inference. Disable if GPU memory does not have the capacity."
+        description="Cache full movie onto GPU memory for batch generation \
+        when using OphysGenerator. Enabling this will lead to faster batch \
+        generation, training, and inference. If disabled, only the minimum \
+        chunk of movie required for batch generation will be cached onto the \
+        GPU at once."
     )
 
     normalize_cache = argschema.fields.Boolean(
