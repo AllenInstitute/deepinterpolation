@@ -8,8 +8,21 @@ import nibabel as nib
 import glob
 from deepinterpolation.generic import JsonLoader
 import tensorflow as tf
+from typing import Union
 
-def normalize(arr, mean, std):
+def _normalize(arr: Union[np.ndarray, tf.Tensor], 
+    mean: float, std: float) -> Union[np.ndarray, tf.Tensor]:
+    """Normalize input
+    
+    Parameters:
+    arr: Union[np.ndarray, tf.Tensor]
+        Input array to be normalized
+    mean: float
+    std: float
+
+    Returns:
+    normalized_arr: Union[np.ndarray, tf.Tensor]        
+    """
     return (arr - mean) / std
 
 class MaxRetryException(Exception):
@@ -966,7 +979,7 @@ class OphysGenerator(SequentialGenerator):
                     self._movie_data = movie_obj['data'][()]
             if self.normalize_cache:
                 self._movie_data = self._movie_data.astype("float32")
-                self._movie_data = normalize(self._movie_data,
+                self._movie_data = _normalize(self._movie_data,
                         self.local_mean,
                         self.local_std)
         return self._movie_data
@@ -984,12 +997,12 @@ class OphysGenerator(SequentialGenerator):
             self.data_tensor = tf.convert_to_tensor(
                 self.movie_data[start_ind:end_ind], dtype="float")
             if not self.normalize_cache:
-                self.data_tensor = normalize(self.data_tensor, self.local_mean, self.local_std)
+                self.data_tensor = _normalize(self.data_tensor, self.local_mean, self.local_std)
         else:
             batch_frames = tf.convert_to_tensor(
                 self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
             if not self.normalize_cache:
-                batch_frames = normalize(batch_frames, self.local_mean, self.local_std)
+                batch_frames = _normalize(batch_frames, self.local_mean, self.local_std)
             self.data_tensor = tf.concat(
                 [self.data_tensor[self.batch_size:], batch_frames], 0)
 
@@ -1018,9 +1031,9 @@ class OphysGenerator(SequentialGenerator):
             input_full = self.movie_data[input_indices].astype("float")
             output_full = self.movie_data[batch_indices].astype("float")
             if not self.normalize_cache:
-                input_full = normalize(input_full, self.local_mean,
+                input_full = _normalize(input_full, self.local_mean,
                     self.local_std)
-                output_full = normalize(output_full, self.local_mean,
+                output_full = _normalize(output_full, self.local_mean,
                     self.local_std)
             input_full = np.moveaxis(input_full, 1, -1)
             output_full = np.expand_dims(output_full, -1)
