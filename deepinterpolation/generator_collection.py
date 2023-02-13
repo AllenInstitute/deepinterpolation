@@ -913,7 +913,7 @@ class OphysGenerator(SequentialGenerator):
     def __init__(self, json_path):
         "Initialization"
         super().__init__(json_path)
-        self.gpu_available = tf.test.is_gpu_available()
+        self._gpu_available = tf.test.is_gpu_available()
         self._movie_data = None
 
         # For backward compatibility
@@ -921,22 +921,12 @@ class OphysGenerator(SequentialGenerator):
             self.cache_data = self.json_data["cache_data"]
         else:
             self.cache_data = False
-
         if "train_path" in self.json_data.keys():
             self.raw_data_file = self.json_data["train_path"]
         else:
             self.raw_data_file = self.json_data["movie_path"]
-        
-        if "gpu_cache_full" in self.json_data.keys():
-            self.gpu_cache_full = self.json_data["gpu_cache_full"]
-        else:
-            self.gpu_cache_full = False
-
-        if self.json_data.get("normalize_cache"):
-            self.normalize_cache = self.json_data.get("normalize_cache")
-        else:
-            self.normalize_cache = False
-
+        self.gpu_cache_full = self.json_data.get("gpu_cache_full", False)
+        self.normalize_cache = self.json_data.get("normalize_cache", False)
         self.batch_size = self.json_data["batch_size"]
 
         self.total_frame_per_movie = int(self.movie_data.shape[0])
@@ -951,7 +941,7 @@ class OphysGenerator(SequentialGenerator):
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
 
-        if self.gpu_available:
+        if self._gpu_available:
             self.data_tensor = False
             if self.gpu_cache_full:
                 print("Caching full movie onto GPU")
@@ -1007,7 +997,7 @@ class OphysGenerator(SequentialGenerator):
                 [self.data_tensor[self.batch_size:], batch_frames], 0)
 
     def __getitem__(self, index):
-        if self.gpu_available:
+        if self._gpu_available:
             if self.gpu_cache_full:
                 batch_indices = self.generate_batch_indexes(index)
                 input_indices = np.vstack(
