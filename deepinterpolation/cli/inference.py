@@ -53,7 +53,10 @@ class Inference(argschema.ArgSchemaParser):
             data_generator)
 
         self.logger.info("created objects for inference")
-        inferrence_class.run()
+        if self.args["inference_params"].get("use_multiprocessing"):
+            inferrence_class.run_multiprocessing()
+        else:
+            inferrence_class.run()
 
 
 if __name__ == "__main__":  # pragma: nocover

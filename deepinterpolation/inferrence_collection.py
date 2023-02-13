@@ -287,11 +287,6 @@ class core_inferrence:
         else:
             self.output_padding = False
 
-        if "use_multiprocessing" in self.json_data.keys():
-            self.use_multiprocessing = self.json_data["use_multiprocessing"]
-        else:
-            self.use_multiprocessing = True
-
         if "nb_workers" in self.json_data.keys():
             self.workers = self.json_data["nb_workers"]
         else:
@@ -338,15 +333,7 @@ class core_inferrence:
 
         logger.info(f"Created empty HDF5 file {self.output_file}")
         
-        if self.use_multiprocessing:
-            tf.config.threading.set_inter_op_parallelism_threads(1)
-            tf.config.threading.set_intra_op_parallelism_threads(1)
-            mgr = multiprocessing.Manager()
-            output_lock = mgr.Lock()
-            output_dict = mgr.dict()
-            process_list = []
-        else:
-            self.model = __load_model(self.json_data)
+        self.model = __load_model(self.json_data)
 
         # Initialize onset of output sample movie
         local_start = first_sample
@@ -359,79 +346,130 @@ class core_inferrence:
             local_mean, local_std = \
                     self.generator_obj.__get_norm_parameters__(index_dataset)  
             
-            if self.use_multiprocessing:
-                this_batch = {
-                    index_dataset: {
-                        'local_data': local_data,
-                        'local_mean': local_mean,
-                        'local_std': local_std,
-                    }
-                }
-
-                process = multiprocessing.Process(
-                            target=core_inference_worker,
-                            args=(self.json_data,
-                                this_batch,
-                                self.rescale,
-                                self.save_raw,
-                                output_dict,
-                                output_lock))
-                process.start()
-                process_list.append(process)
+            predictions_data = self.model.predict_on_batch(local_data[0])
+            if self.rescale:
+                corrected_data = predictions_data * local_std + local_mean
             else:
-                predictions_data = self.model.predict_on_batch(local_data[0])
-                if self.rescale:
-                    corrected_data = predictions_data * local_std + local_mean
-                else:
-                    corrected_data = predictions_data              
-                local_size = predictions_data.shape[0]
-                start = local_start
-                end = local_start + local_size - 1
-                # We adjust for the next for loop run
-                local_start = end + 1
+                corrected_data = predictions_data              
+            local_size = predictions_data.shape[0]
+            start = local_start
+            end = local_start + local_size - 1
+            # We adjust for the next for loop run
+            local_start = end + 1
 
-            
-            if self.use_multiprocessing:
-                while len(process_list) >= self.workers:
-                    process_list = _winnow_process_list(process_list)
+            start = first_sample + index_dataset * self.batch_size
+            end = first_sample + index_dataset * self.batch_size \
+                + local_size
+    
+            with h5py.File(self.output_file, "a") as file_handle:
+                dset_out = file_handle[output_dataset_name]
+                if self.save_raw:
+                    raw_out = file_handle[raw_dataset_name]
+                    if self.rescale:
+                        corrected_raw = local_data[1] * local_std + local_mean
+                    else:
+                        corrected_raw = local_data[1]
 
-                if len(output_dict) >= max(1, self.nb_datasets//8):
-                    with output_lock:
-                        output_dict = write_output_to_file(
-                                        output_dict,
-                                        self.output_file,
-                                        raw_dataset_name,
-                                        output_dataset_name,
-                                        self.batch_size,
-                                        first_sample)
-            else:
-                start = first_sample + index_dataset * self.batch_size
-                end = first_sample + index_dataset * self.batch_size \
-                    + local_size
+                    raw_out[start:end] = np.squeeze(corrected_raw, -1)
+
+                # We squeeze to remove the feature dimension from tensorflow
+                dset_out[start:end] = np.squeeze(corrected_data, -1)
+
+    def run_multiprocessing(self):
+
+        if self.output_padding:
+            first_sample = self.generator_obj.start_sample - \
+                self.generator_obj.start_frame
+            final_shape = [self.nb_datasets*self.batch_size+first_sample]
+
+        else:
+            final_shape = [self.nb_datasets*self.batch_size]
+            first_sample = 0
+
+        final_shape.extend(self.indiv_shape[:-1])
+
+        chunk_size = [1]
+        chunk_size.extend(self.indiv_shape[:-1])
+
+        output_dataset_name = "data"
+        raw_dataset_name = "raw"
+
+        with h5py.File(self.output_file, "w") as file_handle:
+            file_handle.create_dataset(
+                output_dataset_name,
+                shape=tuple(final_shape),
+                chunks=tuple(chunk_size),
+                dtype=self.output_datatype,
+            )
+
+            if self.save_raw:
+                file_handle.create_dataset(
+                    raw_dataset_name,
+                    shape=tuple(final_shape),
+                    chunks=tuple(chunk_size),
+                    dtype=self.output_datatype,
+                )
+
+        logger.info(f"Created empty HDF5 file {self.output_file}")
         
-                with h5py.File(self.output_file, "a") as file_handle:
-                    dset_out = file_handle[output_dataset_name]
-                    if self.save_raw:
-                        raw_out = file_handle[raw_dataset_name]
-                        if self.rescale:
-                            corrected_raw = local_data[1] * local_std + local_mean
-                        else:
-                            corrected_raw = local_data[1]
+        tf.config.threading.set_inter_op_parallelism_threads(1)
+        tf.config.threading.set_intra_op_parallelism_threads(1)
+        mgr = multiprocessing.Manager()
+        output_lock = mgr.Lock()
+        output_dict = mgr.dict()
+        process_list = []
 
-                        raw_out[start:end] = np.squeeze(corrected_raw, -1)
+        # Initialize onset of output sample movie
+        local_start = first_sample
 
-                    # We squeeze to remove the feature dimension from tensorflow
-                    dset_out[start:end] = np.squeeze(corrected_data, -1)
+        for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
+            local_data = self.generator_obj.__getitem__(index_dataset)
 
-        if self.use_multiprocessing:
-            logger.info('processing last datasets')
-            for p in process_list:
-                p.join()
+            # We overwrite epoch_index to allow the last unfilled epoch
+            self.generator_obj.epoch_index = epoch_index
+            local_mean, local_std = \
+                    self.generator_obj.__get_norm_parameters__(index_dataset)  
+            
+            this_batch = {
+                index_dataset: {
+                    'local_data': local_data,
+                    'local_mean': local_mean,
+                    'local_std': local_std,
+                }
+            }
 
-            output_dict = write_output_to_file(
-                                        output_dict,
-                                        self.output_file,
-                                        raw_dataset_name,
-                                        output_dataset_name,
-                                        self.batch_size,
-                                        first_sample)
+            process = multiprocessing.Process(
+                        target=core_inference_worker,
+                        args=(self.json_data,
+                            this_batch,
+                            self.rescale,
+                            self.save_raw,
+                            output_dict,
+                            output_lock))
+            process.start()
+            process_list.append(process)
+            
+            while len(process_list) >= self.workers:
+                process_list = _winnow_process_list(process_list)
+
+            if len(output_dict) >= max(1, self.nb_datasets//8):
+                with output_lock:
+                    output_dict = write_output_to_file(
+                                    output_dict,
+                                    self.output_file,
+                                    raw_dataset_name,
+                                    output_dataset_name,
+                                    self.batch_size,
+                                    first_sample)
+
+        logger.info('processing last datasets')
+        for p in process_list:
+            p.join()
+
+        output_dict = write_output_to_file(
+                                    output_dict,
+                                    self.output_file,
+                                    raw_dataset_name,
+                                    output_dataset_name,
+                                    self.batch_size,
+                                    first_sample)
