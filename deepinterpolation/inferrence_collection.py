@@ -127,7 +127,7 @@ class fmri_inferrence:
                                 :,
                             ]
 
-def __load_model(json_data):
+def _load_model(json_data):
     try:
         local_model_path = __get_local_model_path(json_data)
         model = __load_local_model(path=local_model_path)
@@ -144,7 +144,7 @@ def core_inference_worker(
         output_dict,
         output_lock):
 
-    model = __load_model(json_data)
+    model = _load_model(json_data)
     local_output = {}
     for dataset_index in input_lookup:
         local_lookup = input_lookup[dataset_index]
@@ -333,7 +333,7 @@ class core_inferrence:
 
         logger.info(f"Created empty HDF5 file {self.output_file}")
         
-        self.model = __load_model(self.json_data)
+        self.model = _load_model(self.json_data)
 
         # Initialize onset of output sample movie
         local_start = first_sample
