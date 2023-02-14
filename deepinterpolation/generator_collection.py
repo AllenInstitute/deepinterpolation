@@ -933,29 +933,26 @@ class OphysGenerator(SequentialGenerator):
         self.gpu_cache_full = self.json_data.get("gpu_cache_full", False)
         self.normalize_cache = self.json_data.get("normalize_cache", False)
         self.batch_size = self.json_data["batch_size"]
+        self.movie_statistics_sample_size = \
+            self.json_data.get("movie_statistics_sample_size")
 
         self.total_frame_per_movie = int(self.movie_data.shape[0])
 
         self._update_end_frame(self.total_frame_per_movie)
         self._calculate_list_samples(self.total_frame_per_movie)
 
-        average_nb_samples = np.min([int(self.movie_data.shape[0]), 1000])
+        average_nb_samples = np.min(
+            [int(self.movie_data.shape[0]), self.movie_statistics_sample_size])
         local_data = self.movie_data[:average_nb_samples].flatten()
         local_data = local_data.astype("float32")
 
-        self.local_mean = np.mean(local_data)
-        self.local_std = np.std(local_data)
+        self.local_mean = local_data.mean()
+        self.local_std = local_data.std()
 
         if self._gpu_available:
             self.cached_index = None
             self._data_tensor = None
-            if self.gpu_cache_full:
-                logger.info("Caching full movie onto GPU")
-                self.data_tensor = tf.convert_to_tensor(
-                    self.movie_data, dtype="float")
-                self.data_tensor = _normalize(
-                    self.data_tensor, self.local_mean, self.local_std)
-            else:
+            if not self.gpu_cache_full:
                 # Get indices for partial movie cache
                 start = self.pre_frame + self.pre_post_omission
                 end = start + self.batch_size
@@ -981,11 +978,12 @@ class OphysGenerator(SequentialGenerator):
                         self.local_std)
         if self.gpu_cache_full:
             if self._data_tensor is None:
+                logger.info("Caching full movie onto GPU")
                 self._data_tensor = tf.convert_to_tensor(
                     self.movie_data, dtype="float")
                 self._data_tensor = _normalize(
                     self.data_tensor, self.local_mean, self.local_std)
-                return self._data_tensor
+            return self._data_tensor
         return self._movie_data
 
     @property

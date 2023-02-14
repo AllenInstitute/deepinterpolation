@@ -245,7 +245,7 @@ class core_inferrence:
             local_start = first_sample
 
             for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
-                local_data = self.generator_obj.__getitem__(index_dataset)
+                local_data = self.generator_obj[index_dataset]
                 local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
                 
                 # We overwrite epoch_index to allow the last unfilled epoch

@@ -197,6 +197,14 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             the maximal number."
     )
 
+    movie_statistics_sample_size = argschema.fields.Int(
+        required=False,
+        default=-1000,
+        description="Number of frames used to calculate normalization \
+            statistics. This constraint to reduce the computational and \
+            space requirements for this calculation."
+    )
+
     gpu_cache_full = argschema.fields.Boolean(
         required=False,
         default=False,
