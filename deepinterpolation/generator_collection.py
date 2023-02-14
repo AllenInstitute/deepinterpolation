@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import numpy as np
 import h5py
@@ -9,6 +10,10 @@ import glob
 from deepinterpolation.generic import JsonLoader
 import tensorflow as tf
 from typing import Union
+
+logger = logging.getLogger(__name__)
+logging.captureWarnings(True)
+logging.basicConfig(level=logging.INFO)
 
 def _normalize(arr: Union[np.ndarray, tf.Tensor], 
     mean: float, std: float) -> Union[np.ndarray, tf.Tensor]:
@@ -230,7 +235,7 @@ class FmriGenerator(DeepGenerator):
 
             for index, value in enumerate(range(self.total_nb_block)):
                 retake = True
-                print(index)
+                logger.info(index)
                 while retake:
                     x_local, y_local, z_local, t_local = self.get_random_xyzt()
                     retake = False
@@ -944,10 +949,11 @@ class OphysGenerator(SequentialGenerator):
         if self._gpu_available:
             self.data_tensor = False
             if self.gpu_cache_full:
-                print("Caching full movie onto GPU")
+                logger.info("Caching full movie onto GPU")
                 self.data_tensor = tf.convert_to_tensor(
                     self.movie_data, dtype="float")
-                self.data_tensor = (self.data_tensor - self.local_mean) / self.local_std
+                self.data_tensor = _normalize(
+                    self.data_tensor, self.local_mean, self.local_std)
             else:
                 # Get indices for partial movie cache
                 start = self.pre_frame + self.pre_post_omission
@@ -1208,4 +1214,4 @@ class MovieJSONGenerator(DeepGenerator):
 
             return input_full, output_full
         except Exception:
-            print("Issues with " + str(self.lims_id))
+            logger.info("Issues with " + str(self.lims_id))
