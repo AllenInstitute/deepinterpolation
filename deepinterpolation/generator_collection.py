@@ -922,14 +922,9 @@ class OphysGenerator(SequentialGenerator):
         self._movie_data = None
 
         # For backward compatibility
-        if "cache_data" in self.json_data.keys():
-            self.cache_data = self.json_data["cache_data"]
-        else:
-            self.cache_data = False
-        if "train_path" in self.json_data.keys():
-            self.raw_data_file = self.json_data["train_path"]
-        else:
-            self.raw_data_file = self.json_data["movie_path"]
+        self.cache_data = self.json_data.get("cache_data", False)
+        self.raw_data_file = self.json_data.get(
+            "train_path", self.json_data["movie_path"])
         self.gpu_cache_full = self.json_data.get("gpu_cache_full", False)
         self.normalize_cache = self.json_data.get("normalize_cache", False)
         self.batch_size = self.json_data["batch_size"]
@@ -1015,7 +1010,6 @@ class OphysGenerator(SequentialGenerator):
             if not self.normalize_cache:
                 self._data_tensor = _normalize(self._data_tensor, self.local_mean, self.local_std)
         return self._data_tesnor
-
 
 
     def __getitem__(self, index):
