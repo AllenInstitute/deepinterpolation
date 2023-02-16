@@ -920,11 +920,16 @@ class OphysGenerator(SequentialGenerator):
         super().__init__(json_path)
         self._gpu_available = tf.test.is_gpu_available()
         self._movie_data = None
+        if self._gpu_available:
+            self._cached_index = None
+            self._data_tensor = None
+            self.batch_indices = None
+            self.input_indices = None
 
         # For backward compatibility
         self.cache_data = self.json_data.get("cache_data", False)
         self.raw_data_file = self.json_data.get(
-            "train_path", self.json_data["movie_path"])
+            "train_path", self.json_data.get("movie_path"))
         self.gpu_cache_full = self.json_data.get("gpu_cache_full", False)
         self.normalize_cache = self.json_data.get("normalize_cache", False)
         self.batch_size = self.json_data["batch_size"]
@@ -944,18 +949,6 @@ class OphysGenerator(SequentialGenerator):
         self.local_mean = local_data.mean()
         self.local_std = local_data.std()
 
-        if self._gpu_available:
-            self.cached_index = None
-            self._data_tensor = None
-            if not self.gpu_cache_full:
-                # Get indices for partial movie cache
-                start = self.pre_frame + self.pre_post_omission
-                end = start + self.batch_size
-                self.batch_indices = list(range(start,end))
-                self.input_indices = np.vstack(
-                    [self.__index_generation(frame_index) \
-                        for frame_index in self.batch_indices])
-
     @property
     def movie_data(self) -> Union[np.ndarray, tf.Tensor]:
         if self._movie_data is None:
@@ -966,22 +959,18 @@ class OphysGenerator(SequentialGenerator):
                     self._movie_data = movie_obj['data'][:end_ind]
                 else:
                     self._movie_data = movie_obj['data'][()]
+            if not (self._gpu_available and not self.gpu_cache_full):
+                logger.info("Caching full movie")
+                self._data_tensor = tf.convert_to_tensor(
+                    self._movie_data, dtype="float")
             if self.normalize_cache:
-                self._movie_data = self._movie_data.astype("float32")
+                if not self.gpu_cache_full:
+                    self._movie_data = self._movie_data.astype("float32")
                 self._movie_data = _normalize(self._movie_data,
                         self.local_mean,
                         self.local_std)
-        if self.gpu_cache_full:
-            if self._data_tensor is None:
-                logger.info("Caching full movie onto GPU")
-                self._data_tensor = tf.convert_to_tensor(
-                    self.movie_data, dtype="float")
-                self._data_tensor = _normalize(
-                    self.data_tensor, self.local_mean, self.local_std)
-            return self._data_tensor
         return self._movie_data
 
-    @property
     def batch_tensor(self, index):
         """Slices minimum movie required to generate batch for a given batch
          index and caches it onto the GPU. If a previous batch is cached, a
@@ -991,60 +980,57 @@ class OphysGenerator(SequentialGenerator):
         end_ind = start_ind + self.batch_size + self.pre_frame \
          + self.post_frame + 2*self.pre_post_omission - 2
         
-        if self.cached_index == index-1:
+        if self._cached_index == index-1:
             batch_frames = tf.convert_to_tensor(
                 self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
             if not self.normalize_cache:
                 batch_frames = _normalize(batch_frames, self.local_mean, self.local_std)
             self._data_tensor = tf.concat(
                 [self._data_tensor[self.batch_size:], batch_frames], 0)
-            self.cached_index = index
+            self._cached_index = index
         
-        elif self.cached_index == index:
-            return self._data_tesnor
+        elif self._cached_index == index:
+            return self._data_tensor
         
         else:
             self._data_tensor = tf.convert_to_tensor(
                 self.movie_data[start_ind:end_ind], dtype="float")
-            self.cached_index = index
+            self._cached_index = index
             if not self.normalize_cache:
                 self._data_tensor = _normalize(self._data_tensor, self.local_mean, self.local_std)
-        return self._data_tesnor
+        return self._data_tensor
 
 
     def __getitem__(self, index):
-        if not (self._gpu_available and not self.gpu_cache_full):
-            batch_indices = self.generate_batch_indexes(index)
-            input_indices = np.vstack(
-                [self.__index_generation(frame_index) \
-                    for frame_index in batch_indices])
-        elif self._gpu_available and self.gpu_cache_full:
-            data_tensor = self.movie_data
-        else:
+        if self._gpu_available and not self.gpu_cache_full:
             data_tensor = self.batch_tensor(index)
+            if self.batch_indices is None or self.input_indices is None:
+                self.batch_indices = self.generate_batch_indexes(0)
+                self.input_indices = np.vstack(
+                    [self.__get_sample_input_indices(frame_index) \
+                        for frame_index in self.batch_indices])
             input_indices = self.input_indices
             batch_indices = self.batch_indices
+        else:
+            data_tensor = self.movie_data
+            batch_indices = self.generate_batch_indexes(index)
+            input_indices = np.vstack(
+                [self.__get_sample_input_indices(frame_index) \
+                    for frame_index in batch_indices])
 
-        if self.gpu_available:
-            input_full = tf.gather(data_tensor, input_indices)
-            output_full = tf.gather(data_tensor, batch_indices)
-            # dims (sample, frames, x, y)
-            input_full = tf.transpose(input_full, perm=[0,2,3,1])
-            output_full = tf.expand_dims(output_full, -1)
-        else:         
-            input_full = self.movie_data[input_indices].astype("float")
-            output_full = self.movie_data[batch_indices].astype("float")
-            if not self.normalize_cache:
-                input_full = _normalize(input_full, self.local_mean,
-                    self.local_std)
-                output_full = _normalize(output_full, self.local_mean,
-                    self.local_std)
-            input_full = np.moveaxis(input_full, 1, -1)
-            output_full = np.expand_dims(output_full, -1)
-
+        input_full = tf.gather(data_tensor, input_indices)
+        output_full = tf.gather(data_tensor, batch_indices)
+        if not self.normalize_cache and not self._gpu_available:
+            input_full = _normalize(input_full, self.local_mean,
+                self.local_std)
+            output_full = _normalize(output_full, self.local_mean,
+                self.local_std)
+        # dims (sample, frames, x, y)
+        input_full = tf.transpose(input_full, perm=[0,2,3,1])
+        output_full = tf.expand_dims(output_full, -1)
         return input_full, output_full
 
-    def __index_generation(self, index_frame):
+    def __get_sample_input_indices(self, index_frame):
         input_index_left = np.arange(
             index_frame-self.pre_frame-self.pre_post_omission,
             index_frame-self.pre_post_omission)

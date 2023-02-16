@@ -5,7 +5,6 @@ from pathlib import Path
 from deepinterpolation.cli.schemas import InferenceInputSchema
 from deepinterpolation.generic import ClassLoader
 
-
 class Inference(argschema.ArgSchemaParser):
     default_schema = InferenceInputSchema
 
