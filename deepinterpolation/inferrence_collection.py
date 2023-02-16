@@ -8,6 +8,7 @@ from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
 import tensorflow as tf
+from typing import Dict
 import multiprocessing
 from deepinterpolation.multiprocessing_utils import _winnow_process_list
 
@@ -217,12 +218,12 @@ def __load_model_from_mlflow(json_data):
 
     return model
 
-def write_output_to_file(output_dict,
-                         output_file_path,
-                         raw_dataset_name,
-                         output_dataset_name,
-                         batch_size,
-                         first_sample):
+def write_output_to_file(output_dict: Dict,
+                         output_file_path: str,
+                         raw_dataset_name: str,
+                         output_dataset_name: str,
+                         batch_size: int,
+                         first_sample: int) -> Dict:
     """Function to output results to a h5py file when used in
     conjunction with multiprocessing.process for inference.
     """

@@ -32,6 +32,7 @@ class Inference(argschema.ArgSchemaParser):
         # disable multiprocessing if gpu_available
         if tf.test.is_gpu_available():
             self.args["inference_params"]["use_multiprocessing"] = False
+            self.logger.warn("GPU is available, multiprocessing is disabled")
 
         # save the json parameters to 2 different files
         inference_json_path = outdir / f"{uid}_inference.json"

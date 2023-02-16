@@ -4,6 +4,7 @@ import numpy as np
 import h5py
 import tensorflow.keras as keras
 import tifffile
+from typing import List, Tuple
 import nibabel as nib
 import glob
 from deepinterpolation.generic import JsonLoader
@@ -1070,7 +1071,7 @@ class MovieJSONGenerator(DeepGenerator):
         if self.steps_per_epoch > 0:
             self.epoch_index = self.epoch_index + 1
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         # This is to ensure we are going through
         # the entire data when steps_per_epoch<self.__len__
         if self.steps_per_epoch > 0:
@@ -1135,7 +1136,10 @@ class MovieJSONGenerator(DeepGenerator):
                     'input_index': input_index
                     }
 
-    def _data_from_indexes(self, video_index, img_index):
+    def _data_from_indexes(
+            self, video_index: int, img_index:int) -> Tuple[np.ndarray, np.ndarray]:
+        """ Generate X, Y dataset given a video_index and img_index
+        """
 
         index_dict = self.frame_lookup[(video_index, img_index)]
         input_index = index_dict['input_index']
