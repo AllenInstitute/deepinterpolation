@@ -959,20 +959,21 @@ class OphysGenerator(SequentialGenerator):
                 end_ind = self.end_frame+self.post_frame+self.pre_post_omission+1
                 total_frame_per_movie = movie_obj['data'].shape[0]
                 if self.end_frame > 0 and  total_frame_per_movie > end_ind:
-                    self._movie_data = movie_obj['data'][:end_ind]
+                    movie_data = movie_obj['data'][:end_ind]
                 else:
-                    self._movie_data = movie_obj['data'][()]
+                    movie_data = movie_obj['data'][()]
             if self.gpu_cache_full and self._gpu_available:
                 logger.info("Caching full movie onto GPU")
                 # tf.convert_to_tensor copies the object onto GPU if it's available
-                self._data_tensor = tf.convert_to_tensor(
-                    self._movie_data, dtype="float")
+                movie_data = tf.convert_to_tensor(
+                    movie_data, dtype="float")
             if self.normalize_cache:
                 if not self.gpu_cache_full:
-                    self._movie_data = self._movie_data.astype("float32")
-                self._movie_data = _normalize(self._movie_data,
+                    movie_data = movie_data.astype("float32")
+                movie_data = _normalize(movie_data,
                         self.local_mean,
                         self.local_std)
+            self._movie_data = movie_data
         return self._movie_data
 
     def __get_batch_tensor(self, index):
@@ -985,6 +986,7 @@ class OphysGenerator(SequentialGenerator):
          + self.post_frame + 2*self.pre_post_omission - 2
         
         if self._cached_index == index-1:
+            # cache the difference in frames between the current index and prev index
             # tf.convert_to_tensor copies the object onto GPU if it's available
             batch_frames = tf.convert_to_tensor(
                 self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
@@ -998,6 +1000,7 @@ class OphysGenerator(SequentialGenerator):
             return self._batch_tensor
         
         else:
+            # cache the minimum movie required to generate a batch
             # tf.convert_to_tensor copies the object onto GPU if it's available
             self._batch_tensor = tf.convert_to_tensor(
                 self.movie_data[start_ind:end_ind], dtype="float")
