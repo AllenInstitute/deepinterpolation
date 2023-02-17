@@ -959,8 +959,8 @@ class OphysGenerator(SequentialGenerator):
                     self._movie_data = movie_obj['data'][:end_ind]
                 else:
                     self._movie_data = movie_obj['data'][()]
-            if not (self._gpu_available and not self.gpu_cache_full):
-                logger.info("Caching full movie")
+            if self.gpu_cache_full:
+                logger.info("Caching full movie onto GPU")
                 self._data_tensor = tf.convert_to_tensor(
                     self._movie_data, dtype="float")
             if self.normalize_cache:
@@ -1017,17 +1017,22 @@ class OphysGenerator(SequentialGenerator):
             input_indices = np.vstack(
                 [self.__get_sample_input_indices(frame_index) \
                     for frame_index in batch_indices])
-
-        input_full = tf.gather(data_tensor, input_indices)
-        output_full = tf.gather(data_tensor, batch_indices)
-        if not self.normalize_cache and not self._gpu_available:
-            input_full = _normalize(input_full, self.local_mean,
-                self.local_std)
-            output_full = _normalize(output_full, self.local_mean,
-                self.local_std)
-        # dims (sample, frames, x, y)
-        input_full = tf.transpose(input_full, perm=[0,2,3,1])
-        output_full = tf.expand_dims(output_full, -1)
+        if self._gpu_available:
+            input_full = tf.gather(data_tensor, input_indices)
+            output_full = tf.gather(data_tensor, batch_indices)
+            # dims (sample, frames, x, y)
+            input_full = tf.transpose(input_full, perm=[0,2,3,1])
+            output_full = tf.expand_dims(output_full, -1)
+        else:
+            input_full = self.movie_data[input_indices].astype("float")
+            output_full = self.movie_data[batch_indices].astype("float")
+            if not self.normalize_cache:
+                input_full = _normalize(input_full, self.local_mean,
+                    self.local_std)
+                output_full = _normalize(output_full, self.local_mean,
+                    self.local_std)
+            input_full = np.moveaxis(input_full, 1, -1)
+            output_full = np.expand_dims(output_full, -1)
         return input_full, output_full
 
     def __get_sample_input_indices(self, index_frame):
