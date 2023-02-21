@@ -137,8 +137,13 @@ class TestOphysGenerator:
         generator_obj = ClassLoader(path_generator)
         data_generator = generator_obj.find_and_build()(path_generator)
         data_generator._normalize = MagicMock()
+
+        # Setting this to be true for testing compatibility with non-gpu sys
+        # This produces the expected behavior since tf.Tensor will use the
+        # CPU instead
         data_generator._gpu_available = MagicMock()
         data_generator._gpu_available.return_value = True
+        
         movie_data = data_generator.movie_data
         assert movie_data.shape == (100, 512, 512)
         if gpu_cache_full:
