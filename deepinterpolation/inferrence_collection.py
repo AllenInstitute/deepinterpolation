@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
+from tensorflow.keras import mixed_precision
 import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
 
@@ -163,6 +164,10 @@ class core_inferrence:
             self.workers = self.json_data["nb_workers"]
         else:
             self.workers = 16
+        
+        if self.json_data.get("use_mixed_float16"):
+            policy = mixed_precision.Policy('mixed_float16')
+            mixed_precision.set_global_policy(policy)
 
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.batch_size = self.generator_obj.batch_size

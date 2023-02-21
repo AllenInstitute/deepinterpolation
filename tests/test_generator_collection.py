@@ -113,7 +113,6 @@ class TestOphysGenerator:
         ] = 0
         generator_param["gpu_cache_full"] = gpu_cache_full
         generator_param["normalize_cache"] = normalize_cache
-        generator_param["use_mixed_float_16"] = True
 
         path_generator = os.path.join(tmp_path, "generator.json")
         json_obj = JsonSaver(generator_param)
