@@ -123,6 +123,7 @@ class fmri_inferrence:
 class core_inferrence:
     # This is the generic inferrence class
     def __init__(self, inferrence_json_path, generator_obj):
+        self.logger.name = type(self).__name__
         self.inferrence_json_path = inferrence_json_path
         self.generator_obj = generator_obj
 
@@ -144,7 +145,8 @@ class core_inferrence:
         if self.json_data.get("use_mixed_float16"):
             policy = mixed_precision.Policy('mixed_float16')
             mixed_precision.set_global_policy(policy)
-
+            self.logger.info(
+                "Setting tensorflow global policy to use 'mixed_float16'")
         self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
