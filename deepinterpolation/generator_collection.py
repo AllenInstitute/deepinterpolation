@@ -15,20 +15,6 @@ logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
 logging.basicConfig(level=logging.INFO)
 
-def _normalize(arr: Union[np.ndarray, tf.Tensor], 
-    mean: float, std: float) -> Union[np.ndarray, tf.Tensor]:
-    """Normalize input
-    
-    Parameters:
-    arr: Union[np.ndarray, tf.Tensor]
-        Input array to be normalized
-    mean: float
-    std: float
-
-    Returns:
-    normalized_arr: Union[np.ndarray, tf.Tensor]        
-    """
-    return (arr - mean) / std
 
 class MaxRetryException(Exception):
     # This is helper class for EmGenerator
@@ -110,6 +96,21 @@ class DeepGenerator(keras.utils.Sequence):
 
         return local_mean, local_std
 
+    def _normalize(self, arr: Union[np.ndarray, tf.Tensor], 
+        mean: float, std: float) -> Union[np.ndarray, tf.Tensor]:
+        """Normalize input
+        
+        Parameters:
+        arr: Union[np.ndarray, tf.Tensor]
+            Input array to be normalized
+        mean: float
+        std: float
+
+        Returns:
+        normalized_arr: Union[np.ndarray, tf.Tensor]        
+        """
+        return (arr - mean) / std
+    
 
 class CollectorGenerator(DeepGenerator):
     """This class allows to create a generator of generators
@@ -921,7 +922,7 @@ class OphysGenerator(SequentialGenerator):
         self._gpu_available = tf.test.is_gpu_available()
         self._movie_data = None
         if self._gpu_available:
-            self._cached_index = None
+            self._batch_tensor_index = None # Current index cached as a batch tensor on the GPU
             self._batch_tensor = None
             self._batch_indices = None
             self._input_indices = None
@@ -937,7 +938,7 @@ class OphysGenerator(SequentialGenerator):
         self.normalize_cache = self.json_data.get("normalize_cache", False)
         self.batch_size = self.json_data["batch_size"]
         self.movie_statistics_sample_size = \
-            self.json_data.get("movie_statistics_sample_size")
+            self.json_data.get("movie_statistics_sample_size", 1000)
 
         self.total_frame_per_movie = int(self.movie_data.shape[0])
 
@@ -946,11 +947,14 @@ class OphysGenerator(SequentialGenerator):
 
         average_nb_samples = np.min(
             [int(self.movie_data.shape[0]), self.movie_statistics_sample_size])
-        local_data = self.movie_data[:average_nb_samples].flatten()
-        local_data = local_data.astype("float32")
-
-        self.local_mean = local_data.mean()
-        self.local_std = local_data.std()
+        local_data = self.movie_data[:average_nb_samples]
+        if self.gpu_cache_full:
+            self.local_mean = tf.math.reduce_mean(local_data)
+            self.local_std = tf.math.reduce_std(local_data)
+        else:
+            local_data = local_data.astype("float32")
+            self.local_mean = local_data.mean()
+            self.local_std = local_data.std()
 
     @property
     def movie_data(self) -> Union[np.ndarray, tf.Tensor]:
@@ -962,7 +966,7 @@ class OphysGenerator(SequentialGenerator):
                     movie_data = movie_obj['data'][:end_ind]
                 else:
                     movie_data = movie_obj['data'][()]
-            if self.gpu_cache_full and self._gpu_available:
+            if self.gpu_cache_full:
                 logger.info("Caching full movie onto GPU")
                 # tf.convert_to_tensor copies the object onto GPU if it's available
                 movie_data = tf.convert_to_tensor(
@@ -970,7 +974,7 @@ class OphysGenerator(SequentialGenerator):
             if self.normalize_cache:
                 if not self.gpu_cache_full:
                     movie_data = movie_data.astype("float32")
-                movie_data = _normalize(movie_data,
+                movie_data = self._normalize(movie_data,
                         self.local_mean,
                         self.local_std)
             self._movie_data = movie_data
@@ -985,18 +989,18 @@ class OphysGenerator(SequentialGenerator):
         end_ind = start_ind + self.batch_size + self.pre_frame \
          + self.post_frame + 2*self.pre_post_omission - 2
         
-        if self._cached_index == index-1:
+        if self._batch_tensor_index == index-1:
             # cache the difference in frames between the current index and prev index
             # tf.convert_to_tensor copies the object onto GPU if it's available
             batch_frames = tf.convert_to_tensor(
                 self.movie_data[end_ind-self.batch_size:end_ind], dtype="float")
             if not self.normalize_cache:
-                batch_frames = _normalize(batch_frames, self.local_mean, self.local_std)
+                batch_frames = self._normalize(batch_frames, self.local_mean, self.local_std)
             self._batch_tensor = tf.concat(
                 [self._batch_tensor[self.batch_size:], batch_frames], 0)
-            self._cached_index = index
+            self._batch_tensor_index = index
         
-        elif self._cached_index == index:
+        elif self._batch_tensor_index == index:
             return self._batch_tensor
         
         else:
@@ -1004,9 +1008,9 @@ class OphysGenerator(SequentialGenerator):
             # tf.convert_to_tensor copies the object onto GPU if it's available
             self._batch_tensor = tf.convert_to_tensor(
                 self.movie_data[start_ind:end_ind], dtype="float")
-            self._cached_index = index
+            self._batch_tensor_index = index
             if not self.normalize_cache:
-                self._batch_tensor = _normalize(self._batch_tensor, self.local_mean, self.local_std)
+                self._batch_tensor = self._normalize(self._batch_tensor, self.local_mean, self.local_std)
         return self._batch_tensor
 
 
@@ -1040,9 +1044,9 @@ class OphysGenerator(SequentialGenerator):
             input_full = self.movie_data[input_indices].astype("float")
             output_full = self.movie_data[batch_indices].astype("float")
             if not self.normalize_cache:
-                input_full = _normalize(input_full, self.local_mean,
+                input_full = self._normalize(input_full, self.local_mean,
                     self.local_std)
-                output_full = _normalize(output_full, self.local_mean,
+                output_full = self._normalize(output_full, self.local_mean,
                     self.local_std)
             input_full = np.moveaxis(input_full, 1, -1)
             output_full = np.expand_dims(output_full, -1)
