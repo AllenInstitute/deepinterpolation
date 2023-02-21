@@ -135,36 +135,12 @@ class core_inferrence:
         # The following settings are used to keep backward compatilibity
         # when not using the CLI. We expect to remove when all uses
         # are migrated to the CLI.
-        if "save_raw" in self.json_data.keys():
-            self.save_raw = self.json_data["save_raw"]
-        else:
-            self.save_raw = False
-
-        if "rescale" in self.json_data.keys():
-            self.rescale = self.json_data["rescale"]
-        else:
-            self.rescale = True
-
-        if "output_datatype" in self.json_data.keys():
-            self.output_datatype = self.json_data["output_datatype"]
-        else:
-            self.output_datatype = 'float32'
-
-        if "output_padding" in self.json_data.keys():
-            self.output_padding = self.json_data["output_padding"]
-        else:
-            self.output_padding = False
-
-        if "use_multiprocessing" in self.json_data.keys():
-            self.use_multiprocessing = self.json_data["use_multiprocessing"]
-        else:
-            self.use_multiprocessing = True
-
-        if "nb_workers" in self.json_data.keys():
-            self.workers = self.json_data["nb_workers"]
-        else:
-            self.workers = 16
-        
+        self.save_raw = self.json_data.get("save_raw", False)
+        self.rescale = self.json_data.get("rescale", True)
+        self.output_datatype = self.json_data.get(
+            "output_datatype", 'float32')
+        self.output_padding = self.json_data.get("output_padding", False)
+        self.workers = self.json_data.get("nb_workers", 16)
         if self.json_data.get("use_mixed_float16"):
             policy = mixed_precision.Policy('mixed_float16')
             mixed_precision.set_global_policy(policy)
