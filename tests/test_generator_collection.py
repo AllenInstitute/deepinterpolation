@@ -1,11 +1,11 @@
 from deepinterpolation.generic import JsonSaver, ClassLoader
-import deepinterpolation
+import h5py
 import os
 import pathlib
 import pytest
 import numpy as np
 import tensorflow as tf
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 def test_generator_tif_creation(tmp_path):
 
@@ -82,28 +82,34 @@ def test_generator_ephys_creation(tmp_path):
 
 
 class TestOphysGenerator:
+    
+    @pytest.fixture()
+    def ophys_movie(self, tmp_path):
+        data = np.arange(80, dtype='int16').reshape(20,2,2)
+        outpath = os.path.join(tmp_path, "ophys_movie.h5")
+
+        with h5py.File(outpath, "w") as f:
+            f.create_dataset("data", data=data)
+        yield outpath
+
     def create_json(self,
                     tmp_path,
-                    gpu_cache_full=False,
-                    normalize_cache=True,
+                    gpu_cache_full,
+                    normalize_cache,
+                    ophys_movie,
                     ):
         generator_param = {}
 
         generator_param["type"] = "generator"
         generator_param["name"] = "OphysGenerator"
-        generator_param["pre_frame"] = 30
-        generator_param["post_frame"] = 30
+        generator_param["pre_frame"] = 3
+        generator_param["post_frame"] = 3
         generator_param["pre_post_omission"] = 1
         generator_param[
             "steps_per_epoch"
         ] = -1
 
-        generator_param["train_path"] = os.path.join(
-            pathlib.Path(__file__).parent.absolute(),
-            "..",
-            "sample_data",
-            "suite2p_motion_output_mini.h5",
-        )
+        generator_param["train_path"] = ophys_movie
 
         generator_param["batch_size"] = 4
         generator_param["start_frame"] = 0
@@ -119,11 +125,22 @@ class TestOphysGenerator:
         json_obj.save_json(path_generator)
         return path_generator
 
-    def test__find_and_build__creates_generator_with_correct_number_of_batches(self, tmp_path):
-        path_generator = self.create_json(tmp_path)
+
+    @pytest.mark.parametrize("gpu_cache_full", [True, False])
+    @pytest.mark.parametrize("normalize_cache", [True, False])
+    def test__find_and_build__gpu_available_creates_generator_with_correct_number_of_batches( # noqa
+        self, tmp_path, gpu_cache_full, normalize_cache, ophys_movie):
+        path_generator = self.create_json(
+            tmp_path, gpu_cache_full, normalize_cache, ophys_movie)
         generator_obj = ClassLoader(path_generator)
-        data_generator = generator_obj.find_and_build()(path_generator)
-        assert len(data_generator) == 9
+        with patch("tensorflow.test.is_gpu_available") as mock_is_available:
+            mock_is_available.return_value = True
+            data_generator = generator_obj.find_and_build()(path_generator)
+        assert data_generator[0][0].shape == (4, 2, 2, 6)
+        if normalize_cache:
+            data_generator._normalize = MagicMock()
+            data_generator._normalize.assert_called
+
 
     @pytest.mark.parametrize("gpu_cache_full", [True, False])
     @pytest.mark.parametrize("normalize_cache", [True, False])
@@ -131,9 +148,10 @@ class TestOphysGenerator:
                                         tmp_path,
                                         gpu_cache_full,
                                         normalize_cache,
+                                        ophys_movie,
                                         ):
         path_generator = self.create_json(
-            tmp_path, gpu_cache_full, normalize_cache)
+            tmp_path, gpu_cache_full, normalize_cache, ophys_movie)
         generator_obj = ClassLoader(path_generator)
         data_generator = generator_obj.find_and_build()(path_generator)
         data_generator._normalize = MagicMock()
@@ -143,9 +161,9 @@ class TestOphysGenerator:
         # CPU instead
         data_generator._gpu_available = MagicMock()
         data_generator._gpu_available.return_value = True
-        
+
         movie_data = data_generator.movie_data
-        assert movie_data.shape == (100, 512, 512)
+        assert movie_data.shape == (20, 2, 2)
         if gpu_cache_full:
             assert isinstance(movie_data, tf.Tensor)
             assert movie_data.dtype=='float32'
@@ -157,5 +175,3 @@ class TestOphysGenerator:
                 assert movie_data.dtype=='int16'
         if normalize_cache:
             assert data_generator._normalize.assert_called_once
-            
-
