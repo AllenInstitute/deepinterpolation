@@ -150,7 +150,6 @@ class core_inferrence:
             mixed_precision.set_global_policy(policy)
             logger.info(
                 "Setting tensorflow global policy to use 'mixed_float16'")
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
@@ -232,7 +231,6 @@ class core_inferrence:
 
             for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
                 local_data = self.generator_obj[index_dataset]
-                local_length = np.min([self.steps_per_epoch, self.nb_datasets-index_dataset])
                 
                 # We overwrite epoch_index to allow the last unfilled epoch
                 self.generator_obj.epoch_index = epoch_index
