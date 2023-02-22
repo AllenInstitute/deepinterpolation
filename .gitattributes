@@ -1,1 +1,0 @@
-sample_data/suite2p_motion_output_mini.h5 filter=lfs diff=lfs merge=lfs -text
