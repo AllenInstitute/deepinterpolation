@@ -945,33 +945,29 @@ class OphysGenerator(SequentialGenerator):
         self._update_end_frame(self.total_frame_per_movie)
         self._calculate_list_samples(self.total_frame_per_movie)
 
-        average_nb_samples = np.min(
-            [int(self.movie_data.shape[0]), self.movie_statistics_sample_size])
-        local_data = self.movie_data[:average_nb_samples]
-        if self.gpu_cache_full:
-            self.local_mean = tf.math.reduce_mean(local_data)
-            self.local_std = tf.math.reduce_std(local_data)
-        else:
-            local_data = local_data.astype("float32")
-            self.local_mean = local_data.mean()
-            self.local_std = local_data.std()
 
     @property
     def movie_data(self) -> Union[np.ndarray, tf.Tensor]:
         if self._movie_data is None:
             with h5py.File(self.raw_data_file, "r") as movie_obj:
-                end_ind = self.end_frame+self.post_frame+self.pre_post_omission+1
+                end_ind = self.end_frame + self.post_frame + self.pre_post_omission + 1
                 total_frame_per_movie = movie_obj['data'].shape[0]
-                if self.end_frame > 0 and  total_frame_per_movie > end_ind:
+                if self.end_frame > 0 and total_frame_per_movie > end_ind:
                     movie_data = movie_obj['data'][:end_ind]
                 else:
                     movie_data = movie_obj['data'][()]
+            average_nb_samples = np.min(
+                [movie_data.shape[0], self.movie_statistics_sample_size])
+            local_data = movie_data[:average_nb_samples]
+            local_data = local_data.astype("float32")
+            self.local_mean = local_data.mean()
+            self.local_std = local_data.std()
             if self.gpu_cache_full:
                 logger.info("Caching full movie onto GPU")
                 # tf.convert_to_tensor copies the object onto GPU if it's available
                 movie_data = tf.convert_to_tensor(
                     movie_data, dtype="float")
-            if self.normalize_cache:
+            if self.normalize_cache or self.gpu_cache_full:
                 if not self.gpu_cache_full:
                     movie_data = movie_data.astype("float32")
                 movie_data = self._normalize(movie_data,
@@ -987,8 +983,9 @@ class OphysGenerator(SequentialGenerator):
         """
         start_ind = index*self.batch_size
         end_ind = start_ind + self.batch_size + self.pre_frame \
-         + self.post_frame + 2*self.pre_post_omission - 2
-        
+         + self.post_frame + 2*self.pre_post_omission
+        end_ind = np.minimum(end_ind, self.movie_data.shape[0]-1)
+                
         if self._batch_tensor_index == index-1:
             # cache the difference in frames between the current index and prev index
             # tf.convert_to_tensor copies the object onto GPU if it's available
@@ -1032,13 +1029,13 @@ class OphysGenerator(SequentialGenerator):
             input_indices = np.vstack(
                 [self.__get_sample_input_indices(frame_index) \
                     for frame_index in batch_indices])
-            
+
         # Slice movie with indices to generate input and outputs
         if self._gpu_available:
             input_full = tf.gather(data_tensor, input_indices)
             output_full = tf.gather(data_tensor, batch_indices)
             input_full = tf.transpose(input_full, perm=[0,2,3,1])
-            output_full = tf.expand_dims(output_full, -1)
+            input_full = tf.expand_dims(input_full, -1)
             # dims (sample, x, y, frames, channels)
         else:
             input_full = self.movie_data[input_indices].astype("float")
@@ -1049,7 +1046,7 @@ class OphysGenerator(SequentialGenerator):
                 output_full = self._normalize(output_full, self.local_mean,
                     self.local_std)
             input_full = np.moveaxis(input_full, 1, -1)
-            output_full = np.expand_dims(output_full, -1)
+            input_full = np.expand_dims(input_full, -1)
         return input_full, output_full
 
     def __get_sample_input_indices(self, index_frame):
