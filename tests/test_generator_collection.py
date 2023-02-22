@@ -192,15 +192,10 @@ class TestOphysGenerator:
         path_generator = self.create_json(
             tmp_path, gpu_cache_full, normalize_cache, ophys_movie)
         generator_obj = ClassLoader(path_generator)
-        data_generator = generator_obj.find_and_build()(path_generator)
+        with patch("tensorflow.test.is_gpu_available") as mock_is_available:
+            mock_is_available.return_value = True
+            data_generator = generator_obj.find_and_build()(path_generator)
         data_generator._normalize = MagicMock()
-
-        # Setting this to be true for testing compatibility with non-gpu sys
-        # This produces the expected behavior since tf.Tensor will use the
-        # CPU instead
-        data_generator._gpu_available = MagicMock()
-        data_generator._gpu_available.return_value = True
-
         movie_data = data_generator.movie_data
         assert movie_data.shape == (20, 2, 2)
         if gpu_cache_full:
