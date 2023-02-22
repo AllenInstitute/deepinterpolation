@@ -1038,8 +1038,8 @@ class OphysGenerator(SequentialGenerator):
             input_full = tf.expand_dims(input_full, -1)
             # dims (sample, x, y, frames, channels)
         else:
-            input_full = self.movie_data[input_indices].astype("float")
-            output_full = self.movie_data[batch_indices].astype("float")
+            input_full = self.movie_data[input_indices].astype("float32")
+            output_full = self.movie_data[batch_indices].astype("float32")
             if not self.normalize_cache:
                 input_full = self._normalize(input_full, self.local_mean,
                     self.local_std)
