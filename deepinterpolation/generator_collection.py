@@ -1035,8 +1035,8 @@ class OphysGenerator(SequentialGenerator):
             input_full = tf.gather(data_tensor, input_indices)
             output_full = tf.gather(data_tensor, batch_indices)
             input_full = tf.transpose(input_full, perm=[0,2,3,1])
-            input_full = tf.expand_dims(input_full, -1)
-            # dims (sample, x, y, frames, channels)
+            output_full = tf.expand_dims(output_full, -1)
+            # dims (sample, x, y, frames)
         else:
             input_full = self.movie_data[input_indices].astype("float32")
             output_full = self.movie_data[batch_indices].astype("float32")
@@ -1046,7 +1046,7 @@ class OphysGenerator(SequentialGenerator):
                 output_full = self._normalize(output_full, self.local_mean,
                     self.local_std)
             input_full = np.moveaxis(input_full, 1, -1)
-            input_full = np.expand_dims(input_full, -1)
+            output_full = np.expand_dims(output_full, -1)
         return input_full, output_full
 
     def __get_sample_input_indices(self, index_frame):

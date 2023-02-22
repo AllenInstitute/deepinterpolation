@@ -254,4 +254,4 @@ class core_inferrence:
                 local_start = end + 1
 
                 # We squeeze to remove the feature dimension from tensorflow
-                dset_out[start:end+1, :] = np.squeeze(corrected_data, -1)
+                dset_out[start:end+1] = np.squeeze(corrected_data, -1)

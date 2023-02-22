@@ -148,7 +148,6 @@ class TestOphysGenerator:
             expected_batch_indices += i*batch_size
             expected_batch = data[expected_batch_indices]
             expected_batch = np.moveaxis(expected_batch, 1, -1)
-            expected_batch = np.expand_dims(expected_batch, -1)
             obtained_batch = data_generator[i][0].numpy()
             np.testing.assert_array_equal(obtained_batch, expected_batch)
             assert obtained_batch.dtype == 'float32'
@@ -175,7 +174,6 @@ class TestOphysGenerator:
             expected_batch_indices += i*batch_size
             expected_batch = data[expected_batch_indices]
             expected_batch = np.moveaxis(expected_batch, 1, -1)
-            expected_batch = np.expand_dims(expected_batch, -1)
             obtained_batch = data_generator[i][0]
             np.testing.assert_array_almost_equal(obtained_batch, expected_batch)
             assert obtained_batch.dtype == 'float32'
