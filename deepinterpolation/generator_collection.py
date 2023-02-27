@@ -1101,7 +1101,7 @@ class MovieJSONGenerator(DeepGenerator):
 
         return input_full, output_full
 
-    def _get_norm_parameters(self, index_frame):
+    def __get_norm_parameters__(self, index_frame):
         local_lims, local_img = self.shuffled_data_list[index_frame]
         local_mean = self.frame_data_location[local_lims]["mean"]
         local_std = self.frame_data_location[local_lims]["std"]

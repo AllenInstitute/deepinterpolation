@@ -145,6 +145,9 @@ def core_inference_worker(
         output_dict,
         output_lock):
 
+    """ Helper function to define Worker for processing inference.
+        Used with multiprocessing.process 
+    """
     model = _load_model(json_data)
     local_output = {}
     for dataset_index in input_lookup:
@@ -153,7 +156,7 @@ def core_inference_worker(
         local_mean = local_lookup['local_mean']
         local_std = local_lookup['local_std']
 
-        predictions_data = model.predict(local_data[0])
+        predictions_data = model.predict_on_batch(local_data[0])
 
         if rescale:
             corrected_data = predictions_data * local_std + local_mean
@@ -174,7 +177,6 @@ def core_inference_worker(
         k_list = list(local_output.keys())
         for k in k_list:
             output_dict[k] = local_output.pop(k)
-    return None
 
 def __get_local_model_path(json_data):
     try:
@@ -218,40 +220,6 @@ def __load_model_from_mlflow(json_data):
 
     return model
 
-def write_output_to_file(output_dict: Dict,
-                         output_file_path: str,
-                         raw_dataset_name: str,
-                         output_dataset_name: str,
-                         batch_size: int,
-                         first_sample: int) -> Dict:
-    """Function to output results to a h5py file when used in
-    conjunction with multiprocessing.process for inference.
-    """
-    index_list = list(output_dict.keys())
-
-    with h5py.File(output_file_path, 'a') as out_file:
-
-        if output_dict[index_list[0]]['corrected_raw'] is not None:
-            raw_out = out_file[raw_dataset_name]
-
-        dset_out = out_file[output_dataset_name]
-
-        for dataset_index in index_list:
-            dataset = output_dict.pop(dataset_index)
-            local_size = dataset['corrected_data'].shape[0]
-            start = first_sample + dataset_index * batch_size
-            end = start + local_size
-            
-            if raw_dataset_name is not None:
-                if dataset['corrected_raw'] is not None:
-                    corrected_raw = dataset['corrected_raw']
-                    raw_out[start:end, :] = np.squeeze(corrected_raw, -1)
-
-            # We squeeze to remove the feature dimension from tensorflow
-            corrected_data = dataset['corrected_data']
-            dset_out[start:end, :] = np.squeeze(corrected_data, -1)
-
-    return output_dict
 
 class core_inferrence:
     # This is the generic inferrence class
@@ -264,14 +232,16 @@ class core_inferrence:
         self.json_data = local_json_loader.json_data
 
         self.output_file = self.json_data["output_file"]
-
+        self.output_dataset_name = "data"
         # The following settings are used to keep backward compatilibity
         # when not using the CLI. We expect to remove when all uses
         # are migrated to the CLI.
         if "save_raw" in self.json_data.keys():
             self.save_raw = self.json_data["save_raw"]
+            self.raw_dataset_name = "raw"
         else:
             self.save_raw = False
+            self.raw_dataset_name = None
 
         if "rescale" in self.json_data.keys():
             self.rescale = self.json_data["rescale"]
@@ -297,25 +267,34 @@ class core_inferrence:
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
+        self._create_h5_datasets(self.output_dataset_name, self.raw_dataset_name)
 
-    def run(self):
+
+    @property
+    def first_sample(self):
         if self.output_padding:
-            first_sample = self.generator_obj.start_sample - \
+            _first_sample = self.generator_obj.start_sample - \
                 self.generator_obj.start_frame
-            final_shape = [self.nb_datasets*self.batch_size+first_sample]
+        else:
+            _first_sample = 0
+        return _first_sample
+
+
+    def _create_h5_datasets(self,
+                            output_dataset_name: str,
+                            raw_dataset_name: str,
+                            ):
+        
+        if self.output_padding:
+            final_shape = [self.nb_datasets*self.batch_size + self.first_sample]
 
         else:
             final_shape = [self.nb_datasets*self.batch_size]
-            first_sample = 0
 
         final_shape.extend(self.indiv_shape[:-1])
-
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape[:-1])
-
-        output_dataset_name = "data"
-        raw_dataset_name = "raw"
-
+    
         with h5py.File(self.output_file, "w") as file_handle:
             file_handle.create_dataset(
                 output_dataset_name,
@@ -323,7 +302,6 @@ class core_inferrence:
                 chunks=tuple(chunk_size),
                 dtype=self.output_datatype,
             )
-
             if self.save_raw:
                 file_handle.create_dataset(
                     raw_dataset_name,
@@ -331,88 +309,70 @@ class core_inferrence:
                     chunks=tuple(chunk_size),
                     dtype=self.output_datatype,
                 )
-
         logger.info(f"Created empty HDF5 file {self.output_file}")
-        
-        self.model = _load_model(self.json_data)
 
+
+    def _write_output_to_file(self,
+                              start: int,
+                              end: int,
+                              corrected_data: np.ndarray,
+                              corrected_raw: np.ndarray = None,
+                              ):
+        with h5py.File(self.output_file, "a") as file_handle:
+            dset_out = file_handle[self.output_dataset_name]
+            dset_out[start:end] = np.squeeze(corrected_data, -1)
+
+            if self.save_raw:
+                raw_out = file_handle[self.raw_dataset_name]
+                raw_out[start:end] = np.squeeze(corrected_raw, -1)
+
+
+    def run(self):
+        self.model = _load_model(self.json_data)
         # Initialize onset of output sample movie
-        local_start = first_sample
+        local_start = self.first_sample
 
         for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
-            local_data = self.generator_obj.__getitem__(index_dataset)
-
+            local_data = self.generator_obj[index_dataset]
             # We overwrite epoch_index to allow the last unfilled epoch
             self.generator_obj.epoch_index = epoch_index
             local_mean, local_std = \
                     self.generator_obj.__get_norm_parameters__(index_dataset)  
-            
             predictions_data = self.model.predict_on_batch(local_data[0])
+
             if self.rescale:
                 corrected_data = predictions_data * local_std + local_mean
             else:
-                corrected_data = predictions_data              
+                corrected_data = predictions_data
+
+            if self.save_raw:
+                if self.rescale:
+                    corrected_raw = local_data[1] * local_std + local_mean
+                else:
+                    corrected_raw = local_data[1]
+
             local_size = predictions_data.shape[0]
             start = local_start
             end = local_start + local_size - 1
             # We adjust for the next for loop run
             local_start = end + 1
-
-            start = first_sample + index_dataset * self.batch_size
-            end = first_sample + index_dataset * self.batch_size \
+            start = self.first_sample + index_dataset * self.batch_size
+            end = self.first_sample + index_dataset * self.batch_size \
                 + local_size
-    
-            with h5py.File(self.output_file, "a") as file_handle:
-                dset_out = file_handle[output_dataset_name]
-                if self.save_raw:
-                    raw_out = file_handle[raw_dataset_name]
-                    if self.rescale:
-                        corrected_raw = local_data[1] * local_std + local_mean
-                    else:
-                        corrected_raw = local_data[1]
 
-                    raw_out[start:end] = np.squeeze(corrected_raw, -1)
+            if self.save_raw:
+                if self.rescale:
+                    corrected_raw = local_data[1] * local_std + local_mean
+                else:
+                    corrected_raw = local_data[1]
+            else:
+                corrected_raw = None
 
-                # We squeeze to remove the feature dimension from tensorflow
-                dset_out[start:end] = np.squeeze(corrected_data, -1)
+            self._write_output_to_file(start, end, corrected_data, corrected_raw)
+
 
     def run_multiprocessing(self):
 
-        if self.output_padding:
-            first_sample = self.generator_obj.start_sample - \
-                self.generator_obj.start_frame
-            final_shape = [self.nb_datasets*self.batch_size+first_sample]
-
-        else:
-            final_shape = [self.nb_datasets*self.batch_size]
-            first_sample = 0
-
-        final_shape.extend(self.indiv_shape[:-1])
-
-        chunk_size = [1]
-        chunk_size.extend(self.indiv_shape[:-1])
-
-        output_dataset_name = "data"
-        raw_dataset_name = "raw"
-
-        with h5py.File(self.output_file, "w") as file_handle:
-            file_handle.create_dataset(
-                output_dataset_name,
-                shape=tuple(final_shape),
-                chunks=tuple(chunk_size),
-                dtype=self.output_datatype,
-            )
-
-            if self.save_raw:
-                file_handle.create_dataset(
-                    raw_dataset_name,
-                    shape=tuple(final_shape),
-                    chunks=tuple(chunk_size),
-                    dtype=self.output_datatype,
-                )
-
-        logger.info(f"Created empty HDF5 file {self.output_file}")
-        
         tf.config.threading.set_inter_op_parallelism_threads(1)
         tf.config.threading.set_intra_op_parallelism_threads(1)
         mgr = multiprocessing.Manager()
@@ -420,11 +380,8 @@ class core_inferrence:
         output_dict = mgr.dict()
         process_list = []
 
-        # Initialize onset of output sample movie
-        local_start = first_sample
-
         for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
-            local_data = self.generator_obj.__getitem__(index_dataset)
+            local_data = self.generator_obj[index_dataset]
 
             # We overwrite epoch_index to allow the last unfilled epoch
             self.generator_obj.epoch_index = epoch_index
@@ -453,24 +410,34 @@ class core_inferrence:
             while len(process_list) >= self.workers:
                 process_list = _winnow_process_list(process_list)
 
+
             if len(output_dict) >= max(1, self.nb_datasets//8):
                 with output_lock:
-                    output_dict = write_output_to_file(
-                                    output_dict,
-                                    self.output_file,
-                                    raw_dataset_name,
-                                    output_dataset_name,
-                                    self.batch_size,
-                                    first_sample)
+                    index_list = list(output_dict.keys())
+                    for dataset_index in index_list:
+                        dataset = output_dict.pop(dataset_index)
+                        local_size = dataset['corrected_data'].shape[0]
+                        start = self.first_sample + dataset_index * self.batch_size
+                        end = start + local_size          
+                        if self.save_raw:
+                            if dataset['corrected_raw'] is not None:
+                                corrected_raw = dataset['corrected_raw']
+                        else:
+                            corrected_raw = None
+                        corrected_data = dataset['corrected_data']
+                        self._write_output_to_file(start, end, corrected_data, corrected_raw)
+
 
         logger.info('processing last datasets')
         for p in process_list:
             p.join()
 
-        output_dict = write_output_to_file(
-                                    output_dict,
-                                    self.output_file,
-                                    raw_dataset_name,
-                                    output_dataset_name,
-                                    self.batch_size,
-                                    first_sample)
+        dataset = output_dict.pop()
+        local_size = dataset['corrected_data'].shape[0]
+        start = self.first_sample + dataset_index * self.batch_size
+        end = start + local_size          
+        if self.save_raw:
+            if dataset['corrected_raw'] is not None:
+                corrected_raw = dataset['corrected_raw']
+        corrected_data = dataset['corrected_data']
+        self._write_output_to_file(start, end, corrected_data, corrected_raw)
