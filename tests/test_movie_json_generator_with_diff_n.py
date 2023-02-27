@@ -14,7 +14,7 @@ from deepinterpolation.generator_collection import MovieJSONGenerator
 
 @pytest.fixture(scope='session')
 def random_seed_fixture():
-    return 221
+    return 1234
 
 
 @pytest.fixture(scope='session')

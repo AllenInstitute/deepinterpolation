@@ -179,6 +179,13 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         inference."
     )
 
+    seed = argschema.fields.Int(
+        required=False,
+        default=-1234,
+        description="Seed used with the randomize parameter to shuffle \
+            selected frames in the generator."
+    )
+
     cache_data = argschema.fields.Boolean(
         required=False,
         default=False,
@@ -196,6 +203,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             number of available frames, it will automatically be reduced to \
             the maximal number."
     )
+
 
     @mm.pre_load
     def generator_specific_settings(self, data, **kwargs):

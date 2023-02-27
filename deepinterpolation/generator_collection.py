@@ -1031,10 +1031,13 @@ class MovieJSONGenerator(DeepGenerator):
         else:
             self.cache_data = False
 
-        self.sample_data_path_json = self.json_data["train_path"]
-        self.batch_size = self.json_data["batch_size"]
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
+        self.sample_data_path_json = self.json_data.get(
+            "train_path", self.json_data.get("movie_path"))
+        self.batch_size = self.json_data.get("batch_size", 16)
+        self.steps_per_epoch = self.json_data.get("steps_per_epoch")
         self.epoch_index = 0
+        self.randomize = self.json_data.get("randomize", True)
+        self.seed = self.json_data.get("seed", 1234)
 
         # For backward compatibility
         if "pre_post_frame" in self.json_data.keys():
@@ -1060,8 +1063,9 @@ class MovieJSONGenerator(DeepGenerator):
             for i_frame in range(n_frames):
                 self.shuffled_data_list.append((ophys_experiment_id, i_frame))
 
-        self.rng = np.random.default_rng(1234)
-        self.rng.shuffle(self.shuffled_data_list)
+
+        rng = np.random.default_rng(self.seed)
+        rng.shuffle(self.shuffled_data_list)
         self._make_index_to_frames()
 
     def on_epoch_end(self):
@@ -1101,7 +1105,7 @@ class MovieJSONGenerator(DeepGenerator):
 
         return input_full, output_full
 
-    def __get_norm_parameters__(self, index_frame):
+    def __get_norm_parameters__(self, index_frame: int):
         local_lims, local_img = self.shuffled_data_list[index_frame]
         local_mean = self.frame_data_location[local_lims]["mean"]
         local_std = self.frame_data_location[local_lims]["std"]
@@ -1181,8 +1185,7 @@ class MovieJSONGenerator(DeepGenerator):
             [1, 512, 512, len(input_index)])
         output_full = np.zeros([1, 512, 512, 1])
 
-        data_img_input = np.swapaxes(data_img_input, 1, 2)
-        data_img_input = np.swapaxes(data_img_input, 0, 2)
+        data_img_input = np.moveaxis(data_img_input, 0, -1)
 
         img_in_shape = data_img_input.shape
         img_out_shape = data_img_output.shape
@@ -1191,10 +1194,9 @@ class MovieJSONGenerator(DeepGenerator):
             "float") - local_mean) / local_std
         data_img_output = (data_img_output.astype(
             "float") - local_mean) / local_std
-        input_full[0, : img_in_shape[0],
-                   : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0],
-                    : img_out_shape[1], 0] = data_img_output
+        input_full[0, :img_in_shape[0], :img_in_shape[1]] = data_img_input
+        output_full[
+            0, :img_out_shape[0], :img_out_shape[1], 0] = data_img_output
 
         return input_full, output_full
 
