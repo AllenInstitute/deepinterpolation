@@ -1,9 +1,14 @@
+# a re-implementation of test_movie_json_generator.py with a
+# different number of frames per movie
+
+import copy
 import pytest
 import h5py
 import json
 import tempfile
 import pathlib
 import numpy as np
+from itertools import product
 from deepinterpolation.generator_collection import MovieJSONGenerator
 
 
@@ -17,7 +22,9 @@ def frame_list_fixture():
     """
     Indexes of frames returned by MovieJSONGenerator
     """
-    return [4, 3, 5, 7, 6, 8]
+    return [[4, 3, 5, 7],
+            [8, 6, 3],
+            [6, 7]]
 
 
 @pytest.fixture(scope='session')
@@ -86,7 +93,7 @@ def json_frame_specification_fixture(movie_path_list_fixture,
     for ii, movie_path in enumerate(movie_path_list_fixture):
         this_params = dict()
         this_params['path'] = movie_path
-        this_params['frames'] = frame_list_fixture
+        this_params['frames'] = frame_list_fixture[ii]
         this_params['mean'] = (ii+1)*2.1
         this_params['std'] = (ii+1)*3.4
         params[str(ii)] = this_params
@@ -116,13 +123,13 @@ def json_frame_specification_fixture(movie_path_list_fixture,
     # rng.shuffle(index_list)
 
     for ii in index_list:
-        for i_frame in range(len(frame_list_fixture)):
+        for i_frame in range(len(frame_list_fixture[ii])):
             this_params = params[str(ii)]
             mu = this_params['mean']
             std = this_params['std']
             movie_path = movie_path_list_fixture[ii]
             data = path_to_data[movie_path]
-            frame = frame_list_fixture[i_frame]
+            frame = frame_list_fixture[ii][i_frame]
             output_data = (data[frame, :, :] - mu)/std
 
             input_indexes = np.array([frame-2, frame-1, frame+1, frame+2])
@@ -146,24 +153,18 @@ def json_frame_specification_fixture(movie_path_list_fixture,
 
 
 @pytest.fixture(scope='session')
-def json_generator_params_fixture(
+def generator_params_fixture(
         tmpdir_factory,
         json_frame_specification_fixture,
         random_seed_fixture):
     """
-    yields the path to the JSON configuration file for the MovieJSONGenerator
+    yields dict with generator params
     """
-
-    tmpdir = tmpdir_factory.mktemp('json_generator_params')
-    json_path = tempfile.mkstemp(dir=tmpdir,
-                                 prefix='movie_json_generator_params_',
-                                 suffix='.json')[1]
 
     params = dict()
     params['pre_post_omission'] = 0
     params['total_samples'] = -1
     params['name'] = 'MovieJSONGenerator'
-    params['batch_size'] = 1
     params['start_frame'] = 0
     params['end_frame'] = -1
     params['pre_frame'] = 2
@@ -174,44 +175,60 @@ def json_generator_params_fixture(
     params['train_path'] = json_frame_specification_fixture['json_path']
     params['type'] = 'generator'
     params['seed'] = random_seed_fixture
-
-    with open(json_path, 'w') as out_file:
-        out_file.write(json.dumps(params, indent=2))
-
-    yield json_path
-
-    json_path = pathlib.Path(json_path)
-    if json_path.is_file():
-        json_path.unlink()
+    return params
 
 
+@pytest.mark.parametrize(
+        "batch_size, cache_data",
+        product((1, 3, 5, 7, 50), (True, False)))
 def test_movie_json_generator(
         movie_path_list_fixture,
         json_frame_specification_fixture,
-        json_generator_params_fixture,
-        frame_list_fixture):
+        generator_params_fixture,
+        frame_list_fixture,
+        batch_size,
+        cache_data,
+        tmpdir):
+
+    json_path = tempfile.mkstemp(dir=tmpdir, suffix='.json')[1]
+    params = copy.deepcopy(generator_params_fixture)
+    params["batch_size"] = batch_size
+    params["cache_data"] = cache_data
+    with open(json_path, 'w') as out_file:
+        out_file.write(json.dumps(params, indent=2))
 
     expected_input = json_frame_specification_fixture['expected_input']
     expected_output = json_frame_specification_fixture['expected_output']
 
-    generator = MovieJSONGenerator(json_generator_params_fixture)
+    generator = MovieJSONGenerator(json_path)
     lims_id_list = generator.lims_id
 
     n_frames = len(frame_list_fixture)
+
+    if cache_data:
+        # read through the dataset once to populate the cache
+        for batch in generator:
+            pass
+
     dataset_ct = 0
 
-    for dataset in generator:
+    for batch in generator:
         # check that the dataset contains the expected input/output frames
-        expected_i = expected_input[dataset_ct]
-        expected_o = expected_output[dataset_ct]
+        input_batch = batch[0]
+        output_batch = batch[1]
+        assert len(batch) == 2
+        assert input_batch.shape[0] == output_batch.shape[0]
+        for i_batch in range(input_batch.shape[0]):
+            expected_i = expected_input[dataset_ct]
+            expected_o = expected_output[dataset_ct]
 
-        actual_o = dataset[1][0, :, :, 0]
-        np.testing.assert_array_equal(actual_o, expected_o)
+            actual_o = output_batch[i_batch, :, :, 0]
+            np.testing.assert_array_equal(actual_o, expected_o)
 
-        actual_i = dataset[0][0, :, :, :].transpose(2, 0, 1)
-        np.testing.assert_array_equal(actual_i, expected_i)
+            actual_i = input_batch[i_batch, :, :, :].transpose(2, 0, 1)
+            np.testing.assert_array_equal(actual_i, expected_i)
 
-        dataset_ct += 1
+            dataset_ct += 1
 
     # make sure we got the expected number of datasets
     assert dataset_ct == len(lims_id_list)*n_frames
