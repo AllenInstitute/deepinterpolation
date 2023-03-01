@@ -145,6 +145,7 @@ def test_integration_cli_ephys_inference_padding(tmp_path):
     }
 
     inferrence_param["output_padding"] = True
+    inferrence_param["use_multiprocessing"] = False
 
     # Replace this path to where you want to store your output file
     inferrence_param["output_file"] = os.path.join(
