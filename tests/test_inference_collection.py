@@ -165,3 +165,98 @@ def test_mlflow_inference():
     out_mlflow = _get_mlflow_out(local_model=local_model)
 
     assert np.allclose(out_local, out_mlflow)
+
+
+class TestCoreInference:
+
+    @pytest.fixture()
+    def ophys_movie(self, tmp_path):
+        rng = np.random.default_rng(1234)
+        data = rng.random((100, 512, 512))
+        outpath = os.path.join(tmp_path, "ophys_movie.h5")
+
+        with h5py.File(outpath, "w") as f:
+            f.create_dataset("data", data=data)
+        yield outpath
+
+
+    def create_generator_json(self,
+                              tmp_path,
+                              ophys_movie,
+                              ):
+        generator_params = {
+            "type": "generator",
+            "name": "OphysGenerator",
+            "pre_frame": 30,
+            "post_frame": 30,
+            "pre_post_omission": 0,
+            "steps_per_epoch": -1,
+            "train_path": ophys_movie,
+            "batch_size": 4,
+            "start_frame": 0,
+            "end_frame": -1,
+            "randomize": 0,          
+        }
+        path_generator = os.path.join(tmp_path, "generator.json")
+        json_obj = JsonSaver(generator_params)
+        json_obj.save_json(path_generator)
+        return path_generator
+    
+    def create_inference_json(self,
+                              tmp_path,
+                              output_path,
+                              ):
+        model_path = os.path.join(
+            pathlib.Path(__file__).parent.absolute(),
+            "..",
+            "sample_data",
+            'unet_single_256-mean_absolute_error_model.h5',
+        )
+        output_file = os.path.join(
+            output_path,
+            "ophys_tiny_continuous_deep_interpolation.h5"
+        )
+        inference_params = {
+            "type": "inferrence",
+            "name": "core_inferrence",
+            "nb_workers": 2,
+            "model_source": {"local_path": model_path},
+            "rescale": True,
+            "save_raw": False,
+            "output_file": output_file,
+        }
+        path_generator = os.path.join(tmp_path, "inference.json")
+        json_obj = JsonSaver(inference_params)
+        json_obj.save_json(path_generator)
+        return path_generator, inference_params
+    
+    def load_model(self, tmp_path, output_path, ophys_movie):
+        generator_json_path = self.create_generator_json(tmp_path, ophys_movie)
+        generator_obj = ClassLoader(generator_json_path)
+        data_generator = generator_obj.find_and_build()(generator_json_path)
+        inference_json_path, inference_params = self.create_inference_json(
+            tmp_path,
+            output_path,
+            )
+        inferrence_obj = ClassLoader(inference_json_path)
+        return inferrence_obj.find_and_build()(
+            inference_json_path,
+            data_generator), inference_params
+
+
+    @pytest.mark.parametrize("use_multiprocessing", [False, True])
+    def test_ophys_inference(self, tmp_path, ophys_movie, use_multiprocessing):
+        # Disable GPU for this test
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        with tempfile.TemporaryDirectory() as jobdir:
+            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie)
+            if use_multiprocessing:
+                model.run_multiprocessing()
+            else:
+                model.run()
+            with h5py.File(inference_params["output_file"], 'r') as file_handle:
+                output_shape = file_handle['data'].shape
+            assert output_shape == (40, 512, 512)
+
+    
+     
