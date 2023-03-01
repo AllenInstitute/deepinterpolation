@@ -8,7 +8,6 @@ from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
 import tensorflow as tf
-from typing import Dict
 import multiprocessing
 from deepinterpolation.multiprocessing_utils import _winnow_process_list
 
@@ -224,6 +223,7 @@ def __load_model_from_mlflow(json_data):
 class core_inferrence:
     # This is the generic inferrence class
     def __init__(self, inferrence_json_path, generator_obj):
+        self.model = None
         self.inferrence_json_path = inferrence_json_path
         self.generator_obj = generator_obj
 
@@ -263,7 +263,6 @@ class core_inferrence:
         else:
             self.workers = 16
 
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
         self.batch_size = self.generator_obj.batch_size
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
@@ -432,7 +431,7 @@ class core_inferrence:
         for p in process_list:
             p.join()
 
-        dataset = output_dict.pop()
+        dataset = output_dict[output_dict.keys()[0]]
         local_size = dataset['corrected_data'].shape[0]
         start = self.first_sample + dataset_index * self.batch_size
         end = start + local_size          
