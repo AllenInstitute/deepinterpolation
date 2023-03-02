@@ -1,6 +1,3 @@
-# a re-implementation of test_movie_json_generator.py with a
-# different number of frames per movie
-
 import copy
 import pytest
 import h5py

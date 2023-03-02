@@ -4,13 +4,15 @@ import h5py
 import logging
 import numpy as np
 from deepinterpolation.generic import JsonLoader
+from deepinterpolation.generator_collection import DeepGenerator
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
 import tensorflow as tf
 import multiprocessing
+from multiprocessing.managers import DictProxy, AcquirerProxy
 from deepinterpolation.multiprocessing_utils import _winnow_process_list
-
+from pathlib import Path
 tf.compat.v1.logging.set_verbosity(
     tf.compat.v1.logging.ERROR)
 
@@ -127,7 +129,7 @@ class fmri_inferrence:
                                 :,
                             ]
 
-def _load_model(json_data):
+def _load_model(json_data: dict) -> tf.keras.Model:
     try:
         local_model_path = __get_local_model_path(json_data)
         model = __load_local_model(path=local_model_path)
@@ -137,12 +139,12 @@ def _load_model(json_data):
 
 
 def core_inference_worker(
-        json_data,
-        input_lookup,
-        rescale,
-        save_raw,
-        output_dict,
-        output_lock):
+                        json_data: dict,
+                        input_lookup: dict,
+                        rescale: bool,
+                        save_raw: bool,
+                        output_dict: DictProxy,
+                        output_lock: AcquirerProxy):
 
     """ Helper function to define Worker for processing inference.
         Used with multiprocessing.process 
@@ -177,7 +179,7 @@ def core_inference_worker(
         for k in k_list:
             output_dict[k] = local_output.pop(k)
 
-def __get_local_model_path(json_data):
+def __get_local_model_path(json_data: dict) -> str:
     try:
         model_path = json_data['model_path']
         warnings.warn('Loading model from model_path will be deprecated '
@@ -186,7 +188,7 @@ def __get_local_model_path(json_data):
         model_path = json_data['model_source']['local_path']
     return model_path
 
-def __load_local_model(path: str):
+def __load_local_model(path: str) -> tf.keras.Model:
     model = load_model(
         path,
         custom_objects={
@@ -194,7 +196,7 @@ def __load_local_model(path: str):
     )
     return model
 
-def __load_model_from_mlflow(json_data):
+def __load_model_from_mlflow(json_data: dict) -> tf.keras.Model:
     import mlflow
     mlflow_registry_params = \
         json_data['model_source']['mlflow_registry']
@@ -222,7 +224,8 @@ def __load_model_from_mlflow(json_data):
 
 class core_inferrence:
     # This is the generic inferrence class
-    def __init__(self, inferrence_json_path, generator_obj):
+    def __init__(self, inferrence_json_path: Path,
+                  generator_obj: DeepGenerator):
         self.model = None
         self.inferrence_json_path = inferrence_json_path
         self.generator_obj = generator_obj
@@ -283,7 +286,8 @@ class core_inferrence:
                             output_dataset_name: str,
                             raw_dataset_name: str,
                             ):
-        
+        """Create datasets on output h5 file. 
+        """
         if self.output_padding:
             final_shape = [self.nb_datasets*self.batch_size + self.first_sample]
 
@@ -317,6 +321,9 @@ class core_inferrence:
                               corrected_data: np.ndarray,
                               corrected_raw: np.ndarray = None,
                               ):
+        """Write denoised and raw outputs onto respective datasets on
+        h5 file
+        """
         with h5py.File(self.output_file, "a") as file_handle:
             dset_out = file_handle[self.output_dataset_name]
             dset_out[start:end] = np.squeeze(corrected_data, -1)
@@ -431,7 +438,8 @@ class core_inferrence:
         for p in process_list:
             p.join()
 
-        dataset = output_dict[output_dict.keys()[0]]
+        dataset_index = output_dict.keys()[0]
+        dataset = output_dict[dataset_index]
         local_size = dataset['corrected_data'].shape[0]
         start = self.first_sample + dataset_index * self.batch_size
         end = start + local_size          

@@ -2,6 +2,7 @@ import json
 import os
 import numpy as np
 import h5py
+from pathlib import Path
 import tensorflow.keras as keras
 import tifffile
 from typing import List, Tuple
@@ -895,7 +896,7 @@ class OphysGenerator(SequentialGenerator):
     continous movie recording into a 'data' field as [time, x, y]. Each
     frame is expected to be smaller than (512,512)."""
 
-    def __init__(self, json_path):
+    def __init__(self, json_path: Path):
         "Initialization"
         super().__init__(json_path)
 
@@ -947,7 +948,7 @@ class OphysGenerator(SequentialGenerator):
 
         movie_obj_point.close()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         shuffle_indexes = self.generate_batch_indexes(index)
 
         input_full = np.zeros(
@@ -967,7 +968,7 @@ class OphysGenerator(SequentialGenerator):
 
         return input_full, output_full
 
-    def __data_generation__(self, index_frame):
+    def __data_generation__(self, index_frame: int):
         "Generates data containing batch_size samples"
 
         if self.cache_data:
@@ -1021,7 +1022,7 @@ class MovieJSONGenerator(DeepGenerator):
     "mean": <float value>,
     "std": <float_value>}}"""
 
-    def __init__(self, json_path):
+    def __init__(self, json_path: Path):
         "Initialization"
         super().__init__(json_path)
 
@@ -1075,7 +1076,7 @@ class MovieJSONGenerator(DeepGenerator):
         if self.steps_per_epoch > 0:
             self.epoch_index = self.epoch_index + 1
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         # This is to ensure we are going through
         # the entire data when steps_per_epoch<self.__len__
         if self.steps_per_epoch > 0:
@@ -1105,7 +1106,7 @@ class MovieJSONGenerator(DeepGenerator):
 
         return input_full, output_full
 
-    def __get_norm_parameters__(self, index_frame: int):
+    def __get_norm_parameters__(self, index_frame: int) -> Tuple[float, float]:
         local_lims, local_img = self.shuffled_data_list[index_frame]
         local_mean = self.frame_data_location[local_lims]["mean"]
         local_std = self.frame_data_location[local_lims]["std"]
@@ -1163,15 +1164,15 @@ class MovieJSONGenerator(DeepGenerator):
                 motion_path = os.path.join(
                                  os.environ['TMPDIR'],
                                  self.frame_data_location[video_index]['path'])
-            if not os.path.isfile(motion_path):
-                msg = 'could not find valid file path for \n'
-                msg += f"{self.frame_data_location[video_index]['path']}\n"
-                msg += f"tried\n{motion_path}\n"
-                raise RuntimeError(msg)
+                if not os.path.isfile(motion_path):
+                    msg = 'could not find valid file path for \n'
+                    msg += f"{self.frame_data_location[video_index]['path']}\n"
+                    msg += f"tried\n{motion_path}\n"
+                    raise RuntimeError(msg)
 
             with h5py.File(motion_path, "r") as movie_obj:
-                data_img_input = movie_obj["data"][input_index, :, :]
-                data_img_output = movie_obj["data"][output_frame, :, :]
+                data_img_input = movie_obj["data"][input_index]
+                data_img_output = movie_obj["data"][output_frame]
 
             if self.cache_data:
                 self.data_cache[key_tuple] = {'input': data_img_input,
@@ -1200,7 +1201,7 @@ class MovieJSONGenerator(DeepGenerator):
 
         return input_full, output_full
 
-    def __data_generation__(self, index_frame):
+    def __data_generation__(self, index_frame: int) -> Tuple[np.ndarray, np.ndarray]:
         "Generates data containing batch_size samples"
 
         # X : (n_samples, *dim, n_channels)
@@ -1209,8 +1210,9 @@ class MovieJSONGenerator(DeepGenerator):
 
             return self._data_from_indexes(local_lims, local_img)
 
-        except Exception:
-            print("Issues with " + str(self.lims_id))
+        except Exception as e:
+            print(f"Exception raised on lims_id: {self.lims_id}")
+            print(e)
             raise
 
     def __len__(self):

@@ -6,9 +6,9 @@ import h5py
 import mlflow
 import numpy as np
 import pytest
-
+from typing import Tuple
 from deepinterpolation.generic import JsonSaver, ClassLoader
-
+from deepinterpolation.inferrence_collection import core_inferrence
 
 def _get_generator_params():
     train_path = os.path.join(
@@ -170,9 +170,12 @@ def test_mlflow_inference():
 class TestCoreInference:
 
     @pytest.fixture()
-    def ophys_movie(self, tmp_path):
+    def ophys_movie(self, tmp_path: str):
+        """yields a path to the movie fixture that is loaded
+        into the generator object
+        """
         rng = np.random.default_rng(1234)
-        data = rng.random((100, 512, 512))
+        data = rng.random((65, 512, 512))
         outpath = os.path.join(tmp_path, "ophys_movie.h5")
 
         with h5py.File(outpath, "w") as f:
@@ -181,9 +184,15 @@ class TestCoreInference:
 
 
     def create_generator_json(self,
-                              tmp_path,
-                              ophys_movie,
-                              ):
+                              tmp_path: str,
+                              ophys_movie: str,
+                              ) -> str:
+        """Creates a json param file for an OphysGenerator object
+        
+        Returns
+        ------
+        str: full path to json
+        """
         generator_params = {
             "type": "generator",
             "name": "OphysGenerator",
@@ -203,9 +212,18 @@ class TestCoreInference:
         return path_generator
     
     def create_inference_json(self,
-                              tmp_path,
-                              output_path,
-                              ):
+                              tmp_path: str,
+                              output_path: str,
+                              save_raw: bool,
+                              ) -> Tuple[str, dict]:
+        """Creates a params dict and json param file for 
+        a core_inference object
+        
+        Returns
+        ------
+        path_generator: str - full path to json
+        inference_params: dict - dictionary containing core_inference params
+        """
         model_path = os.path.join(
             pathlib.Path(__file__).parent.absolute(),
             "..",
@@ -219,10 +237,10 @@ class TestCoreInference:
         inference_params = {
             "type": "inferrence",
             "name": "core_inferrence",
-            "nb_workers": 2,
+            "nb_workers": 4,
             "model_source": {"local_path": model_path},
             "rescale": True,
-            "save_raw": False,
+            "save_raw": save_raw,
             "output_file": output_file,
         }
         path_generator = os.path.join(tmp_path, "inference.json")
@@ -230,13 +248,25 @@ class TestCoreInference:
         json_obj.save_json(path_generator)
         return path_generator, inference_params
     
-    def load_model(self, tmp_path, output_path, ophys_movie):
+    
+    def load_model(self, tmp_path: str,
+                    output_path: str,
+                    ophys_movie: str,
+                    save_raw: bool) -> Tuple[core_inferrence, dict]:
+        """Creates an inference_obj with associated parameters
+        
+        Returns
+        ------
+        core_inferrence: instantiation of a core_inferrence object
+        inference_params: dict - dictionary containing core_inference params
+        """
         generator_json_path = self.create_generator_json(tmp_path, ophys_movie)
         generator_obj = ClassLoader(generator_json_path)
         data_generator = generator_obj.find_and_build()(generator_json_path)
         inference_json_path, inference_params = self.create_inference_json(
             tmp_path,
             output_path,
+            save_raw,
             )
         inferrence_obj = ClassLoader(inference_json_path)
         return inferrence_obj.find_and_build()(
@@ -245,18 +275,34 @@ class TestCoreInference:
 
 
     @pytest.mark.parametrize("use_multiprocessing", [False, True])
-    def test_ophys_inference(self, tmp_path, ophys_movie, use_multiprocessing):
+    @pytest.mark.parametrize("save_raw", [True, False])
+    def test__core_inference_runner__creates_h5_output_correct_data_size(
+                                                    self,
+                                                    tmp_path: str,
+                                                    ophys_movie: str,
+                                                    use_multiprocessing: bool,
+                                                    save_raw: bool):
+        """Test core_inferrence runners with associated parameters. It's expected to 
+        create an output file with the correct data
+        """
         # Disable GPU for this test
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
         with tempfile.TemporaryDirectory() as jobdir:
-            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie)
+            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
             if use_multiprocessing:
                 model.run_multiprocessing()
             else:
                 model.run()
             with h5py.File(inference_params["output_file"], 'r') as file_handle:
-                output_shape = file_handle['data'].shape
-            assert output_shape == (40, 512, 512)
-
+                output_shape = file_handle['data'].shape 
+                assert output_shape == (4, 512, 512)
+                if save_raw:
+                    raw_shape = file_handle['raw'].shape
+                    assert raw_shape == (4, 512, 512)
+                else:
+                    with pytest.raises(KeyError):
+                        file_handle['raw']
+        del os.environ["CUDA_VISIBLE_DEVICES"]
     
      
