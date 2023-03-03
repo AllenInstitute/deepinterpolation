@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import numpy as np
 import h5py
@@ -9,6 +10,10 @@ from typing import List, Tuple
 import nibabel as nib
 import glob
 from deepinterpolation.generic import JsonLoader
+
+logger = logging.getLogger(__name__)
+logging.captureWarnings(True)
+logging.basicConfig(level=logging.INFO)
 
 
 class MaxRetryException(Exception):
@@ -216,7 +221,6 @@ class FmriGenerator(DeepGenerator):
 
             for index, value in enumerate(range(self.total_nb_block)):
                 retake = True
-                print(index)
                 while retake:
                     x_local, y_local, z_local, t_local = self.get_random_xyzt()
                     retake = False
@@ -926,7 +930,7 @@ class OphysGenerator(SequentialGenerator):
             self.cache_data = False
 
         if self.cache_data:
-            print('Caching hdf5 file... \n')
+            logger.info('Caching hdf5 file... \n')
             if self.end_frame > 0:
                 self.raw_data = raw_data[0:np.min([self.total_frame_per_movie,
                     self.end_frame+self.post_frame+self.pre_post_omission+1]), :, :]
@@ -1211,8 +1215,8 @@ class MovieJSONGenerator(DeepGenerator):
             return self._data_from_indexes(local_lims, local_img)
 
         except Exception as e:
-            print(f"Exception raised on lims_id: {self.lims_id}")
-            print(e)
+            logger.error(f"Exception raised on lims_id: {self.lims_id}")
+            logger.error(e)
             raise
 
     def __len__(self):

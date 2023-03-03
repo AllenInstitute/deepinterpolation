@@ -56,6 +56,8 @@ class Inference(argschema.ArgSchemaParser):
 
         self.logger.info("created objects for inference")
         if self.args["inference_params"].get("use_multiprocessing"):
+            tf.config.threading.set_inter_op_parallelism_threads(1)
+            tf.config.threading.set_intra_op_parallelism_threads(1)
             inferrence_class.run_multiprocessing()
         else:
             inferrence_class.run()
