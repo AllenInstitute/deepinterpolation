@@ -305,4 +305,27 @@ class TestCoreInference:
                         file_handle['raw']
         del os.environ["CUDA_VISIBLE_DEVICES"]
     
-     
+    def test__core_inference_runner__run_multiprocessing_equals_run(
+                                                    self,
+                                                    tmp_path: str,
+                                                    ophys_movie: str):
+        """Test core_inferrence runner and multiprocessing runner to 
+        ensure they produce identical outputs
+        """
+        # Disable GPU for this test
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        save_raw = False
+        with tempfile.TemporaryDirectory() as jobdir:
+            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
+            model.run_multiprocessing()
+            with h5py.File(inference_params["output_file"], 'r') as file_handle:
+                multiprocessing_output = file_handle['data'][()]
+
+        with tempfile.TemporaryDirectory() as jobdir:
+            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
+            model.run()
+            with h5py.File(inference_params["output_file"], 'r') as file_handle:
+                output = file_handle['data'][()]
+        np.testing.assert_equal(output, multiprocessing_output)
+        del os.environ["CUDA_VISIBLE_DEVICES"]
+    
