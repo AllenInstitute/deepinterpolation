@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 import tensorflow as tf
 import multiprocessing
 from multiprocessing.managers import DictProxy, AcquirerProxy
-from deepinterpolation.multiprocessing_utils import _winnow_process_list
+from deepinterpolation.multiprocessing_utils import winnow_process_list
 from pathlib import Path
 tf.compat.v1.logging.set_verbosity(
     tf.compat.v1.logging.ERROR)
@@ -369,7 +369,7 @@ class core_inferrence:
             dset_out = file_handle[self.output_dataset_name]
             dset_out[start:end] = np.squeeze(corrected_data, -1)
 
-            if self.save_raw:
+            if self.save_raw and corrected_raw is not None:
                 raw_out = file_handle[self.raw_dataset_name]
                 raw_out[start:end] = np.squeeze(corrected_raw, -1)
     
@@ -435,7 +435,7 @@ class core_inferrence:
             process_list.append(process)
 
             while len(process_list) >= self.workers:
-                process_list = _winnow_process_list(process_list)
+                process_list = winnow_process_list(process_list)
 
 
             if len(output_dict) >= max(1, self.nb_datasets//8):
@@ -456,12 +456,13 @@ class core_inferrence:
         for p in process_list:
             p.join()
 
-        dataset_index = output_dict.keys()[0]
-        dataset = output_dict[dataset_index]
-        if self.save_raw:
-            if dataset['corrected_raw'] is not None:
-                corrected_raw = dataset['corrected_raw']
-        else:
-            corrected_raw = None
-        corrected_data = dataset['corrected_data']
-        self._write_output_to_file(dataset_index, corrected_data, corrected_raw)
+        if output_dict.keys():
+            dataset_index = output_dict.keys()[0]
+            dataset = output_dict[dataset_index]
+            if self.save_raw:
+                if dataset['corrected_raw'] is not None:
+                    corrected_raw = dataset['corrected_raw']
+            else:
+                corrected_raw = None
+            corrected_data = dataset['corrected_data']
+            self._write_output_to_file(dataset_index, corrected_data, corrected_raw)

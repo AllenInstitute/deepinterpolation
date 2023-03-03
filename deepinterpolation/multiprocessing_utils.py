@@ -2,7 +2,7 @@ from typing import List
 from multiprocessing import Process
 
 
-def _winnow_process_list(
+def winnow_process_list(
         process_list: List[Process]) -> List[Process]:
     """
     Loop over a list of processes, popping out any that have

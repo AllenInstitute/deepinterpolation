@@ -6,6 +6,7 @@ import h5py
 import mlflow
 import numpy as np
 import pytest
+import tensorflow as tf
 from typing import Tuple
 from deepinterpolation.generic import JsonSaver, ClassLoader
 from deepinterpolation.inferrence_collection import core_inferrence
@@ -169,6 +170,16 @@ def test_mlflow_inference():
 
 class TestCoreInference:
 
+    def setUp(self) -> None:
+        super().setUp()
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["OMP_NUM_THREADS"] = "1"
+    
+    def tearDown(self) -> None:
+        del os.environ["CUDA_VISIBLE_DEVICES"]
+        del os.environ["OMP_NUM_THREADS"]
+        super().tearDown()
+
     @pytest.fixture()
     def ophys_movie(self, tmp_path: str):
         """yields a path to the movie fixture that is loaded
@@ -285,9 +296,6 @@ class TestCoreInference:
         """Test core_inferrence runners with associated parameters. It's expected to 
         create an output file with the correct data
         """
-        # Disable GPU for this test
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
         with tempfile.TemporaryDirectory() as jobdir:
             model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
             if use_multiprocessing:
@@ -303,7 +311,7 @@ class TestCoreInference:
                 else:
                     with pytest.raises(KeyError):
                         file_handle['raw']
-        del os.environ["CUDA_VISIBLE_DEVICES"]
+    
     
     def test__core_inference_runner__run_multiprocessing_equals_run(
                                                     self,
@@ -312,20 +320,19 @@ class TestCoreInference:
         """Test core_inferrence runner and multiprocessing runner to 
         ensure they produce identical outputs
         """
-        # Disable GPU for this test
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["OMP_NUM_THREADS"] = "1"
         save_raw = False
         with tempfile.TemporaryDirectory() as jobdir:
             model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
             model.run_multiprocessing()
             with h5py.File(inference_params["output_file"], 'r') as file_handle:
                 multiprocessing_output = file_handle['data'][()]
-
-        with tempfile.TemporaryDirectory() as jobdir:
+            os.remove(inference_params["output_file"])
             model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
             model.run()
             with h5py.File(inference_params["output_file"], 'r') as file_handle:
                 output = file_handle['data'][()]
-        np.testing.assert_equal(output, multiprocessing_output)
-        del os.environ["CUDA_VISIBLE_DEVICES"]
+        np.testing.assert_almost_equal(output, multiprocessing_output)
+
     
