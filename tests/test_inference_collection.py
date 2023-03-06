@@ -11,6 +11,145 @@ from typing import Tuple
 from deepinterpolation.generic import JsonSaver, ClassLoader
 from deepinterpolation.inferrence_collection import core_inferrence
 
+
+@pytest.fixture()
+def ophys_movie(tmp_path: str):
+    """yields a path to the movie fixture that is loaded
+    into the generator object
+    """
+    rng = np.random.default_rng(1234)
+    data = rng.random((65, 512, 512))
+    outpath = os.path.join(tmp_path, "ophys_movie.h5")
+
+    with h5py.File(outpath, "w") as f:
+        f.create_dataset("data", data=data)
+    yield outpath
+
+
+def create_generator_json(tmp_path: str,
+                            ophys_movie: str,
+                            ) -> str:
+    """Creates a json param file for an OphysGenerator object
+    
+    Returns
+    ------
+    str: full path to json
+    """
+    generator_params = {
+        "type": "generator",
+        "name": "OphysGenerator",
+        "pre_frame": 30,
+        "post_frame": 30,
+        "pre_post_omission": 0,
+        "steps_per_epoch": -1,
+        "train_path": ophys_movie,
+        "batch_size": 4,
+        "start_frame": 0,
+        "end_frame": -1,
+        "randomize": 0,          
+    }
+    path_generator = os.path.join(tmp_path, "generator.json")
+    json_obj = JsonSaver(generator_params)
+    json_obj.save_json(path_generator)
+    return path_generator
+
+def create_inference_json(tmp_path: str,
+                            output_path: str,
+                            save_raw: bool,
+                            ) -> Tuple[str, dict]:
+    """Creates a params dict and json param file for 
+    a core_inference object
+    
+    Returns
+    ------
+    path_generator: str - full path to json
+    inference_params: dict - dictionary containing core_inference params
+    """
+    model_path = os.path.join(
+        pathlib.Path(__file__).parent.absolute(),
+        "..",
+        "sample_data",
+        'unet_single_256-mean_absolute_error_model.h5',
+    )
+    output_file = os.path.join(
+        output_path,
+        "ophys_tiny_continuous_deep_interpolation.h5"
+    )
+    inference_params = {
+        "type": "inferrence",
+        "name": "core_inferrence",
+        "nb_workers": 4,
+        "model_source": {"local_path": model_path},
+        "rescale": True,
+        "save_raw": save_raw,
+        "output_file": output_file,
+    }
+    path_generator = os.path.join(tmp_path, "inference.json")
+    json_obj = JsonSaver(inference_params)
+    json_obj.save_json(path_generator)
+    return path_generator, inference_params
+
+
+def load_model(tmp_path: str,
+                output_path: str,
+                ophys_movie: str,
+                save_raw: bool) -> Tuple[core_inferrence, dict]:
+    """Creates an inference_obj with associated parameters
+    
+    Returns
+    ------
+    core_inferrence: instantiation of a core_inferrence object
+    inference_params: dict - dictionary containing core_inference params
+    """
+    generator_json_path = create_generator_json(tmp_path, ophys_movie)
+    generator_obj = ClassLoader(generator_json_path)
+    data_generator = generator_obj.find_and_build()(generator_json_path)
+    inference_json_path, inference_params = create_inference_json(
+        tmp_path,
+        output_path,
+        save_raw,
+        )
+    inferrence_obj = ClassLoader(inference_json_path)
+    return inferrence_obj.find_and_build()(
+        inference_json_path,
+        data_generator), inference_params
+
+
+def test__core_inference_runner__run_multiprocessing_equals_run(
+                                                tmp_path: str,
+                                                ophys_movie: str
+                                                ):
+    """Test core_inferrence runner and multiprocessing runner to 
+    ensure they produce identical outputs
+    """
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    os.environ["OMP_NUM_THREADS"] = "1"
+    save_raw = True
+    with tempfile.TemporaryDirectory() as jobdir:
+        model, inference_params = load_model(tmp_path, jobdir, ophys_movie, save_raw)
+        model.run_multiprocessing()
+        with h5py.File(inference_params["output_file"], 'r') as file_handle:
+            multiprocessing_output = file_handle['data'][()]
+            assert multiprocessing_output.shape == (4, 512, 512)
+            if save_raw:
+                raw_shape = file_handle['raw'].shape
+                assert raw_shape == (4, 512, 512)
+            else:
+                with pytest.raises(KeyError):
+                    file_handle['raw']
+        model.run()
+        with h5py.File(inference_params["output_file"], 'r') as file_handle:
+            output = file_handle['data'][()]
+            assert output.shape == (4, 512, 512)
+            if save_raw:
+                raw_shape = file_handle['raw'].shape
+                assert raw_shape == (4, 512, 512)
+            else:
+                with pytest.raises(KeyError):
+                    file_handle['raw']
+    np.testing.assert_almost_equal(output, multiprocessing_output)
+
+
 def _get_generator_params():
     train_path = os.path.join(
         pathlib.Path(__file__).parent.absolute(),
@@ -166,173 +305,3 @@ def test_mlflow_inference():
     out_mlflow = _get_mlflow_out(local_model=local_model)
 
     assert np.allclose(out_local, out_mlflow)
-
-
-class TestCoreInference:
-
-    def setUp(self) -> None:
-        super().setUp()
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-        os.environ["OMP_NUM_THREADS"] = "1"
-    
-    def tearDown(self) -> None:
-        del os.environ["CUDA_VISIBLE_DEVICES"]
-        del os.environ["OMP_NUM_THREADS"]
-        super().tearDown()
-
-    @pytest.fixture()
-    def ophys_movie(self, tmp_path: str):
-        """yields a path to the movie fixture that is loaded
-        into the generator object
-        """
-        rng = np.random.default_rng(1234)
-        data = rng.random((65, 512, 512))
-        outpath = os.path.join(tmp_path, "ophys_movie.h5")
-
-        with h5py.File(outpath, "w") as f:
-            f.create_dataset("data", data=data)
-        yield outpath
-
-
-    def create_generator_json(self,
-                              tmp_path: str,
-                              ophys_movie: str,
-                              ) -> str:
-        """Creates a json param file for an OphysGenerator object
-        
-        Returns
-        ------
-        str: full path to json
-        """
-        generator_params = {
-            "type": "generator",
-            "name": "OphysGenerator",
-            "pre_frame": 30,
-            "post_frame": 30,
-            "pre_post_omission": 0,
-            "steps_per_epoch": -1,
-            "train_path": ophys_movie,
-            "batch_size": 4,
-            "start_frame": 0,
-            "end_frame": -1,
-            "randomize": 0,          
-        }
-        path_generator = os.path.join(tmp_path, "generator.json")
-        json_obj = JsonSaver(generator_params)
-        json_obj.save_json(path_generator)
-        return path_generator
-    
-    def create_inference_json(self,
-                              tmp_path: str,
-                              output_path: str,
-                              save_raw: bool,
-                              ) -> Tuple[str, dict]:
-        """Creates a params dict and json param file for 
-        a core_inference object
-        
-        Returns
-        ------
-        path_generator: str - full path to json
-        inference_params: dict - dictionary containing core_inference params
-        """
-        model_path = os.path.join(
-            pathlib.Path(__file__).parent.absolute(),
-            "..",
-            "sample_data",
-            'unet_single_256-mean_absolute_error_model.h5',
-        )
-        output_file = os.path.join(
-            output_path,
-            "ophys_tiny_continuous_deep_interpolation.h5"
-        )
-        inference_params = {
-            "type": "inferrence",
-            "name": "core_inferrence",
-            "nb_workers": 4,
-            "model_source": {"local_path": model_path},
-            "rescale": True,
-            "save_raw": save_raw,
-            "output_file": output_file,
-        }
-        path_generator = os.path.join(tmp_path, "inference.json")
-        json_obj = JsonSaver(inference_params)
-        json_obj.save_json(path_generator)
-        return path_generator, inference_params
-    
-    
-    def load_model(self, tmp_path: str,
-                    output_path: str,
-                    ophys_movie: str,
-                    save_raw: bool) -> Tuple[core_inferrence, dict]:
-        """Creates an inference_obj with associated parameters
-        
-        Returns
-        ------
-        core_inferrence: instantiation of a core_inferrence object
-        inference_params: dict - dictionary containing core_inference params
-        """
-        generator_json_path = self.create_generator_json(tmp_path, ophys_movie)
-        generator_obj = ClassLoader(generator_json_path)
-        data_generator = generator_obj.find_and_build()(generator_json_path)
-        inference_json_path, inference_params = self.create_inference_json(
-            tmp_path,
-            output_path,
-            save_raw,
-            )
-        inferrence_obj = ClassLoader(inference_json_path)
-        return inferrence_obj.find_and_build()(
-            inference_json_path,
-            data_generator), inference_params
-
-
-    @pytest.mark.parametrize("use_multiprocessing", [False, True])
-    @pytest.mark.parametrize("save_raw", [True, False])
-    def test__core_inference_runner__creates_h5_output_correct_data_size(
-                                                    self,
-                                                    tmp_path: str,
-                                                    ophys_movie: str,
-                                                    use_multiprocessing: bool,
-                                                    save_raw: bool):
-        """Test core_inferrence runners with associated parameters. It's expected to 
-        create an output file with the correct data
-        """
-        with tempfile.TemporaryDirectory() as jobdir:
-            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
-            if use_multiprocessing:
-                model.run_multiprocessing()
-            else:
-                model.run()
-            with h5py.File(inference_params["output_file"], 'r') as file_handle:
-                output_shape = file_handle['data'].shape 
-                assert output_shape == (4, 512, 512)
-                if save_raw:
-                    raw_shape = file_handle['raw'].shape
-                    assert raw_shape == (4, 512, 512)
-                else:
-                    with pytest.raises(KeyError):
-                        file_handle['raw']
-    
-    
-    def test__core_inference_runner__run_multiprocessing_equals_run(
-                                                    self,
-                                                    tmp_path: str,
-                                                    ophys_movie: str):
-        """Test core_inferrence runner and multiprocessing runner to 
-        ensure they produce identical outputs
-        """
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-        os.environ["OMP_NUM_THREADS"] = "1"
-        save_raw = False
-        with tempfile.TemporaryDirectory() as jobdir:
-            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
-            model.run_multiprocessing()
-            with h5py.File(inference_params["output_file"], 'r') as file_handle:
-                multiprocessing_output = file_handle['data'][()]
-            os.remove(inference_params["output_file"])
-            model, inference_params = self.load_model(tmp_path, jobdir, ophys_movie, save_raw)
-            model.run()
-            with h5py.File(inference_params["output_file"], 'r') as file_handle:
-                output = file_handle['data'][()]
-        np.testing.assert_almost_equal(output, multiprocessing_output)
-
-    

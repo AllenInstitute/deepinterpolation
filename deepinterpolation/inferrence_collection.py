@@ -336,7 +336,7 @@ class core_inferrence:
         final_shape.extend(self.indiv_shape[:-1])
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape[:-1])
-    
+
         with h5py.File(self.output_file, "w") as file_handle:
             file_handle.create_dataset(
                 output_dataset_name,
@@ -372,7 +372,7 @@ class core_inferrence:
             if self.save_raw and corrected_raw is not None:
                 raw_out = file_handle[self.raw_dataset_name]
                 raw_out[start:end] = np.squeeze(corrected_raw, -1)
-    
+
 
     def run(self):
         self.model = _load_model(self.json_data)

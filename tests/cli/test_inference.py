@@ -11,6 +11,7 @@ def inference_args(tmpdir, request):
     output_path = tmpdir / "output.h5"
 
     args = {
+        'use_multiprocessing': False,
         'model_source': {}
     }
     if request.param.get('load_model_from_mlflow'):
@@ -97,7 +98,7 @@ def test_inference_cli(generator_args, inference_args, monkeypatch):
     args = {
         "inference_params": inference_args,
         "generator_params": generator_args,
-        "output_full_args": True
+        "output_full_args": True,
     }
     monkeypatch.setattr(inf_cli, "ClassLoader", MockClassLoader)
     inference = inf_cli.Inference(input_data=args, args=[])
