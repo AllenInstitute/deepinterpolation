@@ -1151,15 +1151,6 @@ class MovieJSONGenerator(DeepGenerator):
 
         if data_img_input is None:
             motion_path = self.frame_data_location[video_index]["path"]
-            if not os.path.isfile(motion_path):
-                motion_path = os.path.join(
-                                 os.environ['TMPDIR'],
-                                 self.frame_data_location[video_index]['path'])
-                if not os.path.isfile(motion_path):
-                    msg = 'could not find valid file path for \n'
-                    msg += f"{self.frame_data_location[video_index]['path']}\n"
-                    msg += f"tried\n{motion_path}\n"
-                    raise RuntimeError(msg)
 
             with h5py.File(motion_path, "r") as movie_obj:
                 data_img_input = movie_obj["data"][input_index]
