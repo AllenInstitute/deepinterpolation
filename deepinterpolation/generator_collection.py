@@ -6,7 +6,7 @@ import h5py
 from pathlib import Path
 import tensorflow.keras as keras
 import tifffile
-from typing import List, Tuple
+from typing import Union, Tuple
 import nibabel as nib
 import glob
 from deepinterpolation.generic import JsonLoader
@@ -900,7 +900,7 @@ class OphysGenerator(SequentialGenerator):
     continous movie recording into a 'data' field as [time, x, y]. Each
     frame is expected to be smaller than (512,512)."""
 
-    def __init__(self, json_path: Path):
+    def __init__(self, json_path: Union[str, Path]):
         "Initialization"
         super().__init__(json_path)
 
@@ -913,8 +913,6 @@ class OphysGenerator(SequentialGenerator):
         self.batch_size = self.json_data["batch_size"]
         movie_obj_point = h5py.File(self.raw_data_file, "r")
         raw_data = movie_obj_point["data"]
-
-        self.steps_per_epoch = 0 
         
         self.total_frame_per_movie = int(raw_data.shape[0])
 
@@ -1026,15 +1024,9 @@ class MovieJSONGenerator(DeepGenerator):
     "mean": <float value>,
     "std": <float_value>}}"""
 
-    def __init__(self, json_path: Path):
+    def __init__(self, json_path: Union[str, Path]):
         "Initialization"
         super().__init__(json_path)
-
-        if "cache_data" in self.json_data:
-            self.cache_data = self.json_data["cache_data"]
-            self.data_cache = dict()
-        else:
-            self.cache_data = False
 
         self.sample_data_path_json = self.json_data.get(
             "train_path", self.json_data.get("movie_path"))
@@ -1156,11 +1148,6 @@ class MovieJSONGenerator(DeepGenerator):
 
         data_img_input = None
         data_img_output = None
-        if self.cache_data:
-            key_tuple = (video_index, img_index)
-            if key_tuple in self.data_cache:
-                data_img_input = self.data_cache[key_tuple]['input']
-                data_img_output = self.data_cache[key_tuple]['output']
 
         if data_img_input is None:
             motion_path = self.frame_data_location[video_index]["path"]
@@ -1177,10 +1164,6 @@ class MovieJSONGenerator(DeepGenerator):
             with h5py.File(motion_path, "r") as movie_obj:
                 data_img_input = movie_obj["data"][input_index]
                 data_img_output = movie_obj["data"][output_frame]
-
-            if self.cache_data:
-                self.data_cache[key_tuple] = {'input': data_img_input,
-                                              'output': data_img_output}
 
         local_frame_data = self.frame_data_location[video_index]
         local_mean = local_frame_data["mean"]

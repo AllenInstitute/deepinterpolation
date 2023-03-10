@@ -78,6 +78,7 @@ def create_inference_json(tmp_path: str,
     inference_params = {
         "type": "inferrence",
         "name": "core_inferrence",
+        "steps_per_epoch": 4,
         "nb_workers": 4,
         "model_source": {"local_path": model_path},
         "rescale": True,
