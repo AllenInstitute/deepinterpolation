@@ -81,7 +81,7 @@ def test_generator_ephys_creation(tmp_path):
     assert len(data_generator) == 4993
 
 
-class TestOphysGenerator:
+class TestInferenceOphysGenerator:
     
     @pytest.fixture()
     def ophys_movie(self, tmp_path):
@@ -101,7 +101,7 @@ class TestOphysGenerator:
         generator_param = {}
 
         generator_param["type"] = "generator"
-        generator_param["name"] = "OphysGenerator"
+        generator_param["name"] = "InferenceOphysGenerator"
         generator_param["pre_frame"] = 2
         generator_param["post_frame"] = 2
         generator_param["pre_post_omission"] = 1
