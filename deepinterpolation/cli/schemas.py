@@ -197,29 +197,30 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             the maximal number."
     )
 
-    movie_statistics_sample_size = argschema.fields.Int(
+    movie_statistics_nbframes = argschema.fields.Int(
         required=False,
         default=-1000,
         description="Number of frames used to calculate normalization \
-            statistics. This constraint to reduce the computational and \
-            space requirements for this calculation."
+            statistics. This constraint to reduce the computational time \
+            and space requirements for this calculation."
     )
 
     gpu_cache_full = argschema.fields.Boolean(
         required=False,
         default=False,
         description="Cache full movie onto GPU memory for batch generation \
-        when using OphysGenerator. Enabling this will lead to faster batch \
-        generation, training, and inference. If disabled, only the minimum \
-        chunk of movie required for batch generation will be cached onto the \
-        GPU at once."
+        when using InferenceOphysGenerator. Enabling this will lead to faster \
+        batch generation, training, and inference. If disabled, only the \
+        minimum chunk of movie required for batch generation will be cached \
+        onto the GPU at once."
     )
 
     normalize_cache = argschema.fields.Boolean(
         required=False,
         default=True,
-        description="Normalize movie after caching. This requires converting"
-        "the movie to float32 which will double the caching memory requirements."
+        description="Normalize movie after caching when using the \
+        InferenceOphysGenerator. This requires converting the movie to \
+        float32 which will double the caching memory requirements."
     )
 
     @mm.pre_load
@@ -400,8 +401,9 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         default="False",
         description=(
             "Use float16 precision for tensorflow. Speeds up inference on devices \
-            with float16 support. Use this if you have an RTX or newer GPU, \
-            disable for most CPU processing"
+            with float16 support. Use this if you have an RTX or newer GPU. \
+            If you're using a CPU to run tensorflow, most CPU models do not \
+            support this. Check for your specific CPU model for compatibility."
         ),
     )
 
