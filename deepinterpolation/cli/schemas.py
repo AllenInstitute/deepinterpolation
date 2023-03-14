@@ -204,6 +204,31 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             the maximal number."
     )
 
+    movie_statistics_nbframes = argschema.fields.Int(
+        required=False,
+        default=-1000,
+        description="Number of frames used to calculate normalization \
+            statistics. This constraint to reduce the computational time \
+            and space requirements for this calculation."
+    )
+
+    gpu_cache_full = argschema.fields.Boolean(
+        required=False,
+        default=False,
+        description="Cache full movie onto GPU memory for batch generation \
+        when using InferenceOphysGenerator. Enabling this will lead to faster \
+        batch generation, training, and inference. If disabled, only the \
+        minimum chunk of movie required for batch generation will be cached \
+        onto the GPU at once."
+    )
+
+    normalize_cache = argschema.fields.Boolean(
+        required=False,
+        default=True,
+        description="Normalize movie after caching when using the \
+        InferenceOphysGenerator. This requires converting the movie to \
+        float32 which will double the caching memory requirements."
+    )
 
     @mm.pre_load
     def generator_specific_settings(self, data, **kwargs):

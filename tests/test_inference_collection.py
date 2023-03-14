@@ -37,7 +37,7 @@ def create_generator_json(tmp_path: str,
     """
     generator_params = {
         "type": "generator",
-        "name": "OphysGenerator",
+        "name": "InferenceOphysGenerator",
         "pre_frame": 30,
         "post_frame": 30,
         "pre_post_omission": 0,
