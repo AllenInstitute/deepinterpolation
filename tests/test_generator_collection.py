@@ -97,11 +97,12 @@ class TestInferenceOphysGenerator:
                     gpu_cache_full,
                     normalize_cache,
                     ophys_movie,
+                    name = "InferenceOphysGenerator"
                     ):
         generator_param = {}
 
         generator_param["type"] = "generator"
-        generator_param["name"] = "InferenceOphysGenerator"
+        generator_param["name"] = name
         generator_param["pre_frame"] = 2
         generator_param["post_frame"] = 2
         generator_param["pre_post_omission"] = 1
@@ -124,6 +125,34 @@ class TestInferenceOphysGenerator:
         json_obj = JsonSaver(generator_param)
         json_obj.save_json(path_generator)
         return path_generator
+
+    def test__inference_ophys_generator__batches_equals_to_ophys_generator(
+            self, tmp_path, ophys_movie
+    ):
+        path_generator = self.create_json(
+            tmp_path, False, False, ophys_movie, "OphysGenerator")
+        generator_obj = ClassLoader(path_generator)
+        with patch("tensorflow.test.is_gpu_available") as mock_is_available:
+            mock_is_available.return_value = False
+            data_generator = generator_obj.find_and_build()(path_generator)
+        
+
+        path_generator = self.create_json(
+            tmp_path, False, False, ophys_movie, "InferenceOphysGenerator")
+        generator_obj = ClassLoader(path_generator)
+        with patch("tensorflow.test.is_gpu_available") as mock_is_available:
+            mock_is_available.return_value = False
+            data_generator_inference = generator_obj.find_and_build()(path_generator)
+        
+        assert len(data_generator) == len(data_generator_inference)
+
+        x_ind = 0
+        y_ind = 1
+        for i in range(len(data_generator)):
+            obtained_batch_generator = data_generator[i]
+            obtained_batch_inference_generator = data_generator_inference[i]
+            np.testing.assert_array_equal(obtained_batch_generator[x_ind], obtained_batch_inference_generator[x_ind])
+            np.testing.assert_array_equal(obtained_batch_generator[y_ind], obtained_batch_inference_generator[y_ind])
 
 
     @pytest.mark.parametrize("gpu_cache_full", [True, False])

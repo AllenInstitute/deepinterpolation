@@ -403,67 +403,67 @@ class core_inferrence:
 
 
     def run_multiprocessing(self):
-        mgr = multiprocessing.Manager()
-        output_lock = mgr.Lock()
-        output_dict = mgr.dict()
-        process_list = []
+        with multiprocessing.Manager() as mgr:
+            output_lock = mgr.Lock()
+            output_dict = mgr.dict()
+            process_list = []
 
-        for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
-            local_data = self.generator_obj[index_dataset]
+            for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
+                local_data = self.generator_obj[index_dataset]
 
-            # We overwrite epoch_index to allow the last unfilled epoch
-            self.generator_obj.epoch_index = epoch_index
-            local_mean, local_std = \
-                    self.generator_obj.__get_norm_parameters__(index_dataset)  
-            
-            this_batch = {
-                index_dataset: {
-                    'local_data': local_data,
-                    'local_mean': local_mean,
-                    'local_std': local_std,
+                # We overwrite epoch_index to allow the last unfilled epoch
+                self.generator_obj.epoch_index = epoch_index
+                local_mean, local_std = \
+                        self.generator_obj.__get_norm_parameters__(index_dataset)  
+                
+                this_batch = {
+                    index_dataset: {
+                        'local_data': local_data,
+                        'local_mean': local_mean,
+                        'local_std': local_std,
+                    }
                 }
-            }
 
-            process = multiprocessing.Process(
-                        target=core_inference_worker,
-                        args=(self.json_data,
-                            this_batch,
-                            self.rescale,
-                            self.save_raw,
-                            output_dict,
-                            output_lock))
-            process.start()
-            process_list.append(process)
+                process = multiprocessing.Process(
+                            target=core_inference_worker,
+                            args=(self.json_data,
+                                this_batch,
+                                self.rescale,
+                                self.save_raw,
+                                output_dict,
+                                output_lock))
+                process.start()
+                process_list.append(process)
 
-            while len(process_list) >= self.workers:
-                process_list = winnow_process_list(process_list)
-
-
-            if len(output_dict) >= max(1, self.nb_datasets//8):
-                with output_lock:
-                    index_list = list(output_dict.keys())
-                    for dataset_index in index_list:
-                        dataset = output_dict.pop(dataset_index)      
-                        if self.save_raw:
-                            if dataset['corrected_raw'] is not None:
-                                corrected_raw = dataset['corrected_raw']
-                        else:
-                            corrected_raw = None
-                        corrected_data = dataset['corrected_data']
-                        self._write_output_to_file(dataset_index, corrected_data, corrected_raw)
+                while len(process_list) >= self.workers:
+                    process_list = winnow_process_list(process_list)
 
 
-        logger.info('processing last datasets')
-        for p in process_list:
-            p.join()
+                if len(output_dict) >= max(1, self.nb_datasets//8):
+                    with output_lock:
+                        index_list = list(output_dict.keys())
+                        for dataset_index in index_list:
+                            dataset = output_dict.pop(dataset_index)      
+                            if self.save_raw:
+                                if dataset['corrected_raw'] is not None:
+                                    corrected_raw = dataset['corrected_raw']
+                            else:
+                                corrected_raw = None
+                            corrected_data = dataset['corrected_data']
+                            self._write_output_to_file(dataset_index, corrected_data, corrected_raw)
 
-        if output_dict.keys():
-            dataset_index = output_dict.keys()[0]
-            dataset = output_dict[dataset_index]
-            if self.save_raw:
-                if dataset['corrected_raw'] is not None:
-                    corrected_raw = dataset['corrected_raw']
-            else:
-                corrected_raw = None
-            corrected_data = dataset['corrected_data']
-            self._write_output_to_file(dataset_index, corrected_data, corrected_raw)
+
+            logger.info('processing last datasets')
+            for p in process_list:
+                p.join()
+
+            if output_dict.keys():
+                dataset_index = output_dict.keys()[0]
+                dataset = output_dict[dataset_index]
+                if self.save_raw:
+                    if dataset['corrected_raw'] is not None:
+                        corrected_raw = dataset['corrected_raw']
+                else:
+                    corrected_raw = None
+                corrected_data = dataset['corrected_data']
+                self._write_output_to_file(dataset_index, corrected_data, corrected_raw)

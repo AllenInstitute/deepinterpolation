@@ -928,7 +928,7 @@ class OphysGenerator(SequentialGenerator):
         self.batch_size = self.json_data["batch_size"]
         movie_obj_point = h5py.File(self.raw_data_file, "r")
         raw_data = movie_obj_point["data"]
-        
+        self.movie_dim = raw_data.shape[1:]
         self.total_frame_per_movie = int(raw_data.shape[0])
 
         self._update_end_frame(self.total_frame_per_movie)
@@ -969,11 +969,11 @@ class OphysGenerator(SequentialGenerator):
         shuffle_indexes = self.generate_batch_indexes(index)
 
         input_full = np.zeros(
-            [self.batch_size, 512, 512, self.pre_frame + self.post_frame],
+            [self.batch_size, self.movie_dim[0], self.movie_dim[1], self.pre_frame + self.post_frame],
             dtype="float32",
         )
 
-        output_full = np.zeros([self.batch_size, 512, 512, 1], dtype="float32")
+        output_full = np.zeros([self.batch_size, self.movie_dim[0], self.movie_dim[1], 1], dtype="float32")
 
         for batch_index, frame_index in enumerate(shuffle_indexes):
             X, Y = self.__data_generation__(frame_index)
