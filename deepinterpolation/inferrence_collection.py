@@ -328,11 +328,12 @@ class core_inferrence:
         raw_dataset_name : str
             name of the key of the raw dataset stored in h5
         """
+        nb_frames_inference = self.generator_obj.list_samples.shape[0]
         if self.output_padding:
-            final_shape = [self.nb_datasets*self.batch_size + self._get_first_output_index()]
+            final_shape = [nb_frames_inference + self._get_first_output_index()]
 
         else:
-            final_shape = [self.generator_obj.list_samples.shape[0]]
+            final_shape = [nb_frames_inference]
 
         final_shape.extend(self.indiv_shape[:-1])
         chunk_size = [1]
