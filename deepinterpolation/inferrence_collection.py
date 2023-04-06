@@ -332,13 +332,13 @@ class core_inferrence:
             final_shape = [self.nb_datasets*self.batch_size + self._get_first_output_index()]
 
         else:
-            final_shape = [self.nb_datasets*self.batch_size]
+            final_shape = [self.generator_obj.list_samples.shape[0]]
 
         final_shape.extend(self.indiv_shape[:-1])
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape[:-1])
 
-        with h5py.File(self.output_file, "w") as file_handle:
+        with h5py.File(self.output_file, "a") as file_handle:
             file_handle.create_dataset(
                 output_dataset_name,
                 shape=tuple(final_shape),

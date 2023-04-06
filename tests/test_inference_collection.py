@@ -18,7 +18,7 @@ def ophys_movie(tmp_path: str):
     into the generator object
     """
     rng = np.random.default_rng(1234)
-    data = rng.random((65, 512, 512))
+    data = rng.random((71, 512, 512))
     outpath = os.path.join(tmp_path, "ophys_movie.h5")
 
     with h5py.File(outpath, "w") as f:
@@ -78,7 +78,7 @@ def create_inference_json(tmp_path: str,
     inference_params = {
         "type": "inferrence",
         "name": "core_inferrence",
-        "steps_per_epoch": 4,
+        "steps_per_epoch": -1,
         "nb_workers": 4,
         "model_source": {"local_path": model_path},
         "rescale": True,
@@ -129,22 +129,23 @@ def test__core_inference_runner__run_multiprocessing_equals_run(
     with tempfile.TemporaryDirectory() as jobdir:
         model, inference_params = load_model(tmp_path, jobdir, ophys_movie, save_raw)
         model.run_multiprocessing()
+        expected_output_frames_count = model.generator_obj.list_samples.shape[0]
         with h5py.File(inference_params["output_file"], 'r') as file_handle:
             multiprocessing_output = file_handle['data'][()]
-            assert multiprocessing_output.shape == (4, 512, 512)
+            assert multiprocessing_output.shape == (expected_output_frames_count, 512, 512)
             if save_raw:
                 raw_shape = file_handle['raw'].shape
-                assert raw_shape == (4, 512, 512)
+                assert raw_shape == (expected_output_frames_count, 512, 512)
             else:
                 with pytest.raises(KeyError):
                     file_handle['raw']
         model.run()
         with h5py.File(inference_params["output_file"], 'r') as file_handle:
             output = file_handle['data'][()]
-            assert output.shape == (4, 512, 512)
+            assert output.shape == (expected_output_frames_count, 512, 512)
             if save_raw:
                 raw_shape = file_handle['raw'].shape
-                assert raw_shape == (4, 512, 512)
+                assert raw_shape == (expected_output_frames_count, 512, 512)
             else:
                 with pytest.raises(KeyError):
                     file_handle['raw']

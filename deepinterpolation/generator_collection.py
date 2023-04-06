@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import numpy as np
 import h5py
@@ -529,7 +530,7 @@ class SequentialGenerator(DeepGenerator):
 
     def __len__(self):
         "Denotes the total number of batches"
-        return int(len(self.list_samples) / self.batch_size)
+        return math.ceil(len(self.list_samples) / self.batch_size)
 
     def generate_batch_indexes(self, index):
         # This is to ensure we are going through
@@ -538,11 +539,13 @@ class SequentialGenerator(DeepGenerator):
             index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
-        indexes = np.arange(index * self.batch_size,
-                            (index + 1) * self.batch_size)
-
-        shuffle_indexes = self.list_samples[indexes]
-
+        start_ind = index * self.batch_size
+        end_ind = (index+1) * self.batch_size
+        if end_ind < self.list_samples.shape[0]:
+            indexes = np.arange(start_ind, end_ind)
+            shuffle_indexes = self.list_samples[indexes]
+        else:
+            shuffle_indexes = self.list_samples[start_ind:]
         return shuffle_indexes
 
 
