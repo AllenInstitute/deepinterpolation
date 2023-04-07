@@ -206,7 +206,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
 
     movie_statistics_nbframes = argschema.fields.Int(
         required=False,
-        default=-1000,
+        default=-100,
         description="Number of frames used to calculate normalization \
             statistics. This constraint to reduce the computational time \
             and space requirements for this calculation."
