@@ -339,7 +339,7 @@ class core_inferrence:
         chunk_size = [1]
         chunk_size.extend(self.indiv_shape[:-1])
 
-        with h5py.File(self.output_file, "a") as file_handle:
+        with h5py.File(self.output_file, "w") as file_handle:
             file_handle.create_dataset(
                 output_dataset_name,
                 shape=tuple(final_shape),
@@ -386,7 +386,6 @@ class core_inferrence:
             local_mean, local_std = \
                     self.generator_obj.__get_norm_parameters__(index_dataset)  
             predictions_data = self.model.predict_on_batch(local_data[0])
-
             if self.rescale:
                 corrected_data = _rescale(predictions_data, local_std, local_mean)
             else:

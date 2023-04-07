@@ -1042,8 +1042,6 @@ class InferenceOphysGenerator(SequentialGenerator):
         if self._gpu_available:
             self._batch_tensor_index = None # Current index cached as a batch tensor on the GPU
             self._batch_tensor = None
-            self._batch_indices = None
-            self._input_indices = None
 
         # For backward compatibility
         self.cache_data = self.json_data.get("cache_data", False)
@@ -1134,13 +1132,10 @@ class InferenceOphysGenerator(SequentialGenerator):
         # Get indices for target frames and their inputs
         if self._gpu_available and not self.gpu_cache_full:
             data_tensor = self.__get_batch_tensor(index)
-            if self._batch_indices is None or self._input_indices is None:
-                self._batch_indices = self.generate_batch_indexes(0)
-                self._input_indices = np.vstack(
-                    [self.__get_sample_input_indices(frame_index) \
-                        for frame_index in self._batch_indices])
-            input_indices = self._input_indices
-            batch_indices = self._batch_indices
+            batch_indices = self.generate_batch_indexes(index) - index*self.batch_size
+            input_indices = np.vstack(
+                [self.__get_sample_input_indices(frame_index) \
+                    for frame_index in batch_indices])
         else:
             data_tensor = self.movie_data
             batch_indices = self.generate_batch_indexes(index)
