@@ -378,7 +378,6 @@ class core_inferrence:
 
     def run(self):
         self.model = _load_model(self.json_data)
-        print(f"DEBUG: local mean: {self.generator_obj.local_mean}, local_std{self.generator_obj.local_std}")
         for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
             local_data = self.generator_obj[index_dataset]
             # We overwrite epoch_index to allow the last unfilled epoch
