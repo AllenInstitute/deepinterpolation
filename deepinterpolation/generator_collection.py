@@ -936,8 +936,9 @@ class OphysGenerator(SequentialGenerator):
 
         self._update_end_frame(self.total_frame_per_movie)
         self._calculate_list_samples(self.total_frame_per_movie)
-
-        average_nb_samples = np.min([int(raw_data.shape[0]), 100])
+        self.movie_statistics_sample_size = \
+            self.json_data.get("movie_statistics_sample_size", 100)
+        average_nb_samples = np.min([int(raw_data.shape[0]), self.movie_statistics_sample_size])
 
         # For backward compatibility
         if "cache_data" in self.json_data.keys():
@@ -1054,7 +1055,7 @@ class InferenceOphysGenerator(SequentialGenerator):
         self.normalize_cache = self.json_data.get("normalize_cache", False)
         self.batch_size = self.json_data["batch_size"]
         self.movie_statistics_sample_size = \
-            self.json_data.get("movie_statistics_sample_size", 1000)
+            self.json_data.get("movie_statistics_sample_size", 100)
 
         self.total_frame_per_movie = int(self.movie_data.shape[0])
 
