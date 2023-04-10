@@ -267,5 +267,5 @@ def test_ephys_inference(use_legacy_model_path):
         with h5py.File(inference_params["output_file"], "r") as file_handle:
             local_size = file_handle["data"].shape
 
-        # We check we get 100 frames out
+        # We check we get 101 frames out
         assert local_size[0] == 101
