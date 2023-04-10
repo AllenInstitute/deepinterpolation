@@ -175,7 +175,10 @@ class TestInferenceOphysGenerator:
                                                 [1, 2, 6, 7],
                                                 [2, 3, 7, 8]])
             expected_batch_indices += i*batch_size
-            expected_batch = data[expected_batch_indices]
+            if i == nb_datasets-1:
+                expected_batch = data[expected_batch_indices[:2]]
+            else:
+                expected_batch = data[expected_batch_indices]
             expected_batch = np.moveaxis(expected_batch, 1, -1)
             obtained_batch = data_generator[i][0].numpy()
             np.testing.assert_array_equal(obtained_batch, expected_batch)
@@ -201,7 +204,10 @@ class TestInferenceOphysGenerator:
                                                 [1, 2, 6, 7],
                                                 [2, 3, 7, 8]])
             expected_batch_indices += i*batch_size
-            expected_batch = data[expected_batch_indices]
+            if i == nb_datasets-1:
+                expected_batch = data[expected_batch_indices[:2]]
+            else:
+                expected_batch = data[expected_batch_indices]
             expected_batch = np.moveaxis(expected_batch, 1, -1)
             obtained_batch = data_generator[i][0]
             np.testing.assert_array_almost_equal(obtained_batch, expected_batch)
