@@ -1,6 +1,7 @@
-import argschema
 import json
 from pathlib import Path
+
+import argschema
 
 from deepinterpolation.cli.schemas import FineTuningInputSchema
 from deepinterpolation.generic import ClassLoader
@@ -23,8 +24,9 @@ class FineTuning(argschema.ArgSchemaParser):
 
         # We create the output model filename if empty
         if self.args["finetuning_params"]["model_string"] == "":
-            self.args["finetuning_params"]["model_string"] = \
-                self.args["finetuning_params"]["loss"]
+            self.args["finetuning_params"]["model_string"] = self.args[
+                "finetuning_params"
+            ]["loss"]
 
         # TODO: The following lines will be remove once we deprecate the legacy
         # parameter tracking system
@@ -38,17 +40,21 @@ class FineTuning(argschema.ArgSchemaParser):
         )
 
         # To be removed once fully transitioned to CLI
-        self.args["generator_params"]["train_path"] = \
-            self.args["generator_params"]["data_path"]
-        self.args["test_generator_params"]["train_path"] = \
-            self.args["test_generator_params"]["data_path"]
+        self.args["generator_params"]["train_path"] = self.args["generator_params"][
+            "data_path"
+        ]
+        self.args["test_generator_params"]["train_path"] = self.args[
+            "test_generator_params"
+        ]["data_path"]
 
         # Forward parameters to the training agent
-        self.args["finetuning_params"]["steps_per_epoch"] = \
-            self.args["finetuning_params"]["steps_per_epoch"]
+        self.args["finetuning_params"]["steps_per_epoch"] = self.args[
+            "finetuning_params"
+        ]["steps_per_epoch"]
 
-        self.args["finetuning_params"]["batch_size"] = \
-            self.args["generator_params"]["batch_size"]
+        self.args["finetuning_params"]["batch_size"] = self.args["generator_params"][
+            "batch_size"
+        ]
 
         # This is used to send to the legacy parameter tracking system
         # to specify each sub-object type.

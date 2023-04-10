@@ -1,25 +1,28 @@
+import logging
+import multiprocessing
 import warnings
+from multiprocessing.managers import AcquirerProxy, DictProxy
+from pathlib import Path
+from typing import Union
 
 import h5py
-import logging
 import numpy as np
-from deepinterpolation.generic import JsonLoader
-from deepinterpolation.generator_collection import DeepGenerator
-from tensorflow.keras.models import load_model
-import deepinterpolation.loss_collection as lc
-from tqdm.auto import tqdm
 import tensorflow as tf
-from typing import Union
-import multiprocessing
-from multiprocessing.managers import DictProxy, AcquirerProxy
+from tensorflow.keras.models import load_model
+from tqdm.auto import tqdm
+
+import deepinterpolation.loss_collection as lc
+from deepinterpolation.generator_collection import DeepGenerator
+from deepinterpolation.generic import JsonLoader
 from deepinterpolation.multiprocessing_utils import winnow_process_list
-from pathlib import Path
-tf.compat.v1.logging.set_verbosity(
-    tf.compat.v1.logging.ERROR)
+
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 logger = logging.getLogger(__name__)
 logging.captureWarnings(True)
 logging.basicConfig(level=logging.INFO)
+
+
 class fmri_inferrence:
     # This inferrence is specific to fMRI which is raster scanning for
     # denoising
@@ -48,7 +51,7 @@ class fmri_inferrence:
         if "output_datatype" in self.json_data.keys():
             self.output_datatype = self.json_data["output_datatype"]
         else:
-            self.output_datatype = 'float32'
+            self.output_datatype = "float32"
 
         self.model_path = self.json_data["model_path"]
 
@@ -130,6 +133,7 @@ class fmri_inferrence:
                                 :,
                             ]
 
+
 def _load_model(json_data: dict) -> tf.keras.Model:
     try:
         local_model_path = __get_local_model_path(json_data)
@@ -138,13 +142,15 @@ def _load_model(json_data: dict) -> tf.keras.Model:
         model = __load_model_from_mlflow(json_data)
     return model
 
-def _rescale(data: np.ndarray,
-             std: float,
-             mean: float,
-    ) -> np.ndarray:
+
+def _rescale(
+    data: np.ndarray,
+    std: float,
+    mean: float,
+) -> np.ndarray:
     """Rescale the inference output. Since the inference is
     predicting normalized data, rescaling can denormalize
-    
+
     Parameters
     -----------
     data : np.ndarray
@@ -163,23 +169,24 @@ def _rescale(data: np.ndarray,
 
 
 def core_inference_worker(
-                        json_data: dict,
-                        input_lookup: dict,
-                        rescale: bool,
-                        save_raw: bool,
-                        output_dict: DictProxy,
-                        output_lock: AcquirerProxy):
+    json_data: dict,
+    input_lookup: dict,
+    rescale: bool,
+    save_raw: bool,
+    output_dict: DictProxy,
+    output_lock: AcquirerProxy,
+):
 
-    """ Helper function to define Worker for processing inference.
-        Used with multiprocessing.process 
+    """Helper function to define Worker for processing inference.
+    Used with multiprocessing.process
     """
     model = _load_model(json_data)
     local_output = {}
     for dataset_index in input_lookup:
         local_lookup = input_lookup[dataset_index]
-        local_data = local_lookup['local_data']
-        local_mean = local_lookup['local_mean']
-        local_std = local_lookup['local_std']
+        local_data = local_lookup["local_data"]
+        local_mean = local_lookup["local_mean"]
+        local_std = local_lookup["local_std"]
 
         predictions_data = model.predict_on_batch(local_data[0])
 
@@ -195,41 +202,46 @@ def core_inference_worker(
             else:
                 corrected_raw = local_data[1]
 
-        local_output[dataset_index] = {'corrected_raw': corrected_raw,
-                                       'corrected_data': corrected_data}
+        local_output[dataset_index] = {
+            "corrected_raw": corrected_raw,
+            "corrected_data": corrected_data,
+        }
 
     with output_lock:
         k_list = list(local_output.keys())
         for k in k_list:
             output_dict[k] = local_output.pop(k)
 
+
 def __get_local_model_path(json_data: dict) -> str:
     try:
-        model_path = json_data['model_path']
-        warnings.warn('Loading model from model_path will be deprecated '
-                      'in a future release')
+        model_path = json_data["model_path"]
+        warnings.warn(
+            "Loading model from model_path will be deprecated " "in a future release"
+        )
     except KeyError:
-        model_path = json_data['model_source']['local_path']
+        model_path = json_data["model_source"]["local_path"]
     return model_path
+
 
 def __load_local_model(path: str) -> tf.keras.Model:
     model = load_model(
         path,
-        custom_objects={
-            "annealed_loss": lc.loss_selector("annealed_loss")},
+        custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
     )
     return model
 
+
 def __load_model_from_mlflow(json_data: dict) -> tf.keras.Model:
     import mlflow
-    mlflow_registry_params = \
-        json_data['model_source']['mlflow_registry']
 
-    model_name = mlflow_registry_params['model_name']
-    model_version = mlflow_registry_params.get('model_version')
-    model_stage = mlflow_registry_params.get('model_stage')
+    mlflow_registry_params = json_data["model_source"]["mlflow_registry"]
 
-    mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
+    model_name = mlflow_registry_params["model_name"]
+    model_version = mlflow_registry_params.get("model_version")
+    model_stage = mlflow_registry_params.get("model_stage")
+
+    mlflow.set_tracking_uri(mlflow_registry_params["tracking_uri"])
 
     if model_version is not None:
         model_uri = f"models:/{model_name}/{model_version}"
@@ -239,17 +251,16 @@ def __load_model_from_mlflow(json_data: dict) -> tf.keras.Model:
         # Gets the latest version without any stage
         model_uri = f"models:/{model_name}/None"
 
-    model = mlflow.keras.load_model(
-        model_uri=model_uri
-    )
+    model = mlflow.keras.load_model(model_uri=model_uri)
 
     return model
 
 
 class core_inferrence:
     # This is the generic inferrence class
-    def __init__(self, inferrence_json_path: Union[str, Path],
-                  generator_obj: DeepGenerator):
+    def __init__(
+        self, inferrence_json_path: Union[str, Path], generator_obj: DeepGenerator
+    ):
         self.model = None
         self.inferrence_json_path = inferrence_json_path
         self.generator_obj = generator_obj
@@ -278,7 +289,7 @@ class core_inferrence:
         if "output_datatype" in self.json_data.keys():
             self.output_datatype = self.json_data["output_datatype"]
         else:
-            self.output_datatype = 'float32'
+            self.output_datatype = "float32"
 
         if "output_padding" in self.json_data.keys():
             self.output_padding = self.json_data["output_padding"]
@@ -295,7 +306,6 @@ class core_inferrence:
         self.indiv_shape = self.generator_obj.get_output_size()
         self._create_h5_datasets(self.output_dataset_name, self.raw_dataset_name)
 
-
     def _get_first_output_index(self) -> int:
         """
         Get first output index depending if output_padding is enabled.
@@ -308,17 +318,18 @@ class core_inferrence:
         first_output_index: int
         """
         if self.output_padding:
-            first_output_index = self.generator_obj.start_sample - \
-                self.generator_obj.start_frame
+            first_output_index = (
+                self.generator_obj.start_sample - self.generator_obj.start_frame
+            )
         else:
             first_output_index = 0
         return first_output_index
 
-
-    def _create_h5_datasets(self,
-                            output_dataset_name: str,
-                            raw_dataset_name: str,
-                            ):
+    def _create_h5_datasets(
+        self,
+        output_dataset_name: str,
+        raw_dataset_name: str,
+    ):
         """Create datasets on output h5 file.
 
         Parameters
@@ -355,12 +366,12 @@ class core_inferrence:
                 )
         logger.info(f"Created empty HDF5 file {self.output_file}")
 
-
-    def _write_output_to_file(self,
-                              index_dataset: int,
-                              corrected_data: np.ndarray,
-                              corrected_raw: np.ndarray = None,
-                              ):
+    def _write_output_to_file(
+        self,
+        index_dataset: int,
+        corrected_data: np.ndarray,
+        corrected_raw: np.ndarray = None,
+    ):
         """Write denoised and raw outputs onto respective datasets on
         h5 file
         """
@@ -375,15 +386,15 @@ class core_inferrence:
                 raw_out = file_handle[self.raw_dataset_name]
                 raw_out[start:end] = np.squeeze(corrected_raw, -1)
 
-
     def run(self):
         self.model = _load_model(self.json_data)
         for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
             local_data = self.generator_obj[index_dataset]
             # We overwrite epoch_index to allow the last unfilled epoch
             self.generator_obj.epoch_index = epoch_index
-            local_mean, local_std = \
-                    self.generator_obj.__get_norm_parameters__(index_dataset)  
+            local_mean, local_std = self.generator_obj.__get_norm_parameters__(
+                index_dataset
+            )
             predictions_data = self.model.predict_on_batch(local_data[0])
             if self.rescale:
                 corrected_data = _rescale(predictions_data, local_std, local_mean)
@@ -400,59 +411,64 @@ class core_inferrence:
 
             self._write_output_to_file(index_dataset, corrected_data, corrected_raw)
 
-
     def run_multiprocessing(self):
         with multiprocessing.Manager() as mgr:
             output_lock = mgr.Lock()
             output_dict = mgr.dict()
             process_list = []
 
-            for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
+            for epoch_index, index_dataset in enumerate(
+                tqdm(np.arange(self.nb_datasets))
+            ):
                 local_data = self.generator_obj[index_dataset]
 
                 # We overwrite epoch_index to allow the last unfilled epoch
                 self.generator_obj.epoch_index = epoch_index
-                local_mean, local_std = \
-                        self.generator_obj.__get_norm_parameters__(index_dataset)  
-                
+                local_mean, local_std = self.generator_obj.__get_norm_parameters__(
+                    index_dataset
+                )
+
                 this_batch = {
                     index_dataset: {
-                        'local_data': local_data,
-                        'local_mean': local_mean,
-                        'local_std': local_std,
+                        "local_data": local_data,
+                        "local_mean": local_mean,
+                        "local_std": local_std,
                     }
                 }
 
                 process = multiprocessing.Process(
-                            target=core_inference_worker,
-                            args=(self.json_data,
-                                this_batch,
-                                self.rescale,
-                                self.save_raw,
-                                output_dict,
-                                output_lock))
+                    target=core_inference_worker,
+                    args=(
+                        self.json_data,
+                        this_batch,
+                        self.rescale,
+                        self.save_raw,
+                        output_dict,
+                        output_lock,
+                    ),
+                )
                 process.start()
                 process_list.append(process)
 
                 while len(process_list) >= self.workers:
                     process_list = winnow_process_list(process_list)
 
-
-                if len(output_dict) >= max(1, self.nb_datasets//8):
+                if len(output_dict) >= max(1, self.nb_datasets // 8):
                     with output_lock:
                         index_list = list(output_dict.keys())
                         for dataset_index in index_list:
-                            dataset = output_dict.pop(dataset_index)      
+                            dataset = output_dict.pop(dataset_index)
                             if self.save_raw:
-                                if dataset['corrected_raw'] is not None:
-                                    corrected_raw = dataset['corrected_raw']
+                                if dataset["corrected_raw"] is not None:
+                                    corrected_raw = dataset["corrected_raw"]
                             else:
                                 corrected_raw = None
-                            corrected_data = dataset['corrected_data']
-                            self._write_output_to_file(dataset_index, corrected_data, corrected_raw)
+                            corrected_data = dataset["corrected_data"]
+                            self._write_output_to_file(
+                                dataset_index, corrected_data, corrected_raw
+                            )
 
-
-            logger.info('processing last datasets')
+            logger.info("processing last datasets")
             for p in process_list:
                 p.join()
 
@@ -460,9 +476,9 @@ class core_inferrence:
                 dataset_index = output_dict.keys()[0]
                 dataset = output_dict[dataset_index]
                 if self.save_raw:
-                    if dataset['corrected_raw'] is not None:
-                        corrected_raw = dataset['corrected_raw']
+                    if dataset["corrected_raw"] is not None:
+                        corrected_raw = dataset["corrected_raw"]
                 else:
                     corrected_raw = None
-                corrected_data = dataset['corrected_data']
+                corrected_data = dataset["corrected_data"]
                 self._write_output_to_file(dataset_index, corrected_data, corrected_raw)

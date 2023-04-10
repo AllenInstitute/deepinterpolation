@@ -1,0 +1,4 @@
+[flake8]
+exclude = build/, examples/
+extend-ignore = E203
+max-line-length=89
