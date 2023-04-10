@@ -12,7 +12,6 @@ from tensorflow.keras.models import load_model
 from tqdm.auto import tqdm
 
 import deepinterpolation.loss_collection as lc
-from deepinterpolation.generator_collection import DeepGenerator
 from deepinterpolation.generic import JsonLoader
 from deepinterpolation.multiprocessing_utils import winnow_process_list
 
@@ -259,7 +258,7 @@ def __load_model_from_mlflow(json_data: dict) -> tf.keras.Model:
 class core_inferrence:
     # This is the generic inferrence class
     def __init__(
-        self, inferrence_json_path: Union[str, Path], generator_obj: DeepGenerator
+        self, inferrence_json_path: Union[str, Path], generator_obj
     ):
         self.model = None
         self.inferrence_json_path = inferrence_json_path

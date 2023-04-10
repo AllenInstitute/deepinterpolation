@@ -181,7 +181,7 @@ def test_integration_cli_ephys_inference_no_padding(tmp_path):
     )
 
     generator_param["batch_size"] = 50
-    generator_param["start_frame"] = 0
+    generator_param["start_frame"] = 50
     generator_param["end_frame"] = 100  # -1 to go until the end.
 
     inferrence_param["name"] = "core_inferrence"
@@ -216,4 +216,4 @@ def test_integration_cli_ephys_inference_no_padding(tmp_path):
     with h5py.File(path_output, "r") as h5_handle:
         nb_frame = h5_handle["data"].shape[0]
 
-    assert nb_frame == 50
+    assert nb_frame == 51
