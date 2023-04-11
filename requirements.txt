@@ -1,4 +1,4 @@
-tensorflow==2.7
+tensorflow
 nibabel
 matplotlib
 numpy
@@ -7,3 +7,4 @@ scipy
 tifffile
 argschema==2.0.2
 mlflow==1.14.1
+tqdm

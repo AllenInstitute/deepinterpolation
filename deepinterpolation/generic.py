@@ -2,8 +2,9 @@ import json
 
 
 class JsonLoader:
-    """     
-    JsonLoader is used to load the data from all structured json files associated with the DeepInterpolation package.
+    """
+    JsonLoader is used to load the data from all structured json files
+    associated with the DeepInterpolation package.
     """
 
     def __init__(self, path):
@@ -13,7 +14,8 @@ class JsonLoader:
 
     def load_json(self):
         """
-        This function load the json file from the path recorded in the class instance. 
+        This function load the json file from the path recorded
+        in the class instance.
 
         Parameters:
         None
@@ -27,9 +29,9 @@ class JsonLoader:
 
     def set_default(self, parameter_name, default_value):
         """
-        set default forces the initialization of a parameter if it was not present in
-        the json file. If the parameter is already present in the json file, nothing
-        will be changed.
+        set default forces the initialization of a parameter if it
+        was not present in the json file. If the parameter is already
+        present in the json file, nothing will be changed.
 
         Parameters:
         parameter_name (str): name of the paramter to initialize
@@ -44,36 +46,40 @@ class JsonLoader:
 
     def get_type(self):
         """
-        json types define the general category of the object the json file applies to.    
-        For instance, the json can apply to a data Generator type
+        json types define the general category of the object the
+        json file applies to. For instance, the json can apply to
+        a data Generator type
 
-        Parameters: 
+        Parameters:
         None
-    
-        Returns: 
-        str: Description of the json type 
+
+        Returns:
+        str: Description of the json type
         """
 
         return self.json_data["type"]
 
     def get_name(self):
-        """     
-        Each json type is sub-divided into different names. The name defines the exact construction logic of the object and how the
-        parameters json data is used. For instance, a json file can apply to a Generator type using the AudioGenerator name when 
-        generating data from an audio source. Type and Name fully defines the object logic. 
+        """
+        Each json type is sub-divided into different names. The name
+        defines the exact construction logic of the object and how the
+        parameters json data is used. For instance, a json file can
+        apply to a Generator type using the AudioGenerator name when
+        generating data from an audio source. Type and Name fully
+        defines the object logic.
 
-        Parameters: 
+        Parameters:
         None
-    
-        Returns: 
-        str: Description of the json name 
+
+        Returns:
+        str: Description of the json name
         """
 
         return self.json_data["name"]
 
 
 class JsonSaver:
-    """     
+    """
     JsonSaver is used to save dict data into individual file.
     """
 
@@ -81,13 +87,13 @@ class JsonSaver:
         self.dict = dict_save
 
     def save_json(self, path):
-        """ 
-        This function save the json file into the path provided. 
+        """
+        This function save the json file into the path provided.
 
-        Parameters: 
+        Parameters:
         str: path: str
 
-        Returns: 
+        Returns:
         None
         """
 
@@ -96,16 +102,20 @@ class JsonSaver:
 
 
 class ClassLoader:
-    """     
-    ClassLoader allows to select and create a specific Type and Name object from the available library of objects. It then
-    uses the parameters in the json file to create a specific instance of that object. 
-    It returns that object and the ClassLoader object should then be deleted. 
+    """
+    ClassLoader allows to select and create a specific Type and Name
+    object from the available library of objects. It then uses the
+    parameters in the json file to create a specific instance of that
+    object. It returns that object and the ClassLoader object should
+    then be deleted.
     """
 
-    from deepinterpolation import network_collection
-    from deepinterpolation import generator_collection
-    from deepinterpolation import trainor_collection
-    from deepinterpolation import inferrence_collection
+    from deepinterpolation import (
+        generator_collection,
+        inferrence_collection,
+        network_collection,
+        trainor_collection,
+    )
 
     def __init__(self, json_path):
         json_class = JsonLoader(json_path)
@@ -116,13 +126,15 @@ class ClassLoader:
 
     def find_and_build(self):
         """
-        This function searches the available classes available for object 'type' and 'name' and returns a callback to instantiate.
+        This function searches the available classes available for
+        object 'type' and 'name' and returns a callback to instantiate.
 
         Parameters:
         None
 
-        Returns: 
-        obj: an instantiation callback of the object requested when creating ClassLoader with a json file
+        Returns:
+        obj: an instantiation callback of the object requested when
+        creating ClassLoader with a json file
         """
 
         if self.local_type == "network":
