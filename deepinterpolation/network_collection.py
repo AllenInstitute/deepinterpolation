@@ -1,29 +1,18 @@
+import numpy as np
+from tensorflow.keras import regularizers
 from tensorflow.keras.layers import (
-    Input,
-    Conv1D,
+    Concatenate,
     Conv2D,
     Conv3D,
-    MaxPooling1D,
-    MaxPooling2D,
-    MaxPool3D,
-    UpSampling3D,
-    UpSampling2D,
     Dense,
+    MaxPool3D,
+    MaxPooling2D,
+    UpSampling2D,
+    UpSampling3D,
     ZeroPadding2D,
     ZeroPadding3D,
-    Flatten,
-    DepthwiseConv2D,
-    Dropout,
-    Reshape,
 )
-from tensorflow.keras.layers import Concatenate
-from tensorflow.keras.constraints import NonNeg
-from tensorflow.keras.layers import dot
-from tensorflow.keras import regularizers
-from tensorflow.keras.constraints import NonNeg
-from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import Input
-from tensorflow.keras.models import Model
+
 from deepinterpolation.generic import JsonLoader
 
 
@@ -83,7 +72,6 @@ def unet_single_256(path_json):
         )  # 128 x 128 x 128
         up1 = UpSampling2D((2, 2))(conv4)  # 14 x 14 x 128
 
-        conc_up_1 = Concatenate()([up1, conv2])
         conv5 = Conv2D(128, (3, 3), activation="relu", padding="same")(
             up1
         )  # 256 x 256 x 64
@@ -139,7 +127,7 @@ def fmri_flexible_architecture(path_json):
 
         broad_activation = hp.Choice("unit_activation", values=["relu", "elu"])
 
-        for nb_conv in range(hp.Choice(f"nb_conv_layers", values=[0, 1, 2])):
+        for nb_conv in range(hp.Choice("nb_conv_layers", values=[0, 1, 2])):
             conv_interm = Conv3D(
                 hp.Choice(
                     f"conv_{nb_conv}_units", values=[32, 64, 128, 256], default=64
@@ -153,7 +141,7 @@ def fmri_flexible_architecture(path_json):
 
         in_dense = out_conv
 
-        for nb_dense in range(hp.Choice(f"nb_dense_layers", values=[2, 4, 6])):
+        for nb_dense in range(hp.Choice("nb_dense_layers", values=[2, 4, 6])):
             out_dense = Dense(
                 hp.Choice(
                     f"dense_{nb_dense}_units", values=[32, 64, 128, 256], default=128
@@ -388,7 +376,7 @@ def unet_1024_search(path_json):
         local_input = input_img
         for local_depth in range(json_data["network_depth"]):
             local_conv = Conv2D(
-                2 ** local_depth * json_data["nb_features_scale"],
+                2**local_depth * json_data["nb_features_scale"],
                 (3, 3),
                 activation="relu",
                 padding="same",
@@ -418,7 +406,7 @@ def unet_1024_search(path_json):
                 local_conc = local_up
 
             local_output = Conv2D(
-                2 ** local_depth * json_data["nb_features_scale"],
+                2**local_depth * json_data["nb_features_scale"],
                 (3, 3),
                 activation="relu",
                 padding="same",
@@ -501,9 +489,6 @@ def segmentation_net(path_json):
         conv4 = Conv2D(512, (3, 3), activation="relu", padding="same")(pool3)
         pool4 = MaxPooling2D(pool_size=(2, 2))(conv4)
         conv5 = Conv2D(1024, (3, 3), activation="relu", padding="same")(pool4)
-
-        latent_layer = Dense(100)(conv5)
-        latent_activation = Dense(100)(latent_layer)
 
         # neuronal projection
 

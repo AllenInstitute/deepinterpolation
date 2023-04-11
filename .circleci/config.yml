@@ -21,11 +21,7 @@ jobs:
       - run:
           command: |
             pip install flake8
-            # `|| true` to force exit code 0 even if no files found
-            CHANGED_PYFILES=$(git diff --diff-filter AMR --name-only origin/master | grep '\.py' || true)
-            echo "List of changed files:"
-            echo ${CHANGED_PYFILES}
-            echo ${CHANGED_PYFILES} | xargs -r flake8 --count
+            flake8 --exclude=build/,examples/ --extend-ignore=E203 --max-line-length=89
           name: Lint
 
   raw_packrequirement_test:

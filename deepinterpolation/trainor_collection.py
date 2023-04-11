@@ -1,27 +1,28 @@
+import math
 import os
+import warnings
+
+import matplotlib.pylab as plt
 import numpy as np
 import tensorflow
-from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import RMSprop
-from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
-import deepinterpolation.loss_collection as lc
-from tensorflow.keras.layers import Input
-from deepinterpolation.generic import JsonLoader
-import math
-import matplotlib.pylab as plt
-from tensorflow.keras.models import load_model
 from packaging import version
-import warnings
+from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
+from tensorflow.keras.layers import Input
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.optimizers import RMSprop
+
+import deepinterpolation.loss_collection as lc
+from deepinterpolation.generic import JsonLoader
 
 
 def create_decay_callback(initial_learning_rate, epochs_drop):
-    """ This is a helper function to return a configured
+    """This is a helper function to return a configured
     learning rate decay callback. It uses passed parameters
     to define the behavior of the decay
     """
 
     def step_decay(epoch):
-        """ learning decay callback"""
+        """learning decay callback"""
 
         drop = 0.5
         decrease_pow = math.floor((1 + epoch) / epochs_drop)
@@ -66,7 +67,7 @@ class core_trainer:
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
 
-        if 'checkpoints_dir' in json_data.keys():
+        if "checkpoints_dir" in json_data.keys():
             self.checkpoints_dir = json_data["checkpoints_dir"]
         else:
             self.checkpoints_dir = self.output_dir
@@ -82,8 +83,7 @@ class core_trainer:
             self.caching_validation = True
 
         self.output_model_file_path = os.path.join(
-            self.output_dir,
-            self.run_uid + "_" + self.model_string + "_model.h5"
+            self.output_dir, self.run_uid + "_" + self.model_string + "_model.h5"
         )
 
         if "nb_workers" in json_data.keys():
@@ -146,8 +146,7 @@ class core_trainer:
 
         checkpoint_path = os.path.join(
             self.checkpoints_dir,
-            self.run_uid + "_" + self.model_string +
-            "-{epoch:04d}-{val_loss:.4f}.h5",
+            self.run_uid + "_" + self.model_string + "-{epoch:04d}-{val_loss:.4f}.h5",
         )
         checkpoint = ModelCheckpoint(
             checkpoint_path,
@@ -185,8 +184,7 @@ class core_trainer:
                 np.floor(len(self.local_generator) / self.steps_per_epoch)
             )
         else:
-            self.epochs = self.nb_times_through_data * \
-                int(len(self.local_generator))
+            self.epochs = self.nb_times_through_data * int(len(self.local_generator))
 
     def initialize_network(self):
         local_size = self.local_generator.get_input_size()
@@ -212,16 +210,15 @@ class core_trainer:
         output_shape[0] = output_shape[0] * nb_object
 
         cache_input = np.zeros(shape=input_shape, dtype=input_example[0].dtype)
-        cache_output = np.zeros(
-            shape=output_shape, dtype=input_example[1].dtype)
+        cache_output = np.zeros(shape=output_shape, dtype=input_example[1].dtype)
 
         for local_index in range(len(self.local_test_generator)):
             local_data = self.local_test_generator.__getitem__(local_index)
             cache_input[
-                local_index * nb_samples: (local_index + 1) * nb_samples, :
+                local_index * nb_samples : (local_index + 1) * nb_samples, :
             ] = local_data[0]
             cache_output[
-                local_index * nb_samples: (local_index + 1) * nb_samples, :
+                local_index * nb_samples : (local_index + 1) * nb_samples, :
             ] = local_data[1]
 
         self.local_test_generator = (cache_input, cache_output)
@@ -242,7 +239,7 @@ class core_trainer:
                 shuffle=False,
                 use_multiprocessing=self.use_multiprocessing,
                 callbacks=self.callbacks_list,
-                initial_epoch=0
+                initial_epoch=0,
             )
         else:
             self.model_train = self.local_model.fit(
@@ -266,7 +263,7 @@ class core_trainer:
 
             save_loss_path = os.path.join(
                 self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_loss.npy"
+                self.run_uid + "_" + self.model_string + "_loss.npy",
             )
             np.save(save_loss_path, loss)
         else:
@@ -278,7 +275,7 @@ class core_trainer:
 
             save_val_loss_path = os.path.join(
                 self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_val_loss.npy"
+                self.run_uid + "_" + self.model_string + "_val_loss.npy",
             )
             np.save(save_val_loss_path, val_loss)
         else:
@@ -312,7 +309,7 @@ class core_trainer:
             plt.legend()
             save_hist_path = os.path.join(
                 self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_losses.png"
+                self.run_uid + "_" + self.model_string + "_losses.png",
             )
             plt.savefig(save_hist_path)
             plt.close(h)
@@ -333,8 +330,11 @@ class transfer_trainer(core_trainer):
     # This class is used to fine-tune a pre-trained model with additional data
 
     def __init__(
-        self, generator_obj, test_generator_obj,
-        trainer_json_path, auto_compile=True,
+        self,
+        generator_obj,
+        test_generator_obj,
+        trainer_json_path,
+        auto_compile=True,
     ):
 
         # self.network_obj = network_obj
@@ -359,7 +359,7 @@ class transfer_trainer(core_trainer):
         self.learning_rate = self.json_data["learning_rate"]
         self.output_model_file_path = os.path.join(
             self.output_dir,
-            self.run_uid + "_" + self.model_string + "_transfer_model.h5"
+            self.run_uid + "_" + self.model_string + "_transfer_model.h5",
         )
 
         if "nb_workers" in self.json_data.keys():
@@ -377,7 +377,7 @@ class transfer_trainer(core_trainer):
         else:
             self.use_multiprocessing = True
 
-        if 'checkpoints_dir' in self.json_data.keys():
+        if "checkpoints_dir" in self.json_data.keys():
             self.checkpoints_dir = self.json_data["checkpoints_dir"]
         else:
             self.checkpoints_dir = self.output_dir
@@ -387,8 +387,7 @@ class transfer_trainer(core_trainer):
         self.apply_learning_decay = self.json_data["apply_learning_decay"]
 
         if self.apply_learning_decay == 1:
-            self.initial_learning_rate = \
-                self.json_data["initial_learning_rate"]
+            self.initial_learning_rate = self.json_data["initial_learning_rate"]
             self.epochs_drop = self.json_data["epochs_drop"]
 
         self.nb_times_through_data = self.json_data["nb_times_through_data"]
@@ -428,8 +427,7 @@ class transfer_trainer(core_trainer):
         # this is expensive so we only do it when asked
         # Default is set to true here to match older behavior
         if "measure_baseline_loss" in self.json_data.keys():
-            self.measure_baseline_loss = \
-                self.json_data["measure_baseline_loss"]
+            self.measure_baseline_loss = self.json_data["measure_baseline_loss"]
         else:
             self.measure_baseline_loss = True
 
@@ -438,7 +436,7 @@ class transfer_trainer(core_trainer):
                 self.local_test_generator,
                 max_queue_size=32,
                 workers=self.workers,
-                use_multiprocessing=self.use_multiprocessing
+                use_multiprocessing=self.use_multiprocessing,
             )
 
     def initialize_network(self):
@@ -462,7 +460,7 @@ class transfer_trainer(core_trainer):
 
             save_loss_path = os.path.join(
                 self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_loss.npy"
+                self.run_uid + "_" + self.model_string + "_loss.npy",
             )
             np.save(save_loss_path, loss)
         else:
@@ -474,7 +472,7 @@ class transfer_trainer(core_trainer):
 
             save_val_loss_path = os.path.join(
                 self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_val_loss.npy"
+                self.run_uid + "_" + self.model_string + "_val_loss.npy",
             )
             np.save(save_val_loss_path, val_loss)
         else:
@@ -508,7 +506,7 @@ class transfer_trainer(core_trainer):
             plt.legend()
             save_hist_path = os.path.join(
                 self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_losses.png"
+                self.run_uid + "_" + self.model_string + "_losses.png",
             )
             plt.savefig(save_hist_path)
             plt.close(h)
@@ -522,31 +520,31 @@ class transfer_trainer(core_trainer):
 
     def __get_local_model_path(self):
         try:
-            model_path = self.json_data['model_path']
-            warnings.warn('Loading model from model_path will be deprecated '
-                          'in a future release')
+            model_path = self.json_data["model_path"]
+            warnings.warn(
+                "Loading model from model_path will be deprecated "
+                "in a future release"
+            )
         except KeyError:
-            model_path = self.json_data['model_source']['local_path']
+            model_path = self.json_data["model_source"]["local_path"]
         return model_path
 
     def __load_local_model(self, path: str):
         self.local_model = load_model(
             path,
-            custom_objects={
-                "annealed_loss": lc.loss_selector("annealed_loss")},
+            custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
         )
 
     def __load_model_from_mlflow(self):
         import mlflow
 
-        mlflow_registry_params = \
-            self.json_data['model_source']['mlflow_registry']
+        mlflow_registry_params = self.json_data["model_source"]["mlflow_registry"]
 
-        model_name = mlflow_registry_params['model_name']
-        model_version = mlflow_registry_params.get('model_version')
-        model_stage = mlflow_registry_params.get('model_stage')
+        model_name = mlflow_registry_params["model_name"]
+        model_version = mlflow_registry_params.get("model_version")
+        model_stage = mlflow_registry_params.get("model_stage")
 
-        mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
+        mlflow.set_tracking_uri(mlflow_registry_params["tracking_uri"])
 
         if model_version is not None:
             model_uri = f"models:/{model_name}/{model_version}"
@@ -556,6 +554,4 @@ class transfer_trainer(core_trainer):
             # Gets the latest version without any stage
             model_uri = f"models:/{model_name}/None"
 
-        self.local_model = mlflow.keras.load_model(
-            model_uri=model_uri
-        )
+        self.local_model = mlflow.keras.load_model(model_uri=model_uri)

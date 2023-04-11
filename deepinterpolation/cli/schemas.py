@@ -1,22 +1,25 @@
+import datetime
+import inspect
+import logging
+
 import argschema
 import marshmallow as mm
-import datetime
 from marshmallow import ValidationError
-import inspect
-from deepinterpolation import network_collection
-from deepinterpolation import generator_collection
-from deepinterpolation import trainor_collection
-from deepinterpolation import inferrence_collection
-import logging
 from marshmallow.validate import OneOf
+
+from deepinterpolation import (
+    generator_collection,
+    inferrence_collection,
+    network_collection,
+    trainor_collection,
+)
 
 
 def get_list_of_networks():
     """Helper function to get the list of networks architecture available
     currently in the package.
     """
-    list_architecture = inspect.getmembers(network_collection,
-                                           inspect.isfunction)
+    list_architecture = inspect.getmembers(network_collection, inspect.isfunction)
     curated_list = [indiv_arch[0] for indiv_arch in list_architecture]
     excluded_list = ["Input", "dot", "load_model"]
     curated_list = [
@@ -34,9 +37,14 @@ def get_list_of_generators():
     """
     list_generator = inspect.getmembers(generator_collection, inspect.isclass)
     curated_list = [indiv_arch[0] for indiv_arch in list_generator]
-    excluded_list = ["MaxRetryException", "JsonLoader",
-                     "FmriGenerator", "CollectorGenerator",
-                     "DeepGenerator", "SequentialGenerator"]
+    excluded_list = [
+        "MaxRetryException",
+        "JsonLoader",
+        "FmriGenerator",
+        "CollectorGenerator",
+        "DeepGenerator",
+        "SequentialGenerator",
+    ]
     # Some generators are not compatible with the CLI yet.
 
     curated_list = [
@@ -63,9 +71,7 @@ def get_list_of_trainors():
         "RMSprop",
     ]
     curated_list = [
-        indiv_arch
-        for indiv_arch in curated_list
-        if indiv_arch not in excluded_list
+        indiv_arch for indiv_arch in curated_list if indiv_arch not in excluded_list
     ]
 
     return curated_list
@@ -80,9 +86,7 @@ def get_list_of_inferrences():
     excluded_list = ["JsonLoader"]
 
     curated_list = [
-        indiv_arch
-        for indiv_arch in curated_list
-        if indiv_arch not in excluded_list
+        indiv_arch for indiv_arch in curated_list if indiv_arch not in excluded_list
     ]
 
     return curated_list
@@ -134,15 +138,15 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             for DeepInterpolation. Omission will be done on both sides of the \
             center frame, ie. twice pre_post_omission are omitted.\
             Omitted frames will not be used to fetch pre_frames and \
-            post_frames."
-        )
+            post_frames.",
+    )
 
     data_path = argschema.fields.String(
         required=True,
         description="Path to the file containing data used by \
             the generator. Usually this will be a full filepath. In some \
             cases, this can point to a folder (with \
-            MultiContinuousTifGenerator)"
+            MultiContinuousTifGenerator)",
     )
 
     batch_size = argschema.fields.Int(
@@ -176,7 +180,14 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         default=True,
         description="Whether to shuffle all selected frames in the generator.\
         It is recommended to set to 'True' for training and 'False' for \
-        inference."
+        inference.",
+    )
+
+    seed = argschema.fields.Int(
+        required=False,
+        default=-1234,
+        description="Seed used with the randomize parameter to shuffle \
+            selected frames in the generator.",
     )
 
     cache_data = argschema.fields.Boolean(
@@ -184,7 +195,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
         default=False,
         description="Whether to cache the entire dataset.\
         into memory to accelerate processing. Be mindfull \
-        of memory usage. Currently only impact OphysGenerator"
+        of memory usage. Currently only impact OphysGenerator",
     )
 
     total_samples = argschema.fields.Int(
@@ -194,25 +205,55 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
             end_frame. -1 defaults to all available samples between \
             start_frame and end_frame. If total_samples is larger than the \
             number of available frames, it will automatically be reduced to \
-            the maximal number."
+            the maximal number.",
+    )
+
+    movie_statistics_nbframes = argschema.fields.Int(
+        required=False,
+        default=-100,
+        description="Number of frames used to calculate normalization \
+            statistics. This constraint to reduce the computational time \
+            and space requirements for this calculation.",
+    )
+
+    gpu_cache_full = argschema.fields.Boolean(
+        required=False,
+        default=False,
+        description="Cache full movie onto GPU memory for batch generation \
+        when using InferenceOphysGenerator. Enabling this will lead to faster \
+        batch generation, training, and inference. If disabled, only the \
+        minimum chunk of movie required for batch generation will be cached \
+        onto the GPU at once.",
+    )
+
+    normalize_cache = argschema.fields.Boolean(
+        required=False,
+        default=True,
+        description="Normalize movie after caching when using the \
+        InferenceOphysGenerator. This requires converting the movie to \
+        float32 which will double the caching memory requirements.",
     )
 
     @mm.pre_load
     def generator_specific_settings(self, data, **kwargs):
         # This is for backward compatibility
         if "train_path" in data:
-            logging.warning("train_path has been deprecated and is to be \
+            logging.warning(
+                "train_path has been deprecated and is to be \
 replaced by data_path as generators can be used for training and inference. \
-We are forwarding the value but please update your code.")
+We are forwarding the value but please update your code."
+            )
             data["data_path"] = data["train_path"]
-            del data['train_path']
+            del data["train_path"]
         if "pre_post_frame" in data:
-            logging.warning("pre_post_frame has been deprecated and is to be \
+            logging.warning(
+                "pre_post_frame has been deprecated and is to be \
 replaced by pre_frame and post_frame. We are forwarding the value but please \
-update your code.")
+update your code."
+            )
             data["pre_frame"] = data["pre_post_frame"]
             data["post_frame"] = data["pre_post_frame"]
-            del data['pre_post_frame']
+            del data["pre_post_frame"]
         return data
 
 
@@ -300,7 +341,8 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
         description="Number of batches ran at one time for inference. \
             This is used to limit memory used and enable multi-processing \
             during inferrence. Choose this number to the highest number \
-            that your RAM memory can afford.")
+            that your RAM memory can afford.",
+    )
 
     use_multiprocessing = argschema.fields.Bool(
         required=False,
@@ -336,8 +378,18 @@ class InferenceSchema(argschema.schemas.DefaultSchema):
     output_datatype = argschema.fields.String(
         required=False,
         default="float32",
-        validate=OneOf(['uint32', 'int32', 'uint16', 'int16', 'uint8', 'int8',
-                        'float32', 'float16']),
+        validate=OneOf(
+            [
+                "uint32",
+                "int32",
+                "uint16",
+                "int16",
+                "uint8",
+                "int8",
+                "float32",
+                "float16",
+            ]
+        ),
         description=(
             "Output data type for inference. Default is float32. It is \
             important to keep in mind that DeepInterpolation can increase \
@@ -394,12 +446,15 @@ class InferenceInputSchema(argschema.ArgSchema):
     def inference_specific_settings(self, data, **kwargs):
         # This is to force randomize to be off if set by mistake
         if data["generator_params"]["randomize"]:
-            logging.info("randomize should be set to False for inference. \
-                        Overriding the parameter")
+            logging.info(
+                "randomize should be set to False for inference. \
+                        Overriding the parameter"
+            )
             data["generator_params"]["randomize"] = False
 
-        data["generator_params"]["steps_per_epoch"] = \
-            data["inference_params"]["steps_per_epoch"]
+        data["generator_params"]["steps_per_epoch"] = data["inference_params"][
+            "steps_per_epoch"
+        ]
 
         return data
 
@@ -430,7 +485,8 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
             as our datasets can be very large and it is beneficial to save \
             models and evaluate validation loss during training. After each \
             epoch a validation loss is computed and a checkpoint model is \
-            potentialy saved (see period_save).")
+            potentialy saved (see period_save).",
+    )
 
     nb_times_through_data = argschema.fields.Int(
         required=False,
@@ -507,11 +563,10 @@ class TrainingSchema(argschema.schemas.DefaultSchema):
     use_multiprocessing = argschema.fields.Bool(
         required=False,
         default=True,
-        description="whether to use a multiprocessing pool to fetch batch \
-            samples. Setting this to true will increase data generation speed \
-            if the generator is limited by read speed. This will also \
-            increase RAM memory usage. Set to False if your hardware \
-            encounter RAM memory error during training.",
+        description="Use multiprocessing pool to perform CPU inference. \
+            This has high RAM requirements as the batch object is duplicated \
+            across workers. Disable if you encounter RAM memory error during \
+            training. Automatically disabled if GPU is detected.",
     )
 
     nb_workers = argschema.fields.Int(
@@ -556,7 +611,8 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
             as our datasets can be very large and it is beneficial to save \
             models and evaluate validation loss during training. After each \
             epoch a validation loss is computed and a checkpoint model is \
-            potentialy saved (see period_save).")
+            potentialy saved (see period_save).",
+    )
 
     nb_times_through_data = argschema.fields.Int(
         required=False,
@@ -684,8 +740,7 @@ class TrainingInputSchema(argschema.ArgSchema):
     )
     training_params = argschema.fields.Nested(TrainingSchema, default={})
     generator_params = argschema.fields.Nested(GeneratorSchema, default={})
-    test_generator_params = argschema.fields.Nested(GeneratorSchema,
-                                                    default={})
+    test_generator_params = argschema.fields.Nested(GeneratorSchema, default={})
     network_params = argschema.fields.Nested(NetworkSchema, default={})
     output_full_args = argschema.fields.Bool(
         required=False,
@@ -700,8 +755,9 @@ class TrainingInputSchema(argschema.ArgSchema):
     @mm.post_load
     def training_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
-        data["generator_params"]["steps_per_epoch"] = \
-            data["training_params"]["steps_per_epoch"]
+        data["generator_params"]["steps_per_epoch"] = data["training_params"][
+            "steps_per_epoch"
+        ]
         data["test_generator_params"]["steps_per_epoch"] = -1
         return data
 
@@ -715,8 +771,7 @@ class FineTuningInputSchema(argschema.ArgSchema):
     )
     finetuning_params = argschema.fields.Nested(FineTuningSchema, default={})
     generator_params = argschema.fields.Nested(GeneratorSchema, default={})
-    test_generator_params = argschema.fields.Nested(GeneratorSchema,
-                                                    default={})
+    test_generator_params = argschema.fields.Nested(GeneratorSchema, default={})
     output_full_args = argschema.fields.Bool(
         required=False,
         default=False,
@@ -730,8 +785,9 @@ class FineTuningInputSchema(argschema.ArgSchema):
     @mm.post_load
     def finetuning_specific_settings(self, data, **kwargs):
         # We forward this parameter to the generator
-        data["generator_params"]["steps_per_epoch"] = \
-            data["finetuning_params"]["steps_per_epoch"]
+        data["generator_params"]["steps_per_epoch"] = data["finetuning_params"][
+            "steps_per_epoch"
+        ]
         data["test_generator_params"]["steps_per_epoch"] = -1
 
         return data

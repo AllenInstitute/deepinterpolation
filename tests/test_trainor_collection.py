@@ -1,6 +1,7 @@
 import os
-from deepinterpolation.generic import JsonSaver, ClassLoader
 import pathlib
+
+from deepinterpolation.generic import ClassLoader, JsonSaver
 
 
 def test_ephys_training(tmp_path):
@@ -30,9 +31,7 @@ def test_ephys_training(tmp_path):
     generator_test_param[
         "pre_post_omission"
     ] = 1  # Number of frame omitted before and after the predicted frame
-    generator_test_param[
-        "steps_per_epoch"
-    ] = -1
+    generator_test_param["steps_per_epoch"] = -1
 
     generator_param["type"] = "generator"
     generator_param["steps_per_epoch"] = steps_per_epoch
@@ -58,28 +57,20 @@ def test_ephys_training(tmp_path):
     # Those are parameters used for the training process
     training_param["type"] = "trainer"
     training_param["name"] = "core_trainer"
-    training_param["run_uid"] = 'tmp'
+    training_param["run_uid"] = "tmp"
     training_param["batch_size"] = generator_test_param["batch_size"]
     training_param["steps_per_epoch"] = steps_per_epoch
-    training_param[
-        "period_save"
-    ] = 25
+    training_param["period_save"] = 25
     training_param["nb_gpus"] = 0
     training_param["apply_learning_decay"] = 0
-    training_param[
-        "nb_times_through_data"
-    ] = 1
+    training_param["nb_times_through_data"] = 1
     training_param["learning_rate"] = 0.0001
     training_param["pre_post_frame"] = generator_test_param["pre_post_frame"]
     training_param["loss"] = "mean_absolute_error"
-    training_param[
-        "nb_workers"
-    ] = 1
+    training_param["nb_workers"] = 1
 
     training_param["model_string"] = (
-        network_param["name"]
-        + "-"
-        + training_param["loss"]
+        network_param["name"] + "-" + training_param["loss"]
     )
     jobdir = tmp_path
 

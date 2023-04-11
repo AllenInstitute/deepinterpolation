@@ -1,6 +1,8 @@
-from pathlib import Path
-import argschema
 import json
+from pathlib import Path
+
+import argschema
+
 from deepinterpolation.cli.schemas import TrainingInputSchema
 from deepinterpolation.generic import ClassLoader
 
@@ -39,10 +41,12 @@ class Training(argschema.ArgSchemaParser):
         )
 
         # To be removed once fully transitioned to CLI
-        self.args["generator_params"]["train_path"] = \
-            self.args["generator_params"]["data_path"]
-        self.args["test_generator_params"]["train_path"] = \
-            self.args["test_generator_params"]["data_path"]
+        self.args["generator_params"]["train_path"] = self.args["generator_params"][
+            "data_path"
+        ]
+        self.args["test_generator_params"]["train_path"] = self.args[
+            "test_generator_params"
+        ]["data_path"]
 
         # This is used to send to the legacy parameter tracking system
         # to specify each sub-object type.
@@ -86,8 +90,7 @@ class Training(argschema.ArgSchemaParser):
         training_obj = ClassLoader(training_json_path)
 
         training_class = training_obj.find_and_build()(
-            data_generator, data_test_generator, data_network,
-            training_json_path
+            data_generator, data_test_generator, data_network, training_json_path
         )
 
         self.logger.info("created objects for training")
