@@ -185,7 +185,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
 
     seed = argschema.fields.Int(
         required=False,
-        default=-1234,
+        default=1234,
         description="Seed used with the randomize parameter to shuffle \
             selected frames in the generator.",
     )
