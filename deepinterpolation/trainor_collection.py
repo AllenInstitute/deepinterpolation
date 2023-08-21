@@ -66,6 +66,7 @@ class core_trainer:
         self.nb_gpus = json_data["nb_gpus"]
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
+        self.verbose = json_data["verbose"]
 
         if "checkpoints_dir" in json_data.keys():
             self.checkpoints_dir = json_data["checkpoints_dir"]
@@ -242,6 +243,7 @@ class core_trainer:
             use_multiprocessing=self.use_multiprocessing,
             callbacks=self.callbacks_list,
             initial_epoch=0,
+            verbose=self.verbose
         )
 
     def finalize(self):
