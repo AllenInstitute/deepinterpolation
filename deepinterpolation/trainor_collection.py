@@ -149,14 +149,24 @@ class core_trainer:
             self.checkpoints_dir,
             self.run_uid + "_" + self.model_string + "-{epoch:04d}-{val_loss:.4f}.h5",
         )
-        checkpoint = ModelCheckpoint(
+        checkpoint = CustomModelCheckpoint(
             checkpoint_path,
             monitor="val_loss",
-            verbose=1,
+            verbose=self.verbose,
             save_best_only=True,
             mode="min",
             period=self.period_save,
         )
+
+        validation_callback = ValidationCallback(
+            model_checkpoint_callback=checkpoint,
+            test_data=self.local_test_generator,
+            workers=self.workers,
+            use_multiprocessing=self.use_multiprocessing,
+            verbose=self.verbose
+        )
+
+        callbacks_list = [validation_callback]
 
         # Add on epoch_end callback
 
@@ -168,9 +178,7 @@ class core_trainer:
             )
 
             lrate = LearningRateScheduler(step_decay_callback)
-            callbacks_list = [checkpoint, lrate]
-        else:
-            callbacks_list = [checkpoint]
+            callbacks_list.append(lrate)
 
         if version.parse(tensorflow.__version__) <= version.parse("2.1.0"):
             callbacks_list.append(epo_end)
@@ -234,7 +242,6 @@ class core_trainer:
 
         self.model_train = self.local_model.fit(
             self.local_generator,
-            validation_data=self.local_test_generator,
             steps_per_epoch=steps_per_epoch,
             epochs=self.epochs,
             max_queue_size=32,
@@ -316,6 +323,49 @@ class OnEpochEnd(tensorflow.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         for callback in self.callbacks:
             callback()
+
+
+class CustomModelCheckpoint(ModelCheckpoint):
+    """This class repurposes `ModelCheckpoint` to work with model.evaluate.
+    It currently only works with `model.fit`"""
+    def on_test_end(self, logs=None):
+        """`on_test_end` is not called in `ModelCheckpoint`.
+        We define it here"""
+        super().on_epoch_end(epoch=self._current_epoch, logs=logs)
+
+
+class ValidationCallback(tensorflow.keras.callbacks.Callback):
+    """This class defines `on_epoch_begin` and calls
+    `ModelCheckpoint.on_epoch_begin` callback every epoch during validation,
+    since otherwise it wouldn't be called (only called in .fit, not .evaluate)
+    """
+    def __init__(
+            self,
+            model_checkpoint_callback: CustomModelCheckpoint,
+            test_data: tensorflow.keras.utils.Sequence,
+            workers: int,
+            use_multiprocessing: bool,
+            verbose: int
+    ):
+        self._model_checkpoint_callback = model_checkpoint_callback
+        self._test_data = test_data
+        self._workers = workers
+        self._use_multiprocessing = use_multiprocessing
+        self._verbose = verbose
+
+    def on_epoch_begin(self, epoch):
+        self._model_checkpoint_callback.on_epoch_begin(epoch=epoch)
+
+    def on_epoch_end(self, epoch):
+        self.local_model.evaluate(
+            x=self._test_data,
+            max_queue_size=32,
+            workers=self._workers,
+            shuffle=False,
+            use_multiprocessing=self._use_multiprocessing,
+            callbacks=[self._model_checkpoint_callback],
+            verbose=self.verbose
+        )
 
 
 class transfer_trainer(core_trainer):
