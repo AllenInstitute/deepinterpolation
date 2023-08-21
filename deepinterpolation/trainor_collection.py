@@ -373,7 +373,6 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
             x=self._test_data,
             max_queue_size=32,
             workers=self._workers,
-            shuffle=False,
             use_multiprocessing=self._use_multiprocessing,
             callbacks=[self._model_checkpoint_callback],
             verbose=self._verbose
