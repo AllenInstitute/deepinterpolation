@@ -356,11 +356,11 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
         self._use_multiprocessing = use_multiprocessing
         self._verbose = verbose
 
-    def on_epoch_begin(self, epoch):
+    def on_epoch_begin(self, epoch, logs=None):
         self._logger.info(f'Epoch {epoch} train')
-        self._model_checkpoint_callback.on_epoch_begin(epoch=epoch)
+        self._model_checkpoint_callback.on_epoch_begin(epoch=epoch, logs=logs)
 
-    def on_epoch_end(self, epoch):
+    def on_epoch_end(self, epoch, logs=None):
         self._logger.info(f'Epoch {epoch} validation')
 
         self.local_model.evaluate(
