@@ -378,96 +378,20 @@ class transfer_trainer(core_trainer):
 
     def __init__(
         self,
+        network_obj,
         generator_obj,
         test_generator_obj,
         trainer_json_path,
         auto_compile=True,
     ):
 
-        # self.network_obj = network_obj
-        self.local_generator = generator_obj
-        self.local_test_generator = test_generator_obj
-
-        json_obj = JsonLoader(trainer_json_path)
-
-        # the following line is to be backward compatible in case
-        # new parameter logics are added.
-        json_obj.set_default("apply_learning_decay", 0)
-
-        self.json_data = json_obj.json_data
-        self.output_dir = self.json_data["output_dir"]
-        self.run_uid = self.json_data["run_uid"]
-        self.model_string = self.json_data["model_string"]
-        self.batch_size = self.local_generator.batch_size
-        self.steps_per_epoch = self.json_data["steps_per_epoch"]
-        self.loss_type = self.json_data["loss"]
-        self.nb_gpus = self.json_data["nb_gpus"]
-        self.period_save = self.json_data["period_save"]
-        self.learning_rate = self.json_data["learning_rate"]
-        self.output_model_file_path = os.path.join(
-            self.output_dir,
-            self.run_uid + "_" + self.model_string + "_transfer_model.h5",
+        super().__init__(
+            network_obj=network_obj,
+            generator_obj=generator_obj,
+            test_generator_obj=test_generator_obj,
+            trainer_json_path=trainer_json_path,
+            auto_compile=auto_compile
         )
-
-        if "nb_workers" in self.json_data.keys():
-            self.workers = self.json_data["nb_workers"]
-        else:
-            self.workers = 16
-
-        if "caching_validation" in self.json_data.keys():
-            self.caching_validation = self.json_data["caching_validation"]
-        else:
-            self.caching_validation = True
-
-        if "use_multiprocessing" in self.json_data.keys():
-            self.use_multiprocessing = self.json_data["use_multiprocessing"]
-        else:
-            self.use_multiprocessing = True
-
-        if "checkpoints_dir" in self.json_data.keys():
-            self.checkpoints_dir = self.json_data["checkpoints_dir"]
-        else:
-            self.checkpoints_dir = self.output_dir
-
-        # These parameters are related to setting up the
-        # behavior of learning rates
-        self.apply_learning_decay = self.json_data["apply_learning_decay"]
-
-        if self.apply_learning_decay == 1:
-            self.initial_learning_rate = self.json_data["initial_learning_rate"]
-            self.epochs_drop = self.json_data["epochs_drop"]
-
-        self.nb_times_through_data = self.json_data["nb_times_through_data"]
-
-        # Generator has to be initialized first to provide
-        # input size of network
-        self.initialize_generator()
-
-        if self.nb_gpus > 1:
-            mirrored_strategy = tensorflow.distribute.MirroredStrategy()
-            with mirrored_strategy.scope():
-                if auto_compile:
-                    self.initialize_network()
-
-                self.initialize_callbacks()
-
-                self.initialize_loss()
-
-                self.initialize_optimizer()
-                if auto_compile:
-                    self.compile()
-        else:
-            if auto_compile:
-                self.initialize_network()
-
-            self.initialize_callbacks()
-
-            self.initialize_loss()
-
-            self.initialize_optimizer()
-
-            if auto_compile:
-                self.compile()
 
         # For transfer learning, knowing the
         # baseline validation loss is important
