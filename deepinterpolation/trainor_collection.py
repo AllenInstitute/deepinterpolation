@@ -68,6 +68,7 @@ class core_trainer:
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
         self.verbose = json_data["verbose"]
+        self.json_data = json_data
         self._logger = logging.getLogger(__name__)
 
         if "checkpoints_dir" in json_data.keys():
@@ -378,7 +379,6 @@ class transfer_trainer(core_trainer):
 
     def __init__(
         self,
-        network_obj,
         generator_obj,
         test_generator_obj,
         trainer_json_path,
@@ -386,7 +386,7 @@ class transfer_trainer(core_trainer):
     ):
 
         super().__init__(
-            network_obj=network_obj,
+            network_obj=None,
             generator_obj=generator_obj,
             test_generator_obj=test_generator_obj,
             trainer_json_path=trainer_json_path,
