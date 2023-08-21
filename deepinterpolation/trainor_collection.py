@@ -332,6 +332,7 @@ class core_trainer:
         """Validation loss"""
         return self._val_losses
 
+
 # This is a helper class to fix an issue in tensorflow 2.0.
 # the on_epoch_end callback from sequences is not called.
 class OnEpochEnd(tensorflow.keras.callbacks.Callback):
@@ -434,7 +435,8 @@ class transfer_trainer(core_trainer):
     @property
     def output_model_file_path(self):
         return os.path.join(
-            self.output_dir, self.run_uid + "_" + self.model_string + "_transfer_model.h5"
+            self.output_dir, self.run_uid + "_" + self.model_string +
+            "_transfer_model.h5"
         )
 
     def initialize_network(self):
