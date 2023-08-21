@@ -228,31 +228,21 @@ class core_trainer:
         if self.caching_validation:
             self.cache_validation()
 
-        if self.steps_per_epoch > 0:
-            self.model_train = self.local_model.fit(
-                self.local_generator,
-                validation_data=self.local_test_generator,
-                steps_per_epoch=self.steps_per_epoch,
-                epochs=self.epochs,
-                max_queue_size=32,
-                workers=self.workers,
-                shuffle=False,
-                use_multiprocessing=self.use_multiprocessing,
-                callbacks=self.callbacks_list,
-                initial_epoch=0,
-            )
-        else:
-            self.model_train = self.local_model.fit(
-                self.local_generator,
-                validation_data=self.local_test_generator,
-                epochs=self.epochs,
-                max_queue_size=32,
-                workers=self.workers,
-                shuffle=False,
-                use_multiprocessing=True,
-                callbacks=self.callbacks_list,
-                initial_epoch=0,
-            )
+        steps_per_epoch = self.steps_per_epoch if self.steps_per_epoch > 0 \
+            else None
+
+        self.model_train = self.local_model.fit(
+            self.local_generator,
+            validation_data=self.local_test_generator,
+            steps_per_epoch=steps_per_epoch,
+            epochs=self.epochs,
+            max_queue_size=32,
+            workers=self.workers,
+            shuffle=False,
+            use_multiprocessing=self.use_multiprocessing,
+            callbacks=self.callbacks_list,
+            initial_epoch=0,
+        )
 
     def finalize(self):
         draw_plot = True
