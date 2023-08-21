@@ -166,7 +166,8 @@ class core_trainer:
             test_data=self.local_test_generator,
             workers=self.workers,
             use_multiprocessing=self.use_multiprocessing,
-            verbose=self.verbose
+            verbose=self.verbose,
+            logger=self._logger
         )
 
         callbacks_list = [validation_callback]
@@ -348,13 +349,15 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
             test_data: tensorflow.keras.utils.Sequence,
             workers: int,
             use_multiprocessing: bool,
-            verbose: int
+            verbose: int,
+            logger: logging.Logger
     ):
         self._model_checkpoint_callback = model_checkpoint_callback
         self._test_data = test_data
         self._workers = workers
         self._use_multiprocessing = use_multiprocessing
         self._verbose = verbose
+        self._logger = logger
 
     def on_epoch_begin(self, epoch, logs=None):
         self._logger.info(f'Epoch {epoch} train')
