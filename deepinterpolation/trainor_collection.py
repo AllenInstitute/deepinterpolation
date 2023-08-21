@@ -150,11 +150,11 @@ class core_trainer:
 
         checkpoint_path = os.path.join(
             self.checkpoints_dir,
-            self.run_uid + "_" + self.model_string + "-{epoch:04d}-{val_loss:.4f}.h5",
+            self.run_uid + "_" + self.model_string + "-{epoch:04d}-{loss:.4f}.h5",
         )
         checkpoint = CustomModelCheckpoint(
             checkpoint_path,
-            monitor="val_loss",
+            monitor="loss",
             verbose=self.verbose,
             save_best_only=True,
             mode="min",
