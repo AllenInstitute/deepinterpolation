@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import warnings
+from typing import List
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -67,9 +68,10 @@ class core_trainer:
         self.nb_gpus = json_data["nb_gpus"]
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
-        self.verbose = json_data["verbose"]
+        self.verbose = json_data.get("verbose", "auto")
         self.json_data = json_data
         self._logger = logging.getLogger(__name__)
+        self._val_losses = []
 
         if "checkpoints_dir" in json_data.keys():
             self.checkpoints_dir = json_data["checkpoints_dir"]
@@ -85,10 +87,6 @@ class core_trainer:
             self.caching_validation = json_data["caching_validation"]
         else:
             self.caching_validation = True
-
-        self.output_model_file_path = os.path.join(
-            self.output_dir, self.run_uid + "_" + self.model_string + "_model.h5"
-        )
 
         if "nb_workers" in json_data.keys():
             self.workers = json_data["nb_workers"]
@@ -135,6 +133,12 @@ class core_trainer:
             if auto_compile:
                 self.compile()
 
+    @property
+    def output_model_file_path(self):
+        return os.path.join(
+            self.output_dir, self.run_uid + "_" + self.model_string + "_model.h5"
+        )
+
     def compile(self):
         self.local_model.compile(
             loss=self.loss, optimizer=self.optimizer
@@ -163,6 +167,7 @@ class core_trainer:
 
         validation_callback = ValidationCallback(
             model=self.local_model,
+            trainer=self,
             model_checkpoint_callback=checkpoint,
             test_data=self.local_test_generator,
             workers=self.workers,
@@ -318,6 +323,14 @@ class core_trainer:
             plt.savefig(save_hist_path)
             plt.close(h)
 
+    def update_val_loss(self, loss: float):
+        """Update the val loss after calling `Model.evaluate`"""
+        self._val_losses.append(loss)
+
+    @property
+    def val_loss(self) -> List[float]:
+        """Validation loss"""
+        return self._val_losses
 
 # This is a helper class to fix an issue in tensorflow 2.0.
 # the on_epoch_end callback from sequences is not called.
@@ -347,6 +360,7 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
     def __init__(
             self,
             model: tensorflow.keras.Model,
+            trainer: core_trainer,
             model_checkpoint_callback: CustomModelCheckpoint,
             test_data: tensorflow.keras.utils.Sequence,
             workers: int,
@@ -361,6 +375,7 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
         self._use_multiprocessing = use_multiprocessing
         self._verbose = verbose
         self._logger = logger
+        self._trainer = trainer
 
     def on_epoch_begin(self, epoch, logs=None):
         self._logger.info(f'Epoch {epoch+1} train')
@@ -369,7 +384,7 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         self._logger.info(f'Epoch {epoch+1} validation')
 
-        self._model.evaluate(
+        loss = self._model.evaluate(
             x=self._test_data,
             max_queue_size=32,
             workers=self._workers,
@@ -377,6 +392,7 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
             callbacks=[self._model_checkpoint_callback],
             verbose=self._verbose
         )
+        self._trainer.update_val_loss(loss=loss)
 
 
 class transfer_trainer(core_trainer):
@@ -415,6 +431,12 @@ class transfer_trainer(core_trainer):
                 use_multiprocessing=self.use_multiprocessing,
             )
 
+    @property
+    def output_model_file_path(self):
+        return os.path.join(
+            self.output_dir, self.run_uid + "_" + self.model_string + "_transfer_model.h5"
+        )
+
     def initialize_network(self):
         self.__load_model()
 
@@ -443,14 +465,12 @@ class transfer_trainer(core_trainer):
             print("Loss data was not present")
             draw_plot = False
 
-        if "val_loss" in self.model_train.history.keys():
-            val_loss = self.model_train.history["val_loss"]
-
+        if self._val_losses:
             save_val_loss_path = os.path.join(
                 self.checkpoints_dir,
                 self.run_uid + "_" + self.model_string + "_val_loss.npy",
             )
-            np.save(save_val_loss_path, val_loss)
+            np.save(save_val_loss_path, self._val_losses)
         else:
             print("Val. loss data was not present")
             draw_plot = False
@@ -463,7 +483,7 @@ class transfer_trainer(core_trainer):
         if draw_plot:
             h = plt.figure()
             plt.plot(loss, label="loss " + self.run_uid)
-            plt.plot(val_loss, label="val_loss " + self.run_uid)
+            plt.plot(self._val_losses, label="val_loss " + self.run_uid)
 
             if self.steps_per_epoch > 0:
                 plt.xlabel(
