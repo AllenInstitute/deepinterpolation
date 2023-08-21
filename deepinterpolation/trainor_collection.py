@@ -162,6 +162,7 @@ class core_trainer:
         )
 
         validation_callback = ValidationCallback(
+            model=self.local_model,
             model_checkpoint_callback=checkpoint,
             test_data=self.local_test_generator,
             workers=self.workers,
@@ -345,6 +346,7 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
     """
     def __init__(
             self,
+            model: tensorflow.keras.Model,
             model_checkpoint_callback: CustomModelCheckpoint,
             test_data: tensorflow.keras.utils.Sequence,
             workers: int,
@@ -352,6 +354,7 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
             verbose: int,
             logger: logging.Logger
     ):
+        self._model = model
         self._model_checkpoint_callback = model_checkpoint_callback
         self._test_data = test_data
         self._workers = workers
@@ -360,13 +363,13 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
         self._logger = logger
 
     def on_epoch_begin(self, epoch, logs=None):
-        self._logger.info(f'Epoch {epoch} train')
+        self._logger.info(f'Epoch {epoch+1} train')
         self._model_checkpoint_callback.on_epoch_begin(epoch=epoch, logs=logs)
 
     def on_epoch_end(self, epoch, logs=None):
-        self._logger.info(f'Epoch {epoch} validation')
+        self._logger.info(f'Epoch {epoch+1} validation')
 
-        self.local_model.evaluate(
+        self._model.evaluate(
             x=self._test_data,
             max_queue_size=32,
             workers=self._workers,
