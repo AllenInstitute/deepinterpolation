@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import warnings
@@ -67,6 +68,7 @@ class core_trainer:
         self.period_save = json_data["period_save"]
         self.learning_rate = json_data["learning_rate"]
         self.verbose = json_data["verbose"]
+        self._logger = logging.getLogger(__name__)
 
         if "checkpoints_dir" in json_data.keys():
             self.checkpoints_dir = json_data["checkpoints_dir"]
@@ -354,9 +356,12 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
         self._verbose = verbose
 
     def on_epoch_begin(self, epoch):
+        self._logger.info(f'Epoch {epoch} train')
         self._model_checkpoint_callback.on_epoch_begin(epoch=epoch)
 
     def on_epoch_end(self, epoch):
+        self._logger.info(f'Epoch {epoch} validation')
+
         self.local_model.evaluate(
             x=self._test_data,
             max_queue_size=32,

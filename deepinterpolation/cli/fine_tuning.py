@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 
 import argschema
@@ -8,11 +9,22 @@ from deepinterpolation.generic import ClassLoader
 
 
 class FineTuning(argschema.ArgSchemaParser):
-    default_schema = FineTuningInputSchema
+    def __init__(self):
+        super().__init__(
+            schema_type=FineTuningInputSchema)
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+
+        logging.basicConfig(
+            format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+            level=self.logger.level
+        )
+        logger = logging.getLogger(type(self).__name__)
+        logger.setLevel(level=self.logger.level)
+        self.logger = logger
 
     def run(self):
-        self.logger.name = type(self).__name__
-
         uid = self.args["run_uid"]
 
         outdir = Path(self.args["finetuning_params"]["output_dir"])
