@@ -376,7 +376,7 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
             shuffle=False,
             use_multiprocessing=self._use_multiprocessing,
             callbacks=[self._model_checkpoint_callback],
-            verbose=self.verbose
+            verbose=self._verbose
         )
 
 
