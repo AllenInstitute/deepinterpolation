@@ -1,6 +1,7 @@
 import json
 import logging
 from pathlib import Path
+from typing import Dict, Optional, List
 
 import argschema
 
@@ -9,8 +10,13 @@ from deepinterpolation.generic import ClassLoader
 
 
 class FineTuning(argschema.ArgSchemaParser):
-    def __init__(self):
+    def __init__(
+            self,
+            input_data: Dict,
+            args: Optional[List] = None):
         super().__init__(
+            input_data=input_data,
+            args=args,
             schema_type=FineTuningInputSchema)
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
