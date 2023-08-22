@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Dict, Optional, List
 
@@ -24,7 +25,8 @@ class FineTuning(argschema.ArgSchemaParser):
         logging.basicConfig(
             format='%(asctime)s %(name)s %(levelname)-8s %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S',
-            level=self.logger.level
+            level=self.logger.level,
+            stream=sys.stdout
         )
         logger = logging.getLogger(type(self).__name__)
         logger.setLevel(level=self.logger.level)
