@@ -2,7 +2,8 @@ import logging
 import math
 import os
 import warnings
-from typing import List
+from contextlib import nullcontext
+from typing import List, Union, Tuple
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -41,16 +42,12 @@ class core_trainer:
     # hyperparameter search to allow modification of the model
     def __init__(
         self,
-        generator_obj,
-        test_generator_obj,
         network_obj,
         trainer_json_path,
         auto_compile=True,
     ):
 
         self.network_obj = network_obj
-        self.local_generator = generator_obj
-        self.local_test_generator = test_generator_obj
 
         json_obj = JsonLoader(trainer_json_path)
 
@@ -62,7 +59,6 @@ class core_trainer:
         self.output_dir = json_data["output_dir"]
         self.run_uid = json_data["run_uid"]
         self.model_string = json_data["model_string"]
-        self.batch_size = self.local_generator.batch_size
         self.steps_per_epoch = json_data["steps_per_epoch"]
         self.loss_type = json_data["loss"]
         self.nb_gpus = json_data["nb_gpus"]
@@ -72,6 +68,8 @@ class core_trainer:
         self.json_data = json_data
         self._logger = logging.getLogger(__name__)
         self._val_losses = []
+        self._auto_compile = auto_compile
+        self._validation_data = None
 
         if "checkpoints_dir" in json_data.keys():
             self.checkpoints_dir = json_data["checkpoints_dir"]
@@ -103,54 +101,18 @@ class core_trainer:
 
         self.nb_times_through_data = json_data["nb_times_through_data"]
 
-        # Generator has to be initialized first to provide
-        # input size of network
-        self.initialize_generator()
-
-        if self.nb_gpus > 1:
-            mirrored_strategy = tensorflow.distribute.MirroredStrategy()
-            with mirrored_strategy.scope():
-                if auto_compile:
-                    self.initialize_network()
-
-                self.initialize_callbacks()
-
-                self.initialize_loss()
-
-                self.initialize_optimizer()
-                if auto_compile:
-                    self.compile()
-        else:
-            if auto_compile:
-                self.initialize_network()
-
-            self.initialize_callbacks()
-
-            self.initialize_loss()
-
-            self.initialize_optimizer()
-
-            if auto_compile:
-                self.compile()
-
     @property
     def output_model_file_path(self):
         return os.path.join(
             self.output_dir, self.run_uid + "_" + self.model_string + "_model.h5"
         )
 
-    def compile(self):
-        self.local_model.compile(
-            loss=self.loss, optimizer=self.optimizer
-        )  # , metrics=['mae'])
-
-    def initialize_optimizer(self):
-        self.optimizer = RMSprop(learning_rate=self.learning_rate)
-
-    def initialize_loss(self):
-        self.loss = lc.loss_selector(self.loss_type)
-
-    def initialize_callbacks(self):
+    def initialize_callbacks(
+            self,
+            model: Model,
+            train_generator: tensorflow.keras.utils.Sequence,
+            test_data: Union[tensorflow.keras.utils.Sequence, Tuple]
+    ):
 
         checkpoint_path = os.path.join(
             self.checkpoints_dir,
@@ -166,10 +128,10 @@ class core_trainer:
         )
 
         validation_callback = ValidationCallback(
-            model=self.local_model,
+            model=model,
             trainer=self,
             model_checkpoint_callback=checkpoint,
-            test_data=self.local_test_generator,
+            test_data=test_data,
             workers=self.workers,
             use_multiprocessing=self.use_multiprocessing,
             verbose=self.verbose,
@@ -180,7 +142,7 @@ class core_trainer:
 
         # Add on epoch_end callback
 
-        epo_end = OnEpochEnd([self.local_generator.on_epoch_end])
+        epo_end = OnEpochEnd([train_generator.on_epoch_end])
 
         if self.apply_learning_decay == 1:
             step_decay_callback = create_decay_callback(
@@ -193,32 +155,37 @@ class core_trainer:
         if version.parse(tensorflow.__version__) <= version.parse("2.1.0"):
             callbacks_list.append(epo_end)
 
-        self.callbacks_list = callbacks_list
+        return callbacks_list
 
-    def initialize_generator(self):
-        # If feeeding a stepped generator,
-        # we need to calculate the number of epochs accordingly
+    def _get_n_epochs(self, data_generator):
+        """Calculate number of epochs to run"""
         if self.steps_per_epoch > 0:
-            self.epochs = self.nb_times_through_data * int(
-                np.floor(len(self.local_generator) / self.steps_per_epoch)
+            epochs = self.nb_times_through_data * int(
+                np.floor(len(data_generator) / self.steps_per_epoch)
             )
         else:
-            self.epochs = self.nb_times_through_data * int(len(self.local_generator))
+            epochs = self.nb_times_through_data * int(len(data_generator))
+        return epochs
 
-    def initialize_network(self):
-        local_size = self.local_generator.get_input_size()
+    def initialize_network(
+            self,
+            train_generator: tensorflow.keras.utils.Sequence
+    ):
+        local_size = train_generator.get_input_size()
 
         input_img = Input(shape=local_size)
-        self.local_model = Model(input_img, self.network_obj(input_img))
+        return Model(input_img, self.network_obj(input_img))
 
-    def cache_validation(self):
+    @staticmethod
+    def cache_validation(
+            test_generator: tensorflow.keras.utils.Sequence):
         # This is used to remove IO duplication,
         # leverage memory for validation and
         # avoid deadlocks that happens when
         # using keras.utils.Sequence as validation datasets
 
-        input_example = self.local_test_generator.__getitem__(0)
-        nb_object = int(len(self.local_test_generator))
+        input_example = test_generator[0]
+        nb_object = int(len(test_generator))
 
         input_shape = list(input_example[0].shape)
         nb_samples = input_shape[0]
@@ -231,8 +198,8 @@ class core_trainer:
         cache_input = np.zeros(shape=input_shape, dtype=input_example[0].dtype)
         cache_output = np.zeros(shape=output_shape, dtype=input_example[1].dtype)
 
-        for local_index in range(len(self.local_test_generator)):
-            local_data = self.local_test_generator.__getitem__(local_index)
+        for local_index in range(len(test_generator)):
+            local_data = test_generator[local_index]
             cache_input[
                 local_index * nb_samples : (local_index + 1) * nb_samples, :
             ] = local_data[0]
@@ -240,34 +207,69 @@ class core_trainer:
                 local_index * nb_samples : (local_index + 1) * nb_samples, :
             ] = local_data[1]
 
-        self.local_test_generator = (cache_input, cache_output)
+        return cache_input, cache_output
 
-    def run(self):
+    def run(
+            self,
+            train_generator: tensorflow.keras.utils.Sequence,
+            test_generator: tensorflow.keras.utils.Sequence):
         # we first cache the validation data
         if self.caching_validation:
-            self.cache_validation()
+            validation_data = \
+                self.cache_validation(test_generator=test_generator)
+        else:
+            validation_data = None
+
+        mirrored_strategy = tensorflow.distribute.MirroredStrategy()
+        with mirrored_strategy.scope() if self.nb_gpus > 1 else nullcontext():
+            if self._auto_compile:
+                model = self.initialize_network(
+                    train_generator=train_generator)
+
+            callbacks = self.initialize_callbacks(
+                model=model,
+                train_generator=train_generator,
+                test_data=(validation_data if validation_data is not None
+                           else test_generator)
+            )
+
+            if self._auto_compile:
+                model.compile(
+                    loss=lc.loss_selector(self.loss_type),
+                    optimizer=RMSprop(learning_rate=self.learning_rate)
+                )
 
         steps_per_epoch = self.steps_per_epoch if self.steps_per_epoch > 0 \
             else None
 
-        self.model_train = self.local_model.fit(
-            self.local_generator,
+        model.fit(
+            x=train_generator,
             steps_per_epoch=steps_per_epoch,
-            epochs=self.epochs,
+            epochs=self._get_n_epochs(data_generator=train_generator),
             max_queue_size=32,
             workers=self.workers,
             shuffle=False,
             use_multiprocessing=self.use_multiprocessing,
-            callbacks=self.callbacks_list,
+            callbacks=callbacks,
             initial_epoch=0,
             verbose=self.verbose
         )
 
-    def finalize(self):
+        self._logger.info("finetuning finished - finalizing output model")
+        self.finalize(
+            model=model,
+            train_generator=train_generator
+        )
+
+    def finalize(
+            self,
+            model: Model,
+            train_generator: tensorflow.keras.utils.Sequence
+    ):
         draw_plot = True
 
-        if "loss" in self.model_train.history.keys():
-            loss = self.model_train.history["loss"]
+        if "loss" in model.history.history.keys():
+            loss = model.history.history["loss"]
             # save losses
 
             save_loss_path = os.path.join(
@@ -276,11 +278,11 @@ class core_trainer:
             )
             np.save(save_loss_path, loss)
         else:
-            print("Loss data was not present")
+            self._logger.warning("Loss data was not present")
             draw_plot = False
 
-        if "val_loss" in self.model_train.history.keys():
-            val_loss = self.model_train.history["val_loss"]
+        if self._val_losses:
+            val_loss = self._val_losses
 
             save_val_loss_path = os.path.join(
                 self.checkpoints_dir,
@@ -288,13 +290,13 @@ class core_trainer:
             )
             np.save(save_val_loss_path, val_loss)
         else:
-            print("Val. loss data was not present")
+            self._logger.warning("Val. loss data was not present")
             draw_plot = False
 
         # save model
-        self.local_model.save(self.output_model_file_path)
+        model.save(self.output_model_file_path)
 
-        print("Saved model to disk")
+        self._logger.info("Saved model to disk")
 
         if draw_plot:
             h = plt.figure()
@@ -304,13 +306,13 @@ class core_trainer:
             if self.steps_per_epoch > 0:
                 plt.xlabel(
                     "number of epochs ("
-                    + str(self.batch_size * self.steps_per_epoch)
+                    + str(train_generator.batch_size * self.steps_per_epoch)
                     + " samples/epochs)"
                 )
             else:
                 plt.xlabel(
                     "number of epochs ("
-                    + str(self.batch_size * len(self.local_generator))
+                    + str(train_generator.batch_size * len(train_generator))
                     + " samples/epochs)"
                 )
 
@@ -385,8 +387,14 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         self._logger.info(f'Epoch {epoch+1} validation')
 
+        if isinstance(self._test_data, tuple):
+            x, y = self._test_data
+        else:
+            x = self._test_data
+            y = None
         loss = self._model.evaluate(
-            x=self._test_data,
+            x=x,
+            y=y,
             max_queue_size=32,
             workers=self._workers,
             use_multiprocessing=self._use_multiprocessing,
@@ -401,16 +409,12 @@ class transfer_trainer(core_trainer):
 
     def __init__(
         self,
-        generator_obj,
-        test_generator_obj,
         trainer_json_path,
         auto_compile=True,
     ):
 
         super().__init__(
             network_obj=None,
-            generator_obj=generator_obj,
-            test_generator_obj=test_generator_obj,
             trainer_json_path=trainer_json_path,
             auto_compile=auto_compile
         )
@@ -419,18 +423,25 @@ class transfer_trainer(core_trainer):
         # baseline validation loss is important
         # this is expensive so we only do it when asked
         # Default is set to true here to match older behavior
-        if "measure_baseline_loss" in self.json_data.keys():
-            self.measure_baseline_loss = self.json_data["measure_baseline_loss"]
-        else:
-            self.measure_baseline_loss = True
+        self.measure_baseline_loss = self.json_data.get(
+            "measure_baseline_loss", True)
+
+    def run(self,
+            train_generator: tensorflow.keras.utils.Sequence,
+            test_generator: tensorflow.keras.utils.Sequence):
+        model = self.initialize_network()
 
         if self.measure_baseline_loss:
-            self.baseline_val_loss = self.local_model.evaluate(
-                self.local_test_generator,
+            self.baseline_val_loss = model.evaluate(
+                x=test_generator,
                 max_queue_size=32,
                 workers=self.workers,
                 use_multiprocessing=self.use_multiprocessing,
             )
+        super().run(
+            train_generator=train_generator,
+            test_generator=test_generator
+        )
 
     @property
     def output_model_file_path(self):
@@ -439,12 +450,10 @@ class transfer_trainer(core_trainer):
             "_transfer_model.h5"
         )
 
-    def initialize_network(self):
-        self.__load_model()
+    def initialize_network(self, **kwargs):
+        return self.__load_model()
 
-    def finalize(self):
-        draw_plot = True
-
+    def finalize(self, **kwargs):
         # save init losses
 
         if self.measure_baseline_loss:
@@ -454,67 +463,19 @@ class transfer_trainer(core_trainer):
             )
             np.save(save_loss_path, self.baseline_val_loss)
 
-        if "loss" in self.model_train.history.keys():
-            loss = self.model_train.history["loss"]
-            # save losses
-
-            save_loss_path = os.path.join(
-                self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_loss.npy",
-            )
-            np.save(save_loss_path, loss)
-        else:
-            print("Loss data was not present")
-            draw_plot = False
-
-        if self._val_losses:
-            save_val_loss_path = os.path.join(
-                self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_val_loss.npy",
-            )
-            np.save(save_val_loss_path, self._val_losses)
-        else:
-            print("Val. loss data was not present")
-            draw_plot = False
-
-        # save model
-        self.local_model.save(self.output_model_file_path)
-
-        print("Saved model to disk")
-
-        if draw_plot:
-            h = plt.figure()
-            plt.plot(loss, label="loss " + self.run_uid)
-            plt.plot(self._val_losses, label="val_loss " + self.run_uid)
-
-            if self.steps_per_epoch > 0:
-                plt.xlabel(
-                    "number of epochs ("
-                    + str(self.batch_size * self.steps_per_epoch)
-                    + " samples/epochs)"
-                )
-            else:
-                plt.xlabel(
-                    "number of epochs ("
-                    + str(self.batch_size * len(self.local_generator))
-                    + " samples/epochs)"
-                )
-
-            plt.ylabel("training loss")
-            plt.legend()
-            save_hist_path = os.path.join(
-                self.checkpoints_dir,
-                self.run_uid + "_" + self.model_string + "_losses.png",
-            )
-            plt.savefig(save_hist_path)
-            plt.close(h)
+        super().finalize(**kwargs)
 
     def __load_model(self):
         try:
             local_model_path = self.__get_local_model_path()
-            self.__load_local_model(path=local_model_path)
+            model = load_model(
+                filepath=local_model_path,
+                custom_objects={
+                    "annealed_loss": lc.loss_selector("annealed_loss")},
+            )
         except KeyError:
-            self.__load_model_from_mlflow()
+            model = self.__load_model_from_mlflow()
+        return model
 
     def __get_local_model_path(self):
         try:
@@ -526,12 +487,6 @@ class transfer_trainer(core_trainer):
         except KeyError:
             model_path = self.json_data["model_source"]["local_path"]
         return model_path
-
-    def __load_local_model(self, path: str):
-        self.local_model = load_model(
-            path,
-            custom_objects={"annealed_loss": lc.loss_selector("annealed_loss")},
-        )
 
     def __load_model_from_mlflow(self):
         import mlflow
@@ -552,4 +507,4 @@ class transfer_trainer(core_trainer):
             # Gets the latest version without any stage
             model_uri = f"models:/{model_name}/None"
 
-        self.local_model = mlflow.keras.load_model(model_uri=model_uri)
+        return mlflow.keras.load_model(model_uri=model_uri)

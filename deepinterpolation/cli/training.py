@@ -90,14 +90,14 @@ class Training(argschema.ArgSchemaParser):
         training_obj = ClassLoader(training_json_path)
 
         training_class = training_obj.find_and_build()(
-            data_generator, data_test_generator, data_network, training_json_path
+            data_network, training_json_path
         )
 
         self.logger.info("created objects for training")
-        training_class.run()
-
-        self.logger.info("training job finished - finalizing output model")
-        training_class.finalize()
+        training_class.run(
+            train_generator=data_generator,
+            test_generator=data_test_generator
+        )
 
 
 if __name__ == "__main__":  # pragma: nocover

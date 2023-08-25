@@ -8,6 +8,7 @@ import argschema
 
 from deepinterpolation.cli.schemas import FineTuningInputSchema
 from deepinterpolation.generic import ClassLoader
+from deepinterpolation.trainor_collection import transfer_trainer
 
 
 class FineTuning(argschema.ArgSchemaParser):
@@ -108,15 +109,15 @@ class FineTuning(argschema.ArgSchemaParser):
 
         finetuning_obj = ClassLoader(finetuning_json_path)
 
-        training_class = finetuning_obj.find_and_build()(
-            data_generator, data_test_generator, finetuning_json_path
+        training_class: transfer_trainer = finetuning_obj.find_and_build()(
+            finetuning_json_path
         )
 
         self.logger.info("created objects for training")
-        training_class.run()
-
-        self.logger.info("fine tuning job finished - finalizing output model")
-        training_class.finalize()
+        training_class.run(
+            train_generator=data_generator,
+            test_generator=data_test_generator
+        )
 
 
 if __name__ == "__main__":  # pragma: nocover

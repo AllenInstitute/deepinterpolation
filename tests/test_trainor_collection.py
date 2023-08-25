@@ -109,13 +109,12 @@ def test_ephys_training(tmp_path):
     network_callback = network_obj.find_and_build()(path_network)
 
     training_class = trainer_obj.find_and_build()(
-        train_generator, test_generator, network_callback, path_training
+        network_callback, path_training
     )
 
-    training_class.run()
-
-    # Finalize and save output of the training.
-    training_class.finalize()
+    training_class.run(
+        train_generator=train_generator,
+        test_generator=test_generator)
 
     # Validation is a bit random due to initilization. We check that you get
     # reasonable number

@@ -45,10 +45,10 @@ class MockGenerator:
 class MockTraining:
     """for mocked tests, training only needs to produce a file"""
 
-    def __init__(self, data_generator, data_test_generator, training_json_path):
+    def __init__(self, training_json_path):
         self.training_json_path = training_json_path
 
-    def run(self):
+    def run(self, train_generator, test_generator):
         with open(self.training_json_path, "r") as f:
             j = json.load(f)
 
@@ -74,12 +74,15 @@ class MockClassLoader:
     def find_and_build():
         return MockClassLoader()
 
-    def __call__(self, *args):
+    def __call__(self, finetuning_json_path):
+        with open(finetuning_json_path) as f:
+            d = json.load(f)
+
         # return something when called
-        if len(args) == 1:
-            return MockGenerator(args[0])
-        if len(args) > 1:
-            return MockTraining(args[0], args[1], args[2])
+        if d['type'] == 'generator':
+            return MockGenerator(finetuning_json_path)
+        elif d['type'] == 'trainer':
+            return MockTraining(finetuning_json_path)
 
 
 def test_finetuning_cli(generator_args, training_args, monkeypatch):
