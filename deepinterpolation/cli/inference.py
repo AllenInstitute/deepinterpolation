@@ -49,11 +49,13 @@ class Inference(argschema.ArgSchemaParser):
         self.logger.info(f"wrote {generator_json_path}")
 
         generator_obj = ClassLoader(generator_json_path)
-        data_generator = generator_obj.find_and_build()(generator_json_path)
+        data_generator = generator_obj.find_and_build()(
+            json_path=generator_json_path)
 
         inferrence_obj = ClassLoader(inference_json_path)
         inferrence_class = inferrence_obj.find_and_build()(
-            inference_json_path, data_generator
+            inferrence_json_path=inference_json_path,
+            generator_obj=data_generator
         )
 
         self.logger.info("created objects for inference")

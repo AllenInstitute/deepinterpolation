@@ -100,17 +100,18 @@ class FineTuning(argschema.ArgSchemaParser):
         self.logger.info(f"wrote {test_generator_json_path}")
 
         generator_obj = ClassLoader(generator_json_path)
-        data_generator = generator_obj.find_and_build()(generator_json_path)
+        data_generator = generator_obj.find_and_build()(
+            json_path=generator_json_path)
 
         test_generator_obj = ClassLoader(test_generator_json_path)
         data_test_generator = test_generator_obj.find_and_build()(
-            test_generator_json_path
+            json_path=test_generator_json_path
         )
 
         finetuning_obj = ClassLoader(finetuning_json_path)
 
         training_class: transfer_trainer = finetuning_obj.find_and_build()(
-            finetuning_json_path
+            trainer_json_path=finetuning_json_path
         )
 
         self.logger.info("created objects for training")

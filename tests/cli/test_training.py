@@ -6,6 +6,7 @@ import h5py
 import pytest
 
 import deepinterpolation.cli.training as cli
+from deepinterpolation.testing.utils import MockClassLoader
 
 
 @pytest.fixture
@@ -44,47 +45,6 @@ class MockGenerator:
 
     def __init__(self, arg):
         pass
-
-
-class MockTraining:
-    """for mocked tests, training only needs to produce a file"""
-
-    def __init__(
-        self, data_generator, data_test_generator, data_network, training_json_path
-    ):
-        self.training_json_path = training_json_path
-
-    def run(self):
-        with open(self.training_json_path, "r") as f:
-            j = json.load(f)
-
-        local_model_path = os.path.join(
-            j["output_dir"], j["run_uid"] + "_" + j["model_string"] + "_model.h5"
-        )
-
-        with h5py.File(local_model_path, "w") as f:
-            f.create_dataset("data", data=[1, 2, 3])
-
-    def finalize(self):
-        pass
-
-
-class MockClassLoader:
-    """mocks the behavior of the ClassLoader"""
-
-    def __init__(self, arg=None):
-        pass
-
-    @staticmethod
-    def find_and_build():
-        return MockClassLoader()
-
-    def __call__(self, *args):
-        # return something when called
-        if len(args) == 1:
-            return MockGenerator(args[0])
-        if len(args) > 1:
-            return MockTraining(args[0], args[1], args[2], args[3])
 
 
 def test_training_cli(generator_args, training_args, network_args, monkeypatch):

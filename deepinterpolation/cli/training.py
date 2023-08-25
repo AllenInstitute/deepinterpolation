@@ -77,20 +77,23 @@ class Training(argschema.ArgSchemaParser):
         self.logger.info(f"wrote {test_generator_json_path}")
 
         generator_obj = ClassLoader(generator_json_path)
-        data_generator = generator_obj.find_and_build()(generator_json_path)
+        data_generator = generator_obj.find_and_build()(
+            json_path=generator_json_path)
 
         test_generator_obj = ClassLoader(test_generator_json_path)
         data_test_generator = test_generator_obj.find_and_build()(
-            test_generator_json_path
+            json_path=test_generator_json_path
         )
 
         network_obj = ClassLoader(network_json_path)
-        data_network = network_obj.find_and_build()(network_json_path)
+        data_network = network_obj.find_and_build()(
+            path_json=network_json_path)
 
         training_obj = ClassLoader(training_json_path)
 
         training_class = training_obj.find_and_build()(
-            data_network, training_json_path
+            network_obj=data_network,
+            trainer_json_path=training_json_path
         )
 
         self.logger.info("created objects for training")
