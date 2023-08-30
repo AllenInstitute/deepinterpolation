@@ -1214,7 +1214,8 @@ class MovieJSONGenerator(DeepGenerator):
     "mean": <float value>,
     "std": <float_value>}}"""
 
-    def __init__(self, json_path: Union[str, Path]):
+    def __init__(self, json_path: Union[str, Path],
+                 preload_movie: bool = True):
         "Initialization"
         super().__init__(json_path)
 
@@ -1245,6 +1246,14 @@ class MovieJSONGenerator(DeepGenerator):
             self.frame_data_location = json.load(json_handle)
 
         self.lims_id = list(self.frame_data_location.keys())
+
+        if preload_movie:
+            with h5py.File(self.frame_data_location[self.lims_id[0]]["path"],
+                           "r") as f:
+                self._mov = f['data'][()]
+        else:
+            self._mov = None
+
         self.shuffled_data_list = []
         for ophys_experiment_id in self.lims_id:
             n_frames = len(self.frame_data_location[ophys_experiment_id]["frames"])
@@ -1339,9 +1348,13 @@ class MovieJSONGenerator(DeepGenerator):
         if data_img_input is None:
             motion_path = self.frame_data_location[video_index]["path"]
 
-            with h5py.File(motion_path, "r") as movie_obj:
-                data_img_input = movie_obj["data"][input_index]
-                data_img_output = movie_obj["data"][output_frame]
+            if self._mov is None:
+                with h5py.File(motion_path, "r") as movie_obj:
+                    data_img_input = movie_obj["data"][input_index]
+                    data_img_output = movie_obj["data"][output_frame]
+            else:
+                data_img_input = self._mov[input_index]
+                data_img_output = self._mov[output_frame]
 
         local_frame_data = self.frame_data_location[video_index]
         local_mean = local_frame_data["mean"]

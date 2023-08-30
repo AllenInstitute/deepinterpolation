@@ -84,7 +84,7 @@ class core_trainer:
         if "caching_validation" in json_data.keys():
             self.caching_validation = json_data["caching_validation"]
         else:
-            self.caching_validation = True
+            self.caching_validation = False
 
         if "nb_workers" in json_data.keys():
             self.workers = json_data["nb_workers"]
@@ -110,7 +110,6 @@ class core_trainer:
     def initialize_callbacks(
             self,
             model: Model,
-            train_generator: tensorflow.keras.utils.Sequence,
             test_data: Union[tensorflow.keras.utils.Sequence, Tuple]
     ):
 
@@ -140,10 +139,6 @@ class core_trainer:
 
         callbacks_list = [validation_callback]
 
-        # Add on epoch_end callback
-
-        epo_end = OnEpochEnd([train_generator.on_epoch_end])
-
         if self.apply_learning_decay == 1:
             step_decay_callback = create_decay_callback(
                 self.initial_learning_rate, self.epochs_drop
@@ -151,9 +146,6 @@ class core_trainer:
 
             lrate = LearningRateScheduler(step_decay_callback)
             callbacks_list.append(lrate)
-
-        if version.parse(tensorflow.__version__) <= version.parse("2.1.0"):
-            callbacks_list.append(epo_end)
 
         return callbacks_list
 
@@ -228,7 +220,6 @@ class core_trainer:
 
             callbacks = self.initialize_callbacks(
                 model=model,
-                train_generator=train_generator,
                 test_data=(validation_data if validation_data is not None
                            else test_generator)
             )
