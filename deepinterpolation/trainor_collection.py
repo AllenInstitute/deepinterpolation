@@ -81,11 +81,6 @@ class core_trainer:
         else:
             self.use_multiprocessing = True
 
-        if "caching_validation" in json_data.keys():
-            self.caching_validation = json_data["caching_validation"]
-        else:
-            self.caching_validation = False
-
         if "nb_workers" in json_data.keys():
             self.workers = json_data["nb_workers"]
         else:
@@ -168,49 +163,10 @@ class core_trainer:
         input_img = Input(shape=local_size)
         return Model(input_img, self.network_obj(input_img))
 
-    @staticmethod
-    def cache_validation(
-            test_generator: tensorflow.keras.utils.Sequence):
-        # This is used to remove IO duplication,
-        # leverage memory for validation and
-        # avoid deadlocks that happens when
-        # using keras.utils.Sequence as validation datasets
-
-        input_example = test_generator[0]
-        nb_object = int(len(test_generator))
-
-        input_shape = list(input_example[0].shape)
-        nb_samples = input_shape[0]
-
-        input_shape[0] = input_shape[0] * nb_object
-
-        output_shape = list(input_example[1].shape)
-        output_shape[0] = output_shape[0] * nb_object
-
-        cache_input = np.zeros(shape=input_shape, dtype=input_example[0].dtype)
-        cache_output = np.zeros(shape=output_shape, dtype=input_example[1].dtype)
-
-        for local_index in range(len(test_generator)):
-            local_data = test_generator[local_index]
-            cache_input[
-                local_index * nb_samples : (local_index + 1) * nb_samples, :
-            ] = local_data[0]
-            cache_output[
-                local_index * nb_samples : (local_index + 1) * nb_samples, :
-            ] = local_data[1]
-
-        return cache_input, cache_output
-
     def run(
             self,
             train_generator: tensorflow.keras.utils.Sequence,
             test_generator: tensorflow.keras.utils.Sequence):
-        # we first cache the validation data
-        if self.caching_validation:
-            validation_data = \
-                self.cache_validation(test_generator=test_generator)
-        else:
-            validation_data = None
 
         mirrored_strategy = tensorflow.distribute.MirroredStrategy()
         with mirrored_strategy.scope() if self.nb_gpus > 1 else nullcontext():
@@ -220,8 +176,7 @@ class core_trainer:
 
             callbacks = self.initialize_callbacks(
                 model=model,
-                test_data=(validation_data if validation_data is not None
-                           else test_generator)
+                test_data=test_generator
             )
 
             if self._auto_compile:
