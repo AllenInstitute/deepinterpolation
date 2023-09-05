@@ -2,11 +2,12 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Type
 
 import argschema
 
 from deepinterpolation.cli.schemas import FineTuningInputSchema
+from deepinterpolation.generator_collection import MovieJSONGenerator
 from deepinterpolation.generic import ClassLoader
 from deepinterpolation.trainor_collection import transfer_trainer
 
@@ -99,13 +100,18 @@ class FineTuning(argschema.ArgSchemaParser):
             json.dump(self.args["test_generator_params"], f, indent=2)
         self.logger.info(f"wrote {test_generator_json_path}")
 
-        generator_obj = ClassLoader(generator_json_path)
-        data_generator = generator_obj.find_and_build()(
-            json_path=generator_json_path)
+        generator_obj: Type[MovieJSONGenerator] = \
+            ClassLoader(generator_json_path).find_and_build()
+        data_generator = generator_obj(
+            json_path=generator_json_path,
+            preload_movie=True
+        )
 
-        test_generator_obj = ClassLoader(test_generator_json_path)
-        data_test_generator = test_generator_obj.find_and_build()(
-            json_path=test_generator_json_path
+        test_generator_obj: Type[MovieJSONGenerator] = \
+            ClassLoader(test_generator_json_path).find_and_build()
+        data_test_generator = test_generator_obj(
+            json_path=test_generator_json_path,
+            preload_movie=True
         )
 
         finetuning_obj = ClassLoader(finetuning_json_path)

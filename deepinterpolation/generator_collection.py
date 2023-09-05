@@ -1214,9 +1214,18 @@ class MovieJSONGenerator(DeepGenerator):
     "mean": <float value>,
     "std": <float_value>}}"""
 
-    def __init__(self, json_path: Union[str, Path],
-                 preload_movie: bool = True):
-        "Initialization"
+    def __init__(
+        self,
+        json_path: Union[str, Path],
+        preload_movie: bool = False
+    ):
+        """
+        @param json_path:
+        @param preload_movie:
+            Preloads movie in memory to speed up processing.
+            Probably only relevant when a single movie is passed, e.g. in the
+            case of finetuning on a single movie
+        """
         super().__init__(json_path)
 
         self.sample_data_path_json = self.json_data.get(
@@ -1227,6 +1236,7 @@ class MovieJSONGenerator(DeepGenerator):
         self.epoch_index = 0
         self.randomize = self.json_data.get("randomize", True)
         self.seed = self.json_data.get("seed", 1234)
+        self._movs = {}
 
         # For backward compatibility
         if "pre_post_frame" in self.json_data.keys():
@@ -1248,11 +1258,15 @@ class MovieJSONGenerator(DeepGenerator):
         self.lims_id = list(self.frame_data_location.keys())
 
         if preload_movie:
-            with h5py.File(self.frame_data_location[self.lims_id[0]]["path"],
-                           "r") as f:
-                self._mov = f['data'][()]
-        else:
-            self._mov = None
+            if len(self.lims_id) > 1:
+                logger.warning('preload_movie will use a lot of memory if '
+                               'there are multiple movies. Are you sure?')
+            for experiment_id in self.lims_id:
+                logger.info(f'Loading {experiment_id} into memory')
+                with h5py.File(
+                        self.frame_data_location[experiment_id]["path"],
+                        "r") as f:
+                    self._movs[experiment_id] = f['data'][()]
 
         self.shuffled_data_list = []
         for ophys_experiment_id in self.lims_id:
@@ -1348,13 +1362,13 @@ class MovieJSONGenerator(DeepGenerator):
         if data_img_input is None:
             motion_path = self.frame_data_location[video_index]["path"]
 
-            if self._mov is None:
+            if self._movs:
+                data_img_input = self._movs[video_index][input_index]
+                data_img_output = self._movs[video_index][output_frame]
+            else:
                 with h5py.File(motion_path, "r") as movie_obj:
                     data_img_input = movie_obj["data"][input_index]
                     data_img_output = movie_obj["data"][output_frame]
-            else:
-                data_img_input = self._mov[input_index]
-                data_img_output = self._mov[output_frame]
 
         local_frame_data = self.frame_data_location[video_index]
         local_mean = local_frame_data["mean"]
