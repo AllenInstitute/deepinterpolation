@@ -8,7 +8,6 @@ from typing import List, Union, Tuple
 import matplotlib.pylab as plt
 import numpy as np
 import tensorflow
-from packaging import version
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model, load_model
