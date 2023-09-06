@@ -715,6 +715,13 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
             training becomes limited either by RAM or CPU usage.",
     )
 
+    verbose = argschema.fields.Int(
+        default=1,
+        description=(
+            'See `verbose` argument in '
+            'https://keras.io/api/models/model_training_apis/#fit-method')
+    )
+
 
 class NetworkSchema(argschema.schemas.DefaultSchema):
     name = argschema.fields.String(
