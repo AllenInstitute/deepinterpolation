@@ -332,14 +332,8 @@ class ValidationCallback(tensorflow.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         self._logger.info(f'Epoch {epoch+1} validation')
 
-        if isinstance(self._test_data, tuple):
-            x, y = self._test_data
-        else:
-            x = self._test_data
-            y = None
         loss = self._model.evaluate(
-            x=x,
-            y=y,
+            x=self._test_data,
             max_queue_size=32,
             workers=self._workers,
             use_multiprocessing=self._use_multiprocessing,
