@@ -1220,8 +1220,10 @@ class MovieJSONGenerator(DeepGenerator):
         preload_movie: bool = False
     ):
         """
-        @param json_path:
-        @param preload_movie:
+        Parameters
+        ----------
+        json_path
+        preload_movie
             Preloads movie in memory to speed up processing.
             Probably only relevant when a single movie is passed, e.g. in the
             case of finetuning on a single movie
