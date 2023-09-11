@@ -1,8 +1,6 @@
-import json
 import os
 from pathlib import Path
 
-import h5py
 import pytest
 
 import deepinterpolation.cli.fine_tuning as cli
