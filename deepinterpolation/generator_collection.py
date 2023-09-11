@@ -4,7 +4,7 @@ import logging
 import math
 import os
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional, Dict
 
 import h5py
 import nibabel as nib
@@ -1217,28 +1217,30 @@ class MovieJSONGenerator(DeepGenerator):
     def __init__(
         self,
         json_path: Union[str, Path],
-        preload_movie: bool = False
+        movs: Optional[Dict[int, np.ndarray]] = None
     ):
         """
         Parameters
         ----------
         json_path
-        preload_movie
-            Preloads movie in memory to speed up processing.
-            Probably only relevant when a single movie is passed, e.g. in the
-            case of finetuning on a single movie
+        movs
+            Maps ophys experiment id to movie, in order to read movie from
+            RAM rather than disk, to speed up training
         """
         super().__init__(json_path)
 
+        if movs is None:
+            movs = {}
+
         self.sample_data_path_json = self.json_data.get(
-            "train_path", self.json_data.get("movie_path")
+            "train_path", self.json_data.get("data_path")
         )
         self.batch_size = self.json_data.get("batch_size", 16)
         self.steps_per_epoch = self.json_data.get("steps_per_epoch")
         self.epoch_index = 0
         self.randomize = self.json_data.get("randomize", True)
         self.seed = self.json_data.get("seed", 1234)
-        self._movs = {}
+        self._movs = movs
 
         # For backward compatibility
         if "pre_post_frame" in self.json_data.keys():
@@ -1258,17 +1260,6 @@ class MovieJSONGenerator(DeepGenerator):
             self.frame_data_location = json.load(json_handle)
 
         self.lims_id = list(self.frame_data_location.keys())
-
-        if preload_movie:
-            if len(self.lims_id) > 1:
-                logger.warning('preload_movie will use a lot of memory if '
-                               'there are multiple movies. Are you sure?')
-            for experiment_id in self.lims_id:
-                logger.info(f'Loading {experiment_id} into memory')
-                with h5py.File(
-                        self.frame_data_location[experiment_id]["path"],
-                        "r") as f:
-                    self._movs[experiment_id] = f['data'][()]
 
         self.shuffled_data_list = []
         for ophys_experiment_id in self.lims_id:
@@ -1290,7 +1281,7 @@ class MovieJSONGenerator(DeepGenerator):
     def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         # This is to ensure we are going through
         # the entire data when steps_per_epoch<self.__len__
-        if self.steps_per_epoch > 0:
+        if self.steps_per_epoch is not None and self.steps_per_epoch > 0:
             index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch

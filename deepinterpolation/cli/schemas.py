@@ -185,7 +185,7 @@ class GeneratorSchema(argschema.schemas.DefaultSchema):
 
     seed = argschema.fields.Int(
         required=False,
-        default=-1234,
+        default=1234,
         description="Seed used with the randomize parameter to shuffle \
             selected frames in the generator.",
     )
@@ -720,6 +720,14 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
         description=(
             'See `verbose` argument in '
             'https://keras.io/api/models/model_training_apis/#fit-method')
+    )
+
+    load_movie_into_memory = argschema.fields.Bool(
+        default=True,
+        description='Load movie into memory to speed up training. '
+                    'Only relevant when finetuning on a single movie as '
+                    'otherwise it would be infeasible to load all movies '
+                    'into memory.'
     )
 
 

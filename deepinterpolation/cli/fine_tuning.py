@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Dict, Optional, List, Type
 
 import argschema
+import h5py
+import numpy as np
 
 from deepinterpolation.cli.schemas import FineTuningInputSchema
 from deepinterpolation.generator_collection import MovieJSONGenerator
@@ -100,18 +102,23 @@ class FineTuning(argschema.ArgSchemaParser):
             json.dump(self.args["test_generator_params"], f, indent=2)
         self.logger.info(f"wrote {test_generator_json_path}")
 
+        movs = self._maybe_load_movie_into_memory(
+            train_generator_json_path=generator_json_path,
+            test_generator_json_path=test_generator_json_path
+        )
+
         generator_obj: Type[MovieJSONGenerator] = \
             ClassLoader(generator_json_path).find_and_build()
         data_generator = generator_obj(
             json_path=generator_json_path,
-            preload_movie=True
+            movs=movs
         )
 
         test_generator_obj: Type[MovieJSONGenerator] = \
             ClassLoader(test_generator_json_path).find_and_build()
         data_test_generator = test_generator_obj(
             json_path=test_generator_json_path,
-            preload_movie=True
+            movs=movs
         )
 
         finetuning_obj = ClassLoader(finetuning_json_path)
@@ -125,6 +132,59 @@ class FineTuning(argschema.ArgSchemaParser):
             train_generator=data_generator,
             test_generator=data_test_generator
         )
+
+    def _maybe_load_movie_into_memory(
+        self,
+        train_generator_json_path: Path,
+        test_generator_json_path: Path
+    ) -> Optional[Dict[int, np.ndarray]]:
+        """
+        Loads movies into memory if `load_movie_into_memory` is `True`.
+
+        Parameters
+        ----------
+        train_generator_json_path
+        test_generator_json_path
+
+        Returns
+        -------
+        Map from ophys experiment id to movie, if `load_movie_into_memory` is
+        `True`, otherwise `None`
+        """
+        if not self.args["finetuning_params"]["load_movie_into_memory"]:
+            return None
+
+        movs = {}
+        with open(train_generator_json_path) as f:
+            train_generator_config = json.load(f)
+        with open(train_generator_config["train_path"]) as f:
+            train_data = json.load(f)
+
+        with open(test_generator_json_path) as f:
+            test_generator_config = json.load(f)
+        with open(test_generator_config["train_path"]) as f:
+            test_data = json.load(f)
+
+        train_ophys_experiment_ids = list(train_data.keys())
+        test_ophys_experiment_ids = list(test_data.keys())
+
+        if sorted(train_ophys_experiment_ids) != \
+                sorted(test_ophys_experiment_ids):
+            raise NotImplementedError('Different ophys experiments in '
+                                      'train/test not supported when using '
+                                      '`load_movie_into_memory`')
+        ophys_experiment_ids = train_ophys_experiment_ids
+
+        if len(ophys_experiment_ids) > 1:
+            self.logger.warning(
+                'load_movie_into_memory will use a lot of '
+                'memory if there are multiple movies. Are you sure?')
+        for experiment_id in ophys_experiment_ids:
+            self.logger.info(f'Loading {experiment_id} into memory')
+            with h5py.File(
+                    train_data[experiment_id]["path"], "r") as f:
+                movs[experiment_id] = f['data'][()]
+        return movs
 
 
 if __name__ == "__main__":  # pragma: nocover
