@@ -171,13 +171,11 @@ def generator_params_fixture(
 
 
 @pytest.mark.parametrize("batch_size", (1, 3, 5, 7, 50))
-@pytest.mark.parametrize("preload_movie", (True, False))
 def test_movie_json_generator(
     movie_path_list_fixture,
     json_frame_specification_fixture,
     generator_params_fixture,
     frame_list_fixture,
-    preload_movie,
     batch_size,
     tmpdir,
 ):
@@ -193,7 +191,6 @@ def test_movie_json_generator(
 
     generator = MovieJSONGenerator(
         json_path,
-        preload_movie=preload_movie
     )
     lims_id_list = generator.lims_id
 
