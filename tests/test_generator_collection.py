@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 from unittest.mock import MagicMock, patch
@@ -7,6 +8,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
+from deepinterpolation.generator_collection import MovieJSONGenerator
 from deepinterpolation.generic import ClassLoader, JsonSaver
 
 
@@ -74,6 +76,38 @@ def test_generator_ephys_creation(tmp_path):
     data_generator = generator_obj.find_and_build()(path_generator)
 
     assert len(data_generator) == 4994
+
+
+class TestMovieJSONGenerator:
+    @pytest.mark.parametrize('load_mov_into_memory', (True, False))
+    def test__getitem__(
+        self,
+        load_mov_into_memory,
+        movie_json_generator_args,
+        tmpdir
+    ):
+        with open(tmpdir / 'generator.json', 'w') as f:
+            f.write(json.dumps(movie_json_generator_args))
+
+        if load_mov_into_memory:
+            with open(movie_json_generator_args['data_path']) as f:
+                meta = json.load(f)
+            movs = {}
+            ophys_experiment_ids = list(meta.keys())
+            for ophys_experiment_id in ophys_experiment_ids:
+                with h5py.File(meta[ophys_experiment_id]['path'], 'r') as f:
+                    movs[ophys_experiment_id] = f['data'][()]
+        else:
+            movs = None
+
+        gen = MovieJSONGenerator(
+            json_path=tmpdir / 'generator.json',
+            movs=movs
+        )
+        batch = gen[0]
+        assert len(batch) == 2 and \
+               batch[0].shape[0] > 0 and \
+               batch[1] .shape[0] > 0
 
 
 class TestInferenceOphysGenerator:

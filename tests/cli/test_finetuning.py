@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import h5py
 import pytest
 
 import deepinterpolation.cli.fine_tuning as cli
@@ -23,28 +22,26 @@ def training_args(tmpdir, request):
     yield args
 
 
-@pytest.fixture
-def generator_args(tmpdir):
-    # make some dummy files so the schema validation is satisfied
-    train_path = tmpdir / "train_data.h5"
-    with h5py.File(train_path, "w") as f:
-        f.create_dataset("data", data=[1, 2, 3])
-    args = {"data_path": str(train_path)}
-    yield args
-
-
-def test_finetuning_cli(generator_args, training_args, monkeypatch):
+@pytest.mark.parametrize('cache_data', (True, False))
+def test_finetuning_cli(
+    cache_data,
+    movie_json_generator_args,
+    training_args,
+    monkeypatch
+):
     """this tests that the training CLI validates the schemas
     and executes its logic. Calls to generator, network and training
     are minimally mocked.
     """
+    training_args['cache_data'] = cache_data
     args = {
         "run_uid": "test_uid",
         "finetuning_params": training_args,
-        "generator_params": generator_args,
-        "test_generator_params": generator_args,
+        "generator_params": movie_json_generator_args,
+        "test_generator_params": movie_json_generator_args,
         "output_full_args": True,
     }
+
     monkeypatch.setattr(cli, "ClassLoader", MockClassLoader)
     training = cli.FineTuning(input_data=args, args=[])
     training.run()
