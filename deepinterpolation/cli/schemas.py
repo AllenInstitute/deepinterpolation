@@ -722,7 +722,7 @@ class FineTuningSchema(argschema.schemas.DefaultSchema):
             'https://keras.io/api/models/model_training_apis/#fit-method')
     )
 
-    load_movie_into_memory = argschema.fields.Bool(
+    cache_data = argschema.fields.Bool(
         default=True,
         description='Load movie into memory to speed up training. '
                     'Only relevant when finetuning on a single movie as '

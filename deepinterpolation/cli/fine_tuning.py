@@ -102,7 +102,7 @@ class FineTuning(argschema.ArgSchemaParser):
             json.dump(self.args["test_generator_params"], f, indent=2)
         self.logger.info(f"wrote {test_generator_json_path}")
 
-        movs = self._maybe_load_movie_into_memory(
+        movs = self._maybe_cache_data(
             train_generator_json_path=generator_json_path,
             test_generator_json_path=test_generator_json_path
         )
@@ -133,13 +133,13 @@ class FineTuning(argschema.ArgSchemaParser):
             test_generator=data_test_generator
         )
 
-    def _maybe_load_movie_into_memory(
+    def _maybe_cache_data(
         self,
         train_generator_json_path: Path,
         test_generator_json_path: Path
     ) -> Optional[Dict[int, np.ndarray]]:
         """
-        Loads movies into memory if `load_movie_into_memory` is `True`.
+        Loads movies into memory if `cache_data` is `True`.
 
         Parameters
         ----------
@@ -148,10 +148,10 @@ class FineTuning(argschema.ArgSchemaParser):
 
         Returns
         -------
-        Map from ophys experiment id to movie, if `load_movie_into_memory` is
+        Map from ophys experiment id to movie, if `cache_data` is
         `True`, otherwise `None`
         """
-        if not self.args["finetuning_params"]["load_movie_into_memory"]:
+        if not self.args["finetuning_params"]["cache_data"]:
             return None
 
         movs = {}
@@ -172,12 +172,12 @@ class FineTuning(argschema.ArgSchemaParser):
                 sorted(test_ophys_experiment_ids):
             raise NotImplementedError('Different ophys experiments in '
                                       'train/test not supported when using '
-                                      '`load_movie_into_memory`')
+                                      '`cache_data`')
         ophys_experiment_ids = train_ophys_experiment_ids
 
         if len(ophys_experiment_ids) > 1:
             self.logger.warning(
-                'load_movie_into_memory will use a lot of '
+                'cache_data will use a lot of '
                 'memory if there are multiple movies. Are you sure?')
         for experiment_id in ophys_experiment_ids:
             self.logger.info(f'Loading {experiment_id} into memory')

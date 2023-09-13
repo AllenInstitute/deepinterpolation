@@ -22,9 +22,9 @@ def training_args(tmpdir, request):
     yield args
 
 
-@pytest.mark.parametrize('load_movie_into_memory', (True, False))
+@pytest.mark.parametrize('cache_data', (True, False))
 def test_finetuning_cli(
-    load_movie_into_memory,
+    cache_data,
     movie_json_generator_args,
     training_args,
     monkeypatch
@@ -33,7 +33,7 @@ def test_finetuning_cli(
     and executes its logic. Calls to generator, network and training
     are minimally mocked.
     """
-    training_args['load_movie_into_memory'] = load_movie_into_memory
+    training_args['cache_data'] = cache_data
     args = {
         "run_uid": "test_uid",
         "finetuning_params": training_args,
