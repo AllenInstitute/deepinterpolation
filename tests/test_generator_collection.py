@@ -106,8 +106,8 @@ class TestMovieJSONGenerator:
         )
         batch = gen[0]
         assert len(batch) == 2 and \
-               batch[0].shape[0] > 0 and \
-               batch[1] .shape[0] > 0
+            batch[0].shape[0] > 0 and \
+            batch[1] .shape[0] > 0
 
 
 class TestInferenceOphysGenerator:

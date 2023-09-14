@@ -1335,7 +1335,7 @@ class MovieJSONGenerator(DeepGenerator):
         )
         input_index = np.concatenate([input_index_left, input_index_right])
         return input_index
-    
+
     def _make_index_to_frames(self):
         """
         Construct a lookup that goes from video_index, img_index
@@ -1363,17 +1363,6 @@ class MovieJSONGenerator(DeepGenerator):
                     "output_frame": output_frame,
                     "input_index": input_index,
                 }
-
-    def _get_indices(self, video_index, img_index):
-        """
-        Get the indices of input and output frames for a given video_index
-        and img_index
-        """
-        index_dict = self.frame_lookup[(video_index, img_index)]
-        input_index = index_dict["input_index"]
-        output_frame = index_dict["output_frame"]
-
-        return input_index, output_frame
 
     def _data_from_indexes(
         self, video_index: int, img_index: int
