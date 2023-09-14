@@ -1291,17 +1291,29 @@ class MovieJSONGenerator(DeepGenerator):
         else:
             indexes = np.arange(index * self.batch_size, (index + 1) * self.batch_size)
 
-        actual_batch_size = len(indexes)
-        input_full = np.zeros(
-            [actual_batch_size, 512, 512, self.pre_frame + self.post_frame]
-        )
-        output_full = np.zeros([actual_batch_size, 512, 512, 1])
+        if len(self.lims_id) == 1 and self._movs:
+            # 2D slicing of cached movie if only one movie exists
+            output_indices = [self.shuffled_data_list[index][1] for index in indexes]
+            input_indices = np.vstack(
+                [
+                    self.__get_sample_input_indices(frame_index)
+                    for frame_index in output_indices
+                ]
+            )
+            input_full = self._movs[self.lims_id[0]][input_indices]
+            output_full = self._movs[self.lims_id[0]][output_indices]
+        else:
+            actual_batch_size = len(indexes)
+            input_full = np.zeros(
+                [actual_batch_size, 512, 512, self.pre_frame + self.post_frame]
+            )
+            output_full = np.zeros([actual_batch_size, 512, 512, 1])
 
-        for batch_index, frame_index in enumerate(indexes):
-            X, Y = self.__data_generation__(frame_index)
+            for batch_index, frame_index in enumerate(indexes):
+                X, Y = self.__data_generation__(frame_index)
 
-            input_full[batch_index, :, :, :] = X
-            output_full[batch_index, :, :, :] = Y
+                input_full[batch_index, :, :, :] = X
+                output_full[batch_index, :, :, :] = Y
 
         return input_full, output_full
 
@@ -1312,6 +1324,18 @@ class MovieJSONGenerator(DeepGenerator):
 
         return local_mean, local_std
 
+    def __get_sample_input_indices(self, index_frame: int):
+        input_index_left = np.arange(
+            index_frame - self.pre_frame - self.pre_post_omission,
+            index_frame - self.pre_post_omission,
+        )
+        input_index_right = np.arange(
+            index_frame + self.pre_post_omission + 1,
+            index_frame + self.post_frame + self.pre_post_omission + 1,
+        )
+        input_index = np.concatenate([input_index_left, input_index_right])
+        return input_index
+    
     def _make_index_to_frames(self):
         """
         Construct a lookup that goes from video_index, img_index
@@ -1339,6 +1363,17 @@ class MovieJSONGenerator(DeepGenerator):
                     "output_frame": output_frame,
                     "input_index": input_index,
                 }
+
+    def _get_indices(self, video_index, img_index):
+        """
+        Get the indices of input and output frames for a given video_index
+        and img_index
+        """
+        index_dict = self.frame_lookup[(video_index, img_index)]
+        input_index = index_dict["input_index"]
+        output_frame = index_dict["output_frame"]
+
+        return input_index, output_frame
 
     def _data_from_indexes(
         self, video_index: int, img_index: int
