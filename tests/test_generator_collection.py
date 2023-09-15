@@ -107,14 +107,36 @@ class TestMovieJSONGenerator:
         batch = gen[0]
         assert len(batch) == 2 and \
             batch[0].shape[0] > 0 and \
-            batch[1] .shape[0] > 0
-        if movs:
-            gen_b = MovieJSONGenerator(
-                json_path=tmpdir / 'generator.json',
-                movs=None
-            )
-            batch_b = gen_b[0]
-            np.testing.assert_array_equal(batch[0], batch_b[0])
+            batch[1].shape[0] > 0
+
+    def test__getitem__returns_same_batch_with_and_without_movs(
+        self,
+        movie_json_generator_args,
+        tmpdir
+    ):
+        with open(tmpdir / 'generator.json', 'w') as f:
+            f.write(json.dumps(movie_json_generator_args))
+
+        with open(movie_json_generator_args['data_path']) as f:
+            meta = json.load(f)
+        movs = {}
+        ophys_experiment_ids = list(meta.keys())
+        for ophys_experiment_id in ophys_experiment_ids:
+            with h5py.File(meta[ophys_experiment_id]['path'], 'r') as f:
+                movs[ophys_experiment_id] = f['data'][()]
+
+        gen = MovieJSONGenerator(
+            json_path=tmpdir / 'generator.json',
+            movs=movs
+        )
+        batch = gen[0]
+
+        gen_b = MovieJSONGenerator(
+            json_path=tmpdir / 'generator.json',
+            movs=None
+        )
+        batch_b = gen_b[0]
+        np.testing.assert_array_equal(batch[0], batch_b[0])
 
 
 class TestInferenceOphysGenerator:
