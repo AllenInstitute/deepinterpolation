@@ -108,6 +108,13 @@ class TestMovieJSONGenerator:
         assert len(batch) == 2 and \
             batch[0].shape[0] > 0 and \
             batch[1] .shape[0] > 0
+        if movs:
+            gen_b = MovieJSONGenerator(
+                json_path=tmpdir / 'generator.json',
+                movs=None
+            )
+            batch_b = gen_b[0]
+            np.testing.assert_array_equal(batch[0], batch_b[0])
 
 
 class TestInferenceOphysGenerator:

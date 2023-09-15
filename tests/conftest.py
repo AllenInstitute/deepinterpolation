@@ -15,7 +15,7 @@ def movie_json_generator_args(tmpdir):
     ophys_experiment_id = 123
 
     with h5py.File(data_path, "w") as f:
-        f.create_dataset("data", data=np.ones((80, 1, 1), dtype='int16'))
+        f.create_dataset("data", data=np.ones((80, 512, 512), dtype='int16'))
 
     with open(data_meta_path, "w") as f:
         f.write(json.dumps({

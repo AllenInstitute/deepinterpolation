@@ -1302,6 +1302,9 @@ class MovieJSONGenerator(DeepGenerator):
             )
             input_full = self._movs[self.lims_id[0]][input_indices]
             output_full = self._movs[self.lims_id[0]][output_indices]
+            input_full = np.moveaxis(input_full, 1, -1)
+            output_full = np.expand_dims(output_full, -1)
+
         else:
             actual_batch_size = len(indexes)
             input_full = np.zeros(
