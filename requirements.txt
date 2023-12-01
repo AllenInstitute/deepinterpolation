@@ -1,11 +1,8 @@
-tensorflow==2.4.4
+tensorflow
 nibabel
-h5py==2.10.0
+h5py
 matplotlib
 numpy
 python-dateutil
 scipy
 tifffile
-s3fs
-argschema==2.0.2
-mlflow==1.14.1

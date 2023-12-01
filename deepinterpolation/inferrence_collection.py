@@ -2,18 +2,17 @@ import h5py
 import numpy as np
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
+import os 
 import json
 
 class fmri_inferrence:
     # This inferrence is specific to fMRI which is raster scanning for
     # denoising
 
-    def __init__(self, inferrence_json_path, generator_obj):
-        self.inferrence_json_path = inferrence_json_path
+    def __init__(self, inferrence_param, generator_obj):
         self.generator_obj = generator_obj
 
-        with open(inferrence_json_path, "r") as read_file:
-            self.json_data = json.load(read_file)
+        self.json_data = inferrence_param
 
         self.output_file = self.json_data["output_file"]
         self.model_path = self.json_data["model_path"]
@@ -38,6 +37,15 @@ class fmri_inferrence:
 
         self.model = load_model(self.model_path)
         self.input_data_size = self.generator_obj.data_shape
+
+        output_directory = os.path.dirname(self.output_file)
+        output_json_inf = os.path.join(output_directory, "inference_param.json")
+        output_json_gen = os.path.join(output_directory, "generator_param.json")
+        # Save the json file for tracking
+        with open(output_json_inf, "w") as write_file:
+            json.dump(self.dict, write_file)
+        with open(output_json_gen, "w") as write_file:
+            json.dump(self.generator_obj.json_data, write_file)
 
     def run(self):
         chunk_size = list(self.generator_obj.data_shape)
@@ -120,12 +128,10 @@ class fmri_inferrence:
 
 class core_inferrence:
     # This is the generic inferrence class
-    def __init__(self, inferrence_json_path, generator_obj):
-        self.inferrence_json_path = inferrence_json_path
+    def __init__(self, inference_param, generator_obj):
         self.generator_obj = generator_obj
 
-        with open(inferrence_json_path, "r") as read_file:
-            self.json_data = json.load(read_file)
+        self.json_data = inference_param
         
         self.output_file = self.json_data["output_file"]
 
@@ -157,6 +163,15 @@ class core_inferrence:
         self.indiv_shape = self.generator_obj.get_output_size()
 
         self.initialize_network()
+        
+        output_directory = os.path.dirname(self.output_file)
+        output_json_inf = os.path.join(output_directory, "inference_param.json")
+        output_json_gen = os.path.join(output_directory, "generator_param.json")
+        # Save the json file for tracking
+        with open(output_json_inf, "w") as write_file:
+            json.dump(self.json_data, write_file)
+        with open(output_json_gen, "w") as write_file:
+            json.dump(self.generator_obj.json_data, write_file)
 
     def initialize_network(self):
         local_model_path = self.json_data['model_path']

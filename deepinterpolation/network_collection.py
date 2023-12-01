@@ -11,9 +11,9 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.layers import Concatenate
 from tensorflow.keras import regularizers
-import json
+import numpy as np
 
-def autoencoder_single_256(path_json):
+def autoencoder_single_256(network_param):
     def local_network_function(input_img):
         # encoder
         # input = 512 x 512 x number_img_in (wide and thin)
@@ -47,7 +47,7 @@ def autoencoder_single_256(path_json):
     return local_network_function
 
 
-def unet_single_256(path_json):
+def unet_single_256(network_param):
     def local_network_function(input_img):
         # encoder
         # input = 512 x 512 x number_img_in (wide and thin)
@@ -85,7 +85,7 @@ def unet_single_256(path_json):
     return local_network_function
 
 
-def fmri_unet_denoiser(path_json):
+def fmri_unet_denoiser(network_param):
     def local_network_function(input_img):
         # encoder
         conv1 = Conv3D(8, (3, 3, 3), activation="relu", padding="same")(input_img)
@@ -117,7 +117,7 @@ def fmri_unet_denoiser(path_json):
     return local_network_function
 
 
-def fmri_flexible_architecture(path_json):
+def fmri_flexible_architecture(network_param):
     def local_network_function(input_img, hp):
         # encoder
         in_conv = input_img
@@ -155,7 +155,7 @@ def fmri_flexible_architecture(path_json):
     return local_network_function
 
 
-def fmri_volume_optimized_denoiser(path_json):
+def fmri_volume_optimized_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -177,7 +177,7 @@ def fmri_volume_optimized_denoiser(path_json):
     return local_network_function
 
 
-def fmri_volume_deeper_denoiser(path_json):
+def fmri_volume_deeper_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -197,7 +197,7 @@ def fmri_volume_deeper_denoiser(path_json):
     return local_network_function
 
 
-def fmri_volume_dense_denoiser(path_json):
+def fmri_volume_dense_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -215,7 +215,7 @@ def fmri_volume_dense_denoiser(path_json):
     return local_network_function
 
 
-def fmri_volume_denoiser(path_json):
+def fmri_volume_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -234,7 +234,7 @@ def fmri_volume_denoiser(path_json):
     return local_network_function
 
 
-def unet_single_ephys_1024(path_json):
+def unet_single_ephys_1024(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -290,7 +290,7 @@ def unet_single_ephys_1024(path_json):
     return local_network_function
 
 
-def padding_unet_single_1024(path_json):
+def padding_unet_single_1024(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -363,23 +363,20 @@ def padding_unet_single_1024(path_json):
     return local_network_function
 
 
-def unet_1024_search(path_json):
-    with open(path_json, "r") as read_file:
-        json_data = json.load(read_file)
-        
+def unet_1024_search(network_param):            
     def local_network_function(input_img):
 
         # encoder
         local_input = input_img
-        for local_depth in range(json_data["network_depth"]):
+        for local_depth in range(network_param["network_depth"]):
             local_conv = Conv2D(
-                2 ** local_depth * json_data["nb_features_scale"],
+                2 ** local_depth * network_param["nb_features_scale"],
                 (3, 3),
                 activation="relu",
                 padding="same",
             )(local_input)
             local_output = MaxPooling2D(pool_size=(2, 2))(local_conv)
-            if json_data["unet"]:
+            if network_param["unet"]:
                 if local_depth == 0:
                     u_net_shortcut = []
                 u_net_shortcut.append(local_conv)
@@ -387,7 +384,7 @@ def unet_1024_search(path_json):
 
         # Deep CONV
         deep_conv = Conv2D(
-            2 ** json_data["network_depth"] * json_data["nb_features_scale"],
+            2 ** network_param["network_depth"] * network_param["nb_features_scale"],
             (3, 3),
             activation="relu",
             padding="same",
@@ -395,15 +392,15 @@ def unet_1024_search(path_json):
 
         # decoder
         local_input = deep_conv
-        for local_depth in range(json_data["network_depth"] - 1, -1, -1):
+        for local_depth in range(network_param["network_depth"] - 1, -1, -1):
             local_up = UpSampling2D((2, 2))(local_input)
-            if json_data["unet"]:
+            if network_param["unet"]:
                 local_conc = Concatenate()([local_up, u_net_shortcut[local_depth]])
             else:
                 local_conc = local_up
 
             local_output = Conv2D(
-                2 ** local_depth * json_data["nb_features_scale"],
+                2 ** local_depth * network_param["nb_features_scale"],
                 (3, 3),
                 activation="relu",
                 padding="same",
@@ -418,7 +415,7 @@ def unet_1024_search(path_json):
     return local_network_function
 
 
-def unet_single_1024(path_json):
+def unet_single_1024(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -473,7 +470,7 @@ def unet_single_1024(path_json):
     return local_network_function
 
 
-def segmentation_net(path_json):
+def segmentation_net(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -550,7 +547,7 @@ def segmentation_net(path_json):
     return local_network_function
 
 
-def unet_single_1p_1024(path_json):
+def unet_single_1p_1024(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -615,7 +612,7 @@ def unet_single_1p_1024(path_json):
     return local_network_function
 
 
-def unet_double_1024(path_json):
+def unet_double_1024(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -692,7 +689,7 @@ def unet_double_1024(path_json):
     return local_network_function
 
 
-def dense_thick_units(path_json):
+def dense_thick_units(network_param):
     def local_network_function(input_data, nb_units=60, nb_layers=10):
 
         current_input = input_data
