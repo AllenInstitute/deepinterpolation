@@ -897,11 +897,6 @@ class OphysGenerator(SequentialGenerator):
         "Initialization"
         super().__init__(json_path)
 
-        if "from_s3" in self.json_data.keys():
-            self.from_s3 = self.json_data["from_s3"]
-        else:
-            self.from_s3 = False
-
         # For backward compatibility
         if "train_path" in self.json_data.keys():
             self.raw_data_file = self.json_data["train_path"]
@@ -910,12 +905,7 @@ class OphysGenerator(SequentialGenerator):
 
         self.batch_size = self.json_data["batch_size"]
 
-        if self.from_s3:
-            s3_filesystem = s3fs.S3FileSystem()
-            raw_data = h5py.File(
-                s3_filesystem.open(self.raw_data_file, "rb"), "r")["data"]
-        else:
-            raw_data = h5py.File(self.raw_data_file, "r")["data"]
+        raw_data = h5py.File(self.raw_data_file, "r")["data"]
 
         self.total_frame_per_movie = int(raw_data.shape[0])
 
@@ -950,12 +940,7 @@ class OphysGenerator(SequentialGenerator):
     def __data_generation__(self, index_frame):
         "Generates data containing batch_size samples"
 
-        if self.from_s3:
-            s3_filesystem = s3fs.S3FileSystem()
-            movie_obj = h5py.File(s3_filesystem.open(
-                self.raw_data_file, "rb"), "r")
-        else:
-            movie_obj = h5py.File(self.raw_data_file, "r")
+        movie_obj = h5py.File(self.raw_data_file, "r")
 
         input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
         output_full = np.zeros([1, 512, 512, 1])
