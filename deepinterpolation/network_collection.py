@@ -11,8 +11,7 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.layers import Concatenate
 from tensorflow.keras import regularizers
-from deepinterpolation.generic import JsonLoader
-
+import json
 
 def autoencoder_single_256(path_json):
     def local_network_function(input_img):
@@ -365,10 +364,9 @@ def padding_unet_single_1024(path_json):
 
 
 def unet_1024_search(path_json):
-    local_json_loader = JsonLoader(path_json)
-    local_json_loader.load_json()
-    json_data = local_json_loader.json_data
-
+    with open(path_json, "r") as read_file:
+        json_data = json.load(read_file)
+        
     def local_network_function(input_img):
 
         # encoder

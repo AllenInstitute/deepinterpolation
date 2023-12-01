@@ -7,7 +7,6 @@ import tifffile
 import nibabel as nib
 import s3fs
 import glob
-from deepinterpolation.generic import JsonLoader
 
 
 class MaxRetryException(Exception):
@@ -28,9 +27,8 @@ class DeepGenerator(keras.utils.Sequence):
     """
 
     def __init__(self, json_path):
-        local_json_loader = JsonLoader(json_path)
-        local_json_loader.load_json()
-        self.json_data = local_json_loader.json_data
+        with open(json_path, "r") as read_file:
+            self.json_data = json.load(read_file)
         self.local_mean = 1
         self.local_std = 1
 

@@ -6,13 +6,11 @@ from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
 import deepinterpolation.loss_collection as lc
 from tensorflow.keras.layers import Input
-from deepinterpolation.generic import JsonLoader
 import math
 import matplotlib.pylab as plt
 from tensorflow.keras.models import load_model
 from packaging import version
-import warnings
-
+import json
 
 def create_decay_callback(initial_learning_rate, epochs_drop):
     """ This is a helper function to return a configured
@@ -49,13 +47,13 @@ class core_trainer:
         self.local_generator = generator_obj
         self.local_test_generator = test_generator_obj
 
-        json_obj = JsonLoader(trainer_json_path)
+        with open(trainer_json_path, "r") as read_file:
+            json_data = json.load(read_file)
 
         # the following line is to be backward compatible in case
         # new parameter logics are added.
-        json_obj.set_default("apply_learning_decay", 0)
+        json_data["apply_learning_decay"] = 0
 
-        json_data = json_obj.json_data
         self.output_dir = json_data["output_dir"]
         self.run_uid = json_data["run_uid"]
         self.model_string = json_data["model_string"]
@@ -341,13 +339,13 @@ class transfer_trainer(core_trainer):
         self.local_generator = generator_obj
         self.local_test_generator = test_generator_obj
 
-        json_obj = JsonLoader(trainer_json_path)
+        with open(trainer_json_path, "r") as read_file:
+            self.json_data = json.load(read_file)
 
         # the following line is to be backward compatible in case
         # new parameter logics are added.
-        json_obj.set_default("apply_learning_decay", 0)
+        self.json_data["apply_learning_decay"] = 0
 
-        self.json_data = json_obj.json_data
         self.output_dir = self.json_data["output_dir"]
         self.run_uid = self.json_data["run_uid"]
         self.model_string = self.json_data["model_string"]
@@ -428,9 +426,6 @@ class transfer_trainer(core_trainer):
         self.baseline_val_loss = self.local_model.evaluate(
             self.local_test_generator)
 
-    def initialize_network(self):
-        self.__load_model()
-
     def finalize(self):
         draw_plot = True
 
@@ -498,23 +493,11 @@ class transfer_trainer(core_trainer):
             plt.savefig(save_hist_path)
             plt.close(h)
 
-    def __load_model(self):
-        try:
-            local_model_path = self.__get_local_model_path()
-            self.__load_local_model(path=local_model_path)
-
-    def __get_local_model_path(self):
-        try:
-            model_path = self.json_data['model_path']
-            warnings.warn('Loading model from model_path will be deprecated '
-                          'in a future release')
-        except KeyError:
-            model_path = self.json_data['model_source']['local_path']
-        return model_path
-
-    def __load_local_model(self, path: str):
+    def initialize_network(self):
+        local_model_path = self.json_data['model_path']
+        self.__load_local_model(path=local_model_path)
         self.local_model = load_model(
-            path,
+            local_model_path,
             custom_objects={
                 "annealed_loss": lc.loss_selector("annealed_loss")},
         )

@@ -1,11 +1,8 @@
-import warnings
-
 import h5py
 import numpy as np
-from deepinterpolation.generic import JsonLoader
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
-
+import json
 
 class fmri_inferrence:
     # This inferrence is specific to fMRI which is raster scanning for
@@ -15,9 +12,9 @@ class fmri_inferrence:
         self.inferrence_json_path = inferrence_json_path
         self.generator_obj = generator_obj
 
-        local_json_loader = JsonLoader(inferrence_json_path)
-        local_json_loader.load_json()
-        self.json_data = local_json_loader.json_data
+        with open(inferrence_json_path, "r") as read_file:
+            self.json_data = json.load(read_file)
+
         self.output_file = self.json_data["output_file"]
         self.model_path = self.json_data["model_path"]
 
@@ -127,10 +124,9 @@ class core_inferrence:
         self.inferrence_json_path = inferrence_json_path
         self.generator_obj = generator_obj
 
-        local_json_loader = JsonLoader(inferrence_json_path)
-        local_json_loader.load_json()
-        self.json_data = local_json_loader.json_data
-
+        with open(inferrence_json_path, "r") as read_file:
+            self.json_data = json.load(read_file)
+        
         self.output_file = self.json_data["output_file"]
 
         # The following settings are used to keep backward compatilibity
@@ -160,53 +156,14 @@ class core_inferrence:
         self.nb_datasets = len(self.generator_obj)
         self.indiv_shape = self.generator_obj.get_output_size()
 
-        self.__load_model()
+        self.initialize_network()
 
-    def __load_model(self):
-        try:
-            local_model_path = self.__get_local_model_path()
-            self.__load_local_model(path=local_model_path)
-        except KeyError:
-            self.__load_model_from_mlflow()
-
-    def __get_local_model_path(self):
-        try:
-            model_path = self.json_data['model_path']
-            warnings.warn('Loading model from model_path will be deprecated '
-                          'in a future release')
-        except KeyError:
-            model_path = self.json_data['model_source']['local_path']
-        return model_path
-
-    def __load_local_model(self, path: str):
+    def initialize_network(self):
+        local_model_path = self.json_data['model_path']
         self.model = load_model(
-            path,
+            local_model_path,
             custom_objects={
                 "annealed_loss": lc.loss_selector("annealed_loss")},
-        )
-
-    def __load_model_from_mlflow(self):
-        import mlflow
-
-        mlflow_registry_params = \
-            self.json_data['model_source']['mlflow_registry']
-
-        model_name = mlflow_registry_params['model_name']
-        model_version = mlflow_registry_params.get('model_version')
-        model_stage = mlflow_registry_params.get('model_stage')
-
-        mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
-
-        if model_version is not None:
-            model_uri = f"models:/{model_name}/{model_version}"
-        elif model_stage:
-            model_uri = f"models:/{model_name}/{model_stage}"
-        else:
-            # Gets the latest version without any stage
-            model_uri = f"models:/{model_name}/None"
-
-        self.model = mlflow.keras.load_model(
-            model_uri=model_uri
         )
 
     def run(self):
