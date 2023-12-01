@@ -4,7 +4,7 @@ import pathlib
 
 if __name__ == '__main__':
     generator_param = {}
-    inferrence_param = {}
+    inference_param = {}
 
     # We are reusing the data generator for training here.
     generator_param["type"] = "generator"
@@ -33,11 +33,11 @@ if __name__ == '__main__':
     # This is important to keep the order
     # and avoid the randomization used during training
 
-    inferrence_param["type"] = "inferrence"
-    inferrence_param["name"] = "core_inferrence"
+    inference_param["type"] = "inference"
+    inference_param["name"] = "core_inference"
 
     # Replace this path to where you stored your model
-    inferrence_param[
+    inference_param[
         "model_path"
     ] = "/Users/jeromel/Documents/Work documents/Allen Institute/Projects\
         /Deep2P/repos/public/deepinterpolation/examples/unet_single_1024_\
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         model.h5"
 
     # Replace this path to where you want to store your output file
-    inferrence_param[
+    inference_param[
         "output_file"
     ] = "/Users/jeromel/test/ophys_tiny_continuous_deep_interpolation.h5"
 
@@ -61,17 +61,17 @@ if __name__ == '__main__':
     json_obj = JsonSaver(generator_param)
     json_obj.save_json(path_generator)
 
-    path_infer = os.path.join(jobdir, "inferrence.json")
-    json_obj = JsonSaver(inferrence_param)
+    path_infer = os.path.join(jobdir, "inference.json")
+    json_obj = JsonSaver(inference_param)
     json_obj.save_json(path_infer)
 
     generator_obj = ClassLoader(path_generator)
     data_generator = generator_obj.find_and_build()(path_generator)
 
-    inferrence_obj = ClassLoader(path_infer)
-    inferrence_class = inferrence_obj.find_and_build()(path_infer,
+    inference_obj = ClassLoader(path_infer)
+    inference_class = inference_obj.find_and_build()(path_infer,
                                                        data_generator)
 
     # Except this to be slow on a laptop without GPU. Inference needs
     # parallelization to be effective.
-    inferrence_class.run()
+    inference_class.run()

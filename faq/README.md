@@ -17,7 +17,7 @@
 **Answer:** A large number of scripts are provided here : https://github.com/AllenInstitute/deepinterpolation/tree/master/examples/paper_generation_code
 Those are the scripts we used to train and do inference for the publication, using the DeepInterpolation classes. Some of the code in this folder is related to how our cluster operates. 
 The files in this folder : https://github.com/AllenInstitute/deepinterpolation/tree/master/examples/paper_generation_code/cluster_lib
-show how we parallelized the submission of jobs on our cluster infrastructure. You could reuse this code within your own institution but it will require adjustements as it is using pbstools, an internal library designed to work with our cluster. For example, the generic_ophys_process_sync.py file is the master job that is calling out smaller section inference with single_ophys_section_inferrence.py. Therefore you will likely need to update *_sync.py files. 
+show how we parallelized the submission of jobs on our cluster infrastructure. You could reuse this code within your own institution but it will require adjustements as it is using pbstools, an internal library designed to work with our cluster. For example, the generic_ophys_process_sync.py file is the master job that is calling out smaller section inference with single_ophys_section_inference.py. Therefore you will likely need to update *_sync.py files. 
 
 ##
 **Question: I am getting error related to GPU memory allocation, for instance : "ResourceExhaustedError: OOM when allocating tensor with shape...".

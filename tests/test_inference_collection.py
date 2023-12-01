@@ -4,7 +4,7 @@ import tempfile
 
 import h5py
 
-from deepinterpolation.inferrence_collection import core_inferrence
+from deepinterpolation.inference_collection import core_inference
 from deepinterpolation.generator_collection import EphysGenerator
 
 def _get_generator_params():
@@ -37,8 +37,8 @@ def _get_inference_params(output_path):
     )
 
     params = {
-        "type": "inferrence",
-        "name": "core_inferrence",
+        "type": "inference",
+        "name": "core_inference",
         "model_source": {},
         "output_file": output_file
     }
@@ -57,7 +57,7 @@ def _get_inference_params(output_path):
 def _get_ephys_model(generator_params, inference_params):
 
     generator_obj = EphysGenerator(generator_params)
-    model = core_inferrence(inference_params, generator_obj)
+    model = core_inference(inference_params, generator_obj)
     return model
 
 

@@ -3,14 +3,14 @@ import numpy as np
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 
-class fmri_inferrence:
-    # This inferrence is specific to fMRI which is raster scanning for
+class fmri_inference:
+    # This inference is specific to fMRI which is raster scanning for
     # denoising
 
-    def __init__(self, inferrence_param, generator_obj):
+    def __init__(self, inference_param, generator_obj):
         self.generator_obj = generator_obj
 
-        self.json_data = inferrence_param
+        self.json_data = inference_param
 
         self.output_file = self.json_data["output_file"]
         self.model_path = self.json_data["model_path"]
@@ -115,8 +115,8 @@ class fmri_inferrence:
                             ]
 
 
-class core_inferrence:
-    # This is the generic inferrence class
+class core_inference:
+    # This is the generic inference class
     def __init__(self, inference_param, generator_obj):
         self.generator_obj = generator_obj
 
