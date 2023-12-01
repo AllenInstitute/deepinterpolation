@@ -5,7 +5,6 @@ import h5py
 import tensorflow.keras as keras
 import tifffile
 import nibabel as nib
-import s3fs
 import glob
 
 
@@ -26,9 +25,8 @@ class DeepGenerator(keras.utils.Sequence):
     None
     """
 
-    def __init__(self, json_path):
-        with open(json_path, "r") as read_file:
-            self.json_data = json.load(read_file)
+    def __init__(self, generator_param):
+        self.json_data = generator_param
         self.local_mean = 1
         self.local_std = 1
 
@@ -152,8 +150,8 @@ class CollectorGenerator(DeepGenerator):
 
 
 class FmriGenerator(DeepGenerator):
-    def __init__(self, json_path):
-        super().__init__(json_path)
+    def __init__(self, generator_param):
+        super().__init__(generator_param)
 
         self.raw_data_file = self.json_data["train_path"]
         self.batch_size = self.json_data["batch_size"]
@@ -415,9 +413,9 @@ class SequentialGenerator(DeepGenerator):
     intermediary class that is meant to be extended with details of
     how datasets are loaded."""
 
-    def __init__(self, json_path):
+    def __init__(self, generator_param):
         "Initialization"
-        super().__init__(json_path)
+        super().__init__(generator_param)
 
         # We first store the relevant parameters
         if "pre_post_frame" in self.json_data.keys():
@@ -788,9 +786,9 @@ class SingleTifGenerator(SequentialGenerator):
     should be consistent through training. a maximum of 1000 frames are pulled
     from the beginning of the movie to estimate mean and std."""
 
-    def __init__(self, json_path):
+    def __init__(self, generator_param):
         "Initialization"
-        super().__init__(json_path)
+        super().__init__(generator_param)
 
         self.raw_data_file = self.json_data["train_path"]
 
@@ -893,9 +891,9 @@ class OphysGenerator(SequentialGenerator):
     continous movie recording into a 'data' field as [time, x, y]. Each
     frame is expected to be smaller than (512,512)."""
 
-    def __init__(self, json_path):
+    def __init__(self, generator_param):
         "Initialization"
-        super().__init__(json_path)
+        super().__init__(generator_param)
 
         # For backward compatibility
         if "train_path" in self.json_data.keys():
@@ -994,9 +992,9 @@ class MovieJSONGenerator(DeepGenerator):
     "mean": <float value>,
     "std": <float_value>}}"""
 
-    def __init__(self, json_path):
+    def __init__(self, generator_param):
         "Initialization"
-        super().__init__(json_path)
+        super().__init__(generator_param)
 
         self.sample_data_path_json = self.json_data["train_path"]
         self.batch_size = self.json_data["batch_size"]

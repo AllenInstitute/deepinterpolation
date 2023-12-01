@@ -39,7 +39,7 @@ class core_trainer:
         generator_obj,
         test_generator_obj,
         network_obj,
-        trainer_json_path,
+        trainer_param,
         auto_compile=True,
     ):
 
@@ -47,8 +47,7 @@ class core_trainer:
         self.local_generator = generator_obj
         self.local_test_generator = test_generator_obj
 
-        with open(trainer_json_path, "r") as read_file:
-            json_data = json.load(read_file)
+        json_data = trainer_param
 
         # the following line is to be backward compatible in case
         # new parameter logics are added.
@@ -332,15 +331,14 @@ class transfer_trainer(core_trainer):
 
     def __init__(
         self, generator_obj, test_generator_obj,
-        trainer_json_path, auto_compile=True,
+        trainer_param, auto_compile=True,
     ):
 
         # self.network_obj = network_obj
         self.local_generator = generator_obj
         self.local_test_generator = test_generator_obj
 
-        with open(trainer_json_path, "r") as read_file:
-            self.json_data = json.load(read_file)
+        self.json_data = trainer_param
 
         # the following line is to be backward compatible in case
         # new parameter logics are added.

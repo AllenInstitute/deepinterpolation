@@ -1,15 +1,13 @@
-from deepinterpolation.generic import JsonSaver, ClassLoader
+from deepinterpolation.generator_collection import SingleTifGenerator, EphysGenerator
 import os
 import pathlib
 
 
-def test_generator_tif_creation(tmp_path):
+def test_generator_tif_creation():
 
     generator_param = {}
 
     # We are reusing the data generator for training here.
-    generator_param["type"] = "generator"
-    generator_param["name"] = "SingleTifGenerator"
     generator_param["pre_frame"] = 30
     generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 0
@@ -31,21 +29,14 @@ def test_generator_tif_creation(tmp_path):
         "randomize"
     ] = 0
 
-    path_generator = os.path.join(tmp_path, "generator.json")
-    json_obj = JsonSaver(generator_param)
-    json_obj.save_json(path_generator)
-
-    generator_obj = ClassLoader(path_generator)
-    data_generator = generator_obj.find_and_build()(path_generator)
+    data_generator = SingleTifGenerator(generator_param)
 
     assert len(data_generator) == 8
 
 
-def test_generator_ephys_creation(tmp_path):
+def test_generator_ephys_creation():
     generator_param = {}
 
-    generator_param["type"] = "generator"
-    generator_param["name"] = "EphysGenerator"
     generator_param["pre_frame"] = 30
     generator_param["post_frame"] = 30
     generator_param["pre_post_omission"] = 1
@@ -67,11 +58,6 @@ def test_generator_ephys_creation(tmp_path):
         "randomize"
     ] = 0
 
-    path_generator = os.path.join(tmp_path, "generator.json")
-    json_obj = JsonSaver(generator_param)
-    json_obj.save_json(path_generator)
-
-    generator_obj = ClassLoader(path_generator)
-    data_generator = generator_obj.find_and_build()(path_generator)
+    data_generator = EphysGenerator(generator_param)
 
     assert len(data_generator) == 4993
