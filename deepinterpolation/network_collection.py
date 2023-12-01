@@ -1,29 +1,16 @@
 from tensorflow.keras.layers import (
-    Input,
-    Conv1D,
     Conv2D,
     Conv3D,
-    MaxPooling1D,
     MaxPooling2D,
     MaxPool3D,
     UpSampling3D,
     UpSampling2D,
     Dense,
     ZeroPadding2D,
-    ZeroPadding3D,
-    Flatten,
-    DepthwiseConv2D,
-    Dropout,
-    Reshape,
+    ZeroPadding3D
 )
 from tensorflow.keras.layers import Concatenate
-from tensorflow.keras.constraints import NonNeg
-from tensorflow.keras.layers import dot
 from tensorflow.keras import regularizers
-from tensorflow.keras.constraints import NonNeg
-from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import Input
-from tensorflow.keras.models import Model
 from deepinterpolation.generic import JsonLoader
 
 

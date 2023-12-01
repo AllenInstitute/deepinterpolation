@@ -502,8 +502,6 @@ class transfer_trainer(core_trainer):
         try:
             local_model_path = self.__get_local_model_path()
             self.__load_local_model(path=local_model_path)
-        except KeyError:
-            self.__load_model_from_mlflow()
 
     def __get_local_model_path(self):
         try:
@@ -519,28 +517,4 @@ class transfer_trainer(core_trainer):
             path,
             custom_objects={
                 "annealed_loss": lc.loss_selector("annealed_loss")},
-        )
-
-    def __load_model_from_mlflow(self):
-        import mlflow
-
-        mlflow_registry_params = \
-            self.json_data['model_source']['mlflow_registry']
-
-        model_name = mlflow_registry_params['model_name']
-        model_version = mlflow_registry_params.get('model_version')
-        model_stage = mlflow_registry_params.get('model_stage')
-
-        mlflow.set_tracking_uri(mlflow_registry_params['tracking_uri'])
-
-        if model_version is not None:
-            model_uri = f"models:/{model_name}/{model_version}"
-        elif model_stage:
-            model_uri = f"models:/{model_name}/{model_stage}"
-        else:
-            # Gets the latest version without any stage
-            model_uri = f"models:/{model_name}/None"
-
-        self.local_model = mlflow.keras.load_model(
-            model_uri=model_uri
         )
