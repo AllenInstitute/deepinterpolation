@@ -493,7 +493,6 @@ class transfer_trainer(core_trainer):
 
     def initialize_network(self):
         local_model_path = self.json_data['model_path']
-        self.__load_local_model(path=local_model_path)
         self.local_model = load_model(
             local_model_path,
             custom_objects={
