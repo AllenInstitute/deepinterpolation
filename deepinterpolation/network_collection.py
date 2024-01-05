@@ -10,7 +10,6 @@ from tensorflow.keras.layers import (
     ZeroPadding3D
 )
 from tensorflow.keras.layers import Concatenate
-from tensorflow.keras import regularizers
 import numpy as np
 
 
@@ -421,7 +420,7 @@ def unet_1024_search(network_param):
 
         # Deep CONV
         deep_conv = Conv2D(
-            2 ** network_param["network_depth"] * \
+            2 ** network_param["network_depth"] * 
             network_param["nb_features_scale"],
             (3, 3),
             activation="relu",
@@ -509,6 +508,7 @@ def unet_single_1024(network_param):
         return decoded
 
     return local_network_function
+
 
 def unet_single_1p_1024(network_param):
     def local_network_function(input_img):
