@@ -420,7 +420,7 @@ def unet_1024_search(network_param):
 
         # Deep CONV
         deep_conv = Conv2D(
-            2 ** network_param["network_depth"] * 
+            2 ** network_param["network_depth"] *
             network_param["nb_features_scale"],
             (3, 3),
             activation="relu",
