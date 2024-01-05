@@ -89,18 +89,18 @@ def unet_single_256(network_param):
 def fmri_unet_denoiser(network_param):
     def local_network_function(input_img):
         # encoder
-        conv1 = Conv3D(8, (3, 3, 3), 
-                       activation="relu", 
+        conv1 = Conv3D(8, (3, 3, 3),
+                       activation="relu",
                        padding="same")(input_img)
         pool1 = MaxPool3D(pool_size=(2, 2, 2))(conv1)
 
-        conv2 = Conv3D(16, (3, 3, 3), 
-                       activation="relu", 
+        conv2 = Conv3D(16, (3, 3, 3),
+                       activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPool3D(pool_size=(2, 2, 2))(conv2)
 
-        conv3 = Conv3D(32, (3, 3, 3), 
-                       activation="relu", 
+        conv3 = Conv3D(32, (3, 3, 3),
+                       activation="relu",
                        padding="same")(pool2)
 
         # decoder
@@ -109,8 +109,8 @@ def fmri_unet_denoiser(network_param):
 
         conc_up_1 = Concatenate()([up1, conv2])
 
-        conv4 = Conv3D(16, (3, 3, 3), 
-                       activation="relu", 
+        conv4 = Conv3D(16, (3, 3, 3),
+                       activation="relu",
                        padding="same")(conc_up_1)
 
         up2 = UpSampling3D((2, 2, 2))(conv4)
@@ -118,12 +118,12 @@ def fmri_unet_denoiser(network_param):
 
         conc_up_2 = Concatenate()([up2, conv1])
 
-        conv5 = Conv3D(8, (3, 3, 3), 
-                       activation="relu", 
+        conv5 = Conv3D(8, (3, 3, 3),
+                       activation="relu",
                        padding="same")(conc_up_2)
 
-        out = Conv3D(1, (1, 1, 1), 
-                     activation=None, 
+        out = Conv3D(1, (1, 1, 1),
+                     activation=None,
                      padding="same")(conv5)
         return out
 
@@ -157,8 +157,8 @@ def fmri_flexible_architecture(network_param):
         for nb_dense in range(hp.Choice(f"nb_dense_layers", values=[2, 4, 6])):
             out_dense = Dense(
                 hp.Choice(
-                    f"dense_{nb_dense}_units", 
-                    values=[32, 64, 128, 256], 
+                    f"dense_{nb_dense}_units",
+                    values=[32, 64, 128, 256],
                     default=128
                 ),
                 activation=broad_activation,
@@ -177,11 +177,11 @@ def fmri_volume_optimized_denoiser(network_param):
 
         # encoder
         conv1 = Conv3D(256, (2, 2, 2), 
-                       activation="relu", 
+                       activation="relu",
                        padding="same")(input_img)
         pool1 = MaxPool3D(pool_size=(2, 2, 2))(conv1)
         conv2 = Conv3D(128, (2, 2, 2), 
-                       activation="relu", 
+                       activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPool3D(pool_size=(2, 2, 2))(conv2)
         dens1 = Dense(64, activation="relu")(pool2)
@@ -203,11 +203,11 @@ def fmri_volume_deeper_denoiser(network_param):
 
         # encoder
         conv1 = Conv3D(32, (2, 2, 2), 
-                       activation="relu", 
+                       activation="relu",
                        padding="same")(input_img)
         pool1 = MaxPool3D(pool_size=(2, 2, 2))(conv1)
-        conv2 = Conv3D(64, (2, 2, 2), 
-                       activation="relu", 
+        conv2 = Conv3D(64, (2, 2, 2),
+                       activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPool3D(pool_size=(2, 2, 2))(conv2)
         dens1 = Dense(128, activation="relu")(pool2)
@@ -226,12 +226,12 @@ def fmri_volume_dense_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
-        conv1 = Conv3D(32, (2, 2, 2), 
-                       activation="relu", 
+        conv1 = Conv3D(32, (2, 2, 2),
+                       activation="relu",
                        padding="same")(input_img)
         pool1 = MaxPool3D(pool_size=(2, 2, 2))(conv1)
-        conv2 = Conv3D(64, (2, 2, 2), 
-                       activation="relu", 
+        conv2 = Conv3D(64, (2, 2, 2),
+                       activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPool3D(pool_size=(2, 2, 2))(conv2)
         dens1 = Dense(128, activation="relu")(pool2)
@@ -248,16 +248,16 @@ def fmri_volume_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
-        conv1 = Conv3D(32, (2, 2, 2), 
-                       activation="relu", 
+        conv1 = Conv3D(32, (2, 2, 2),
+                       activation="relu",
                        padding="same")(input_img)
         pool1 = MaxPool3D(pool_size=(2, 2, 2))(conv1)
-        conv2 = Conv3D(64, (2, 2, 2), 
-                       activation="relu", 
+        conv2 = Conv3D(64, (2, 2, 2),
+                       activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPool3D(pool_size=(2, 2, 2))(conv2)
-        conv3 = Conv3D(128, (2, 2, 2), 
-                       activation="relu", 
+        conv3 = Conv3D(128, (2, 2, 2),
+                       activation="relu",
                        padding="same")(pool2)
         dens1 = Dense(128, activation="relu")(conv3)
         dens2 = Dense(128, activation="relu")(dens1)

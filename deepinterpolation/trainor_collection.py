@@ -10,7 +10,7 @@ import math
 import matplotlib.pylab as plt
 from tensorflow.keras.models import load_model
 from packaging import version
-import json
+
 
 def create_decay_callback(initial_learning_rate, epochs_drop):
     """ This is a helper function to return a configured
