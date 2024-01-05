@@ -1,11 +1,10 @@
 import os
 import pathlib
 import tempfile
-
 import h5py
-
 from deepinterpolation.inference_collection import core_inference
 from deepinterpolation.generator_collection import EphysGenerator
+
 
 def _get_generator_params():
     train_path = os.path.join(

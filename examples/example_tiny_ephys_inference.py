@@ -36,7 +36,8 @@ if __name__ == '__main__':
     # Replace this path to where you stored your model
     inference_param[
         "model_path"
-    ] = "./sample_data/2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5"
+    ] = r"./sample_data/2020_02_29_15_28_unet_single_ephys_1024_mean_" \
+        + r"squared_error-1050.h5"
 
     # Replace this path to where you want to store your output file
     inference_param[

@@ -3,6 +3,7 @@ import numpy as np
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 
+
 class fmri_inference:
     # This inference is specific to fMRI which is raster scanning for
     # denoising
@@ -121,7 +122,7 @@ class core_inference:
         self.generator_obj = generator_obj
 
         self.json_data = inference_param
-        
+
         self.output_file = self.json_data["output_file"]
 
         # The following settings are used to keep backward compatilibity

@@ -4,6 +4,7 @@ from deepinterpolation.generator_collection import EphysGenerator
 from deepinterpolation.trainor_collection import core_trainer
 from deepinterpolation.network_collection import unet_single_ephys_1024
 
+
 def test_ephys_training(tmp_path):
 
     # Initialize meta-parameters objects
@@ -84,7 +85,7 @@ def test_ephys_training(tmp_path):
     train_generator = EphysGenerator(generator_param)
     test_generator = EphysGenerator(generator_test_param)
 
-    training_class = core_trainer(train_generator, test_generator, 
+    training_class = core_trainer(train_generator, test_generator,
                                   network_obj, training_param)
 
     training_class.run()

@@ -109,7 +109,8 @@ if __name__ == '__main__':
 
     # We build the training object.
     training_class = core_trainer(
-        train_generator, test_generator, unet_single_ephys_1024({}), training_param
+        train_generator, test_generator, 
+        unet_single_ephys_1024({}), training_param
     )
 
     # Start training. This can take very long time.

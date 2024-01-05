@@ -65,7 +65,8 @@ if __name__ == '__main__':
     # Change this path to any model you wish to improve
     training_param[
         "model_path"
-    ] = r"./sample_data/2020_02_29_15_28_unet_single_ephys_1024_mean_squared_error-1050.h5"
+    ] = r"./sample_data/2020_02_29_15_28_unet_single_ephys_" \
+        + r"1024_mean_squared_error-1050.h5"
     training_param["batch_size"] = generator_test_param["batch_size"]
     training_param["steps_per_epoch"] = steps_per_epoch
     training_param[

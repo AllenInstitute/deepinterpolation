@@ -35,7 +35,9 @@ if __name__ == '__main__':
     # Replace this path to where you stored your model
     inference_param[
         "model_path"
-    ] = "/Users/jerome.lecoq/Dropbox/DO NOT DELETE/Deepinterpolation-Models/deep_interpolation_ai93_v1_1/2019_09_11_23_32_unet_single_1024_mean_absolute_error_Ai93-0450.h5"
+    ] = r"/Users/jerome.lecoq/Dropbox/DO NOT DELETE/Deepinterpolation-" \
+        + r"Models/deep_interpolation_ai93_v1_1/2019_09_11_23_32_unet_" \
+            + r"single_1024_mean_absolute_error_Ai93-0450.h5"
 
     # Replace this path to where you want to store your output file
     inference_param[
