@@ -138,11 +138,11 @@ def fmri_flexible_architecture(network_param):
 
         broad_activation = hp.Choice("unit_activation", values=["relu", "elu"])
 
-        for nb_conv in range(hp.Choice(f"nb_conv_layers", values=[0, 1, 2])):
+        for nb_conv in range(hp.Choice("nb_conv_layers", values=[0, 1, 2])):
             conv_interm = Conv3D(
                 hp.Choice(
-                    f"conv_{nb_conv}_units", 
-                    values=[32, 64, 128, 256], 
+                    f"conv_{nb_conv}_units",
+                    values=[32, 64, 128, 256],
                     default=64
                 ),
                 (2, 2, 2),
@@ -154,7 +154,7 @@ def fmri_flexible_architecture(network_param):
 
         in_dense = out_conv
 
-        for nb_dense in range(hp.Choice(f"nb_dense_layers", values=[2, 4, 6])):
+        for nb_dense in range(hp.Choice("nb_dense_layers", values=[2, 4, 6])):
             out_dense = Dense(
                 hp.Choice(
                     f"dense_{nb_dense}_units",
@@ -176,11 +176,11 @@ def fmri_volume_optimized_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
-        conv1 = Conv3D(256, (2, 2, 2), 
+        conv1 = Conv3D(256, (2, 2, 2),
                        activation="relu",
                        padding="same")(input_img)
         pool1 = MaxPool3D(pool_size=(2, 2, 2))(conv1)
-        conv2 = Conv3D(128, (2, 2, 2), 
+        conv2 = Conv3D(128, (2, 2, 2),
                        activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPool3D(pool_size=(2, 2, 2))(conv2)
@@ -202,7 +202,7 @@ def fmri_volume_deeper_denoiser(network_param):
     def local_network_function(input_img):
 
         # encoder
-        conv1 = Conv3D(32, (2, 2, 2), 
+        conv1 = Conv3D(32, (2, 2, 2),
                        activation="relu",
                        padding="same")(input_img)
         pool1 = MaxPool3D(pool_size=(2, 2, 2))(conv1)
@@ -400,7 +400,7 @@ def padding_unet_single_1024(network_param):
     return local_network_function
 
 
-def unet_1024_search(network_param):            
+def unet_1024_search(network_param):
     def local_network_function(input_img):
 
         # encoder
@@ -422,7 +422,7 @@ def unet_1024_search(network_param):
         # Deep CONV
         deep_conv = Conv2D(
             2 ** network_param["network_depth"] * \
-                network_param["nb_features_scale"],
+            network_param["nb_features_scale"],
             (3, 3),
             activation="relu",
             padding="same",
@@ -433,7 +433,7 @@ def unet_1024_search(network_param):
         for local_depth in range(network_param["network_depth"] - 1, -1, -1):
             local_up = UpSampling2D((2, 2))(local_input)
             if network_param["unet"]:
-                local_conc = Concatenate()([local_up, 
+                local_conc = Concatenate()([local_up,
                                             u_net_shortcut[local_depth]])
             else:
                 local_conc = local_up
@@ -447,8 +447,8 @@ def unet_1024_search(network_param):
             local_input = local_output
 
         # output layer
-        final = Conv2D(1, (1, 1), 
-                       activation=None, 
+        final = Conv2D(1, (1, 1),
+                       activation=None,
                        padding="same")(local_output)
 
         return final
@@ -509,86 +509,6 @@ def unet_single_1024(network_param):
         return decoded
 
     return local_network_function
-
-
-def segmentation_net(network_param):
-    def local_network_function(input_img):
-
-        # encoder
-        conv1 = Conv2D(64, (3, 3), 
-                       activation="relu", 
-                       padding="same")(input_img)
-        pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
-        conv2 = Conv2D(128, (3, 3), activation="relu", padding="same")(pool1)
-        pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
-        conv3 = Conv2D(256, (3, 3), activation="relu", padding="same")(pool2)
-        pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
-        conv4 = Conv2D(512, (3, 3), activation="relu", padding="same")(pool3)
-        pool4 = MaxPooling2D(pool_size=(2, 2))(conv4)
-        conv5 = Conv2D(1024, (3, 3), activation="relu", padding="same")(pool4)
-
-        latent_layer = Dense(100)(conv5)
-        latent_activation = Dense(100)(latent_layer)
-
-        # neuronal projection
-
-        up1 = UpSampling2D((2, 2))(conv5)  # 14 x 14 x 128
-        conc_up_1 = Concatenate()([up1, conv4])
-        conv7 = Conv2D(512, (3, 3), activation="relu", padding="same")(
-            conc_up_1
-        )  # 256 x 256 x 64
-        conv7 = Conv2D(512, (3, 3), activation="relu", padding="same")(
-            conv7
-        )  # 256 x 256 x 64
-
-        up2 = UpSampling2D((2, 2))(conv7)  # 28 x 28 x 64
-        conc_up_2 = Concatenate()([up2, conv3])
-        conv8 = Conv2D(256, (3, 3), activation="relu", padding="same")(
-            conc_up_2
-        )  # 512 x 512 x 1
-        conv8 = Conv2D(256, (3, 3), activation="relu", padding="same")(
-            conv8
-        )  # 512 x 512 x 1
-
-        up3 = UpSampling2D((2, 2))(conv8)  # 28 x 28 x 64
-        conc_up_3 = Concatenate()([up3, conv2])
-        conv9 = Conv2D(128, (3, 3), activation="relu", padding="same")(
-            conc_up_3
-        )  # 512 x 512 x 1
-        conv9 = Conv2D(128, (3, 3), activation="relu", padding="same")(
-            conv9
-        )  # 512 x 512 x 1
-
-        up4 = UpSampling2D((2, 2))(conv9)  # 28 x 28 x 64
-        conc_up_4 = Concatenate()([up4, conv1])
-        conv10 = Conv2D(64, (3, 3), activation="relu", padding="same")(
-            conc_up_4
-        )  # 512 x 512 x 1
-        conv10 = Conv2D(64, (3, 3), activation="relu", padding="same")(
-            conv10
-        )  # 512 x 512 x 1
-
-        upsample = Conv2D(
-            1, (1, 1), activation=None, padding="same", name="output_upsample"
-        )(
-            conv10
-        )  # 512 x 512 x 1
-        decoded = Conv2D(
-            1,
-            (10, 10),
-            activation=None,
-            padding="same",
-            name="output_raw",
-            use_bias=False,
-            kernel_regularizer=regularizers.l2(0.01),
-        )(
-            upsample
-        )  # 512 x 512 x 1
-
-        return [upsample, decoded]
-
-    return local_network_function
-
 
 def unet_single_1p_1024(network_param):
     def local_network_function(input_img):
@@ -738,14 +658,14 @@ def dense_thick_units(network_param):
         current_input = input_data
 
         for depth in np.range(nb_layers):
-            current_output = Dense(nb_units, 
-                                   activation="relu", 
+            current_output = Dense(nb_units,
+                                   activation="relu",
                                    padding="same")(
                 current_input
             )
 
-        final_output = Dense(1, 
-                             activation="relu", 
+        final_output = Dense(1,
+                             activation="relu",
                              padding="same")(current_output)
 
         return final_output

@@ -1,4 +1,5 @@
-from deepinterpolation.generator_collection import SingleTifGenerator, EphysGenerator
+from deepinterpolation.generator_collection \
+    import SingleTifGenerator, EphysGenerator
 import os
 import pathlib
 
