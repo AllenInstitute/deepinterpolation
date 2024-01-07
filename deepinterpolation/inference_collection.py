@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
-
+from tqdm.auto import tqdm
 
 class fmri_inference:
     # This inference is specific to fMRI which is raster scanning for
@@ -192,11 +192,13 @@ class core_inference:
                     chunks=tuple(chunk_size),
                     dtype=self.output_datatype,
                 )
-
-            for index_dataset in np.arange(0, self.nb_datasets, 1):
+            for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
                 local_data = self.generator_obj.__getitem__(index_dataset)
 
-                predictions_data = self.model.predict(local_data[0])
+                # We overwrite epoch_index to allow the last unfilled epoch
+                self.generator_obj.epoch_index = epoch_index
+
+                predictions_data = self.model.predict_on_batch(local_data[0])
 
                 local_mean, local_std = \
                     self.generator_obj.__get_norm_parameters__(index_dataset)
