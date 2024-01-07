@@ -6,3 +6,4 @@ numpy
 python-dateutil
 scipy
 tifffile
+tqdm
