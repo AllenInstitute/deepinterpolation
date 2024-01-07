@@ -905,6 +905,7 @@ class OphysGenerator(SequentialGenerator):
 
         movie_obj_point = h5py.File(self.raw_data_file, "r")
         raw_data = movie_obj_point["data"]
+        self.movie_dim = raw_data.shape[1:]
 
         self.total_frame_per_movie = int(raw_data.shape[0])
 
@@ -953,21 +954,30 @@ class OphysGenerator(SequentialGenerator):
 
         movie_obj_point.close()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         shuffle_indexes = self.generate_batch_indexes(index)
-
+        local_batch_size = shuffle_indexes.shape[0]
         input_full = np.zeros(
-            [self.batch_size, 512, 512, self.pre_frame + self.post_frame],
+            [
+                local_batch_size,
+                self.movie_dim[0],
+                self.movie_dim[1],
+                self.pre_frame + self.post_frame,
+            ],
             dtype="float32",
         )
 
-        output_full = np.zeros([self.batch_size, 512, 512, 1], dtype="float32")
+        output_full = np.zeros(
+            [local_batch_size, self.movie_dim[0], self.movie_dim[1], 1], dtype="float32"
+        )
 
         for batch_index, frame_index in enumerate(shuffle_indexes):
             X, Y = self.__data_generation__(frame_index)
+            X_shape = X.shape
+            Y_shape = Y.shape
 
-            input_full[batch_index, :, :, :] = X
-            output_full[batch_index, :, :, :] = Y
+            input_full[batch_index, : X_shape[0], : X_shape[1], :] = X
+            output_full[batch_index, : Y_shape[0], : Y_shape[1], 0] = Y
 
         return input_full, output_full
 
