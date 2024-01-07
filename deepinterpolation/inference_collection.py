@@ -193,7 +193,7 @@ class core_inference:
                     dtype=self.output_datatype,
                 )
             for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
-                local_data = self.generator_obj.__getitem__(index_dataset)
+                local_data = self.generator_obj[index_dataset]
 
                 # We overwrite epoch_index to allow the last unfilled epoch
                 self.generator_obj.epoch_index = epoch_index
