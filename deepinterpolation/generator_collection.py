@@ -903,7 +903,8 @@ class OphysGenerator(SequentialGenerator):
 
         self.batch_size = self.json_data["batch_size"]
 
-        raw_data = h5py.File(self.raw_data_file, "r")["data"]
+        movie_obj_point = h5py.File(self.raw_data_file, "r")
+        raw_data = movie_obj_point["data"]
 
         self.total_frame_per_movie = int(raw_data.shape[0])
 
@@ -911,11 +912,46 @@ class OphysGenerator(SequentialGenerator):
         self._calculate_list_samples(self.total_frame_per_movie)
 
         average_nb_samples = np.min([int(raw_data.shape[0]), 1000])
-        local_data = raw_data[0:average_nb_samples, :, :].flatten()
+
+        if "cache_data" in self.json_data.keys():
+            self.cache_data = self.json_data["cache_data"]
+        else:
+            self.cache_data = False
+
+        if self.cache_data:
+            print("Caching hdf5 file... \n")
+            if self.end_frame > 0:
+                self.raw_data = raw_data[
+                    0 : np.min(
+                        [
+                            self.total_frame_per_movie,
+                            self.end_frame
+                            + self.post_frame
+                            + self.pre_post_omission
+                            + 1,
+                        ]
+                    ),
+                    :,
+                    :,
+                ]
+            else:
+                self.raw_data = raw_data[:, :, :]
+            local_data = self.raw_data[0:average_nb_samples, :, :].flatten()
+        else:
+            local_data = raw_data[0:average_nb_samples, :, :].flatten()
+            self.cache_data = False
+
         local_data = local_data.astype("float32")
 
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
+        
+        if self.cache_data:
+            self.raw_data = (
+                self.raw_data.astype("float") - self.local_mean
+            ) / self.local_std
+
+        movie_obj_point.close()
 
     def __getitem__(self, index):
         shuffle_indexes = self.generate_batch_indexes(index)
@@ -935,13 +971,14 @@ class OphysGenerator(SequentialGenerator):
 
         return input_full, output_full
 
-    def __data_generation__(self, index_frame):
+    def __data_generation__(self, index_frame: int):
         "Generates data containing batch_size samples"
 
-        movie_obj = h5py.File(self.raw_data_file, "r")
-
-        input_full = np.zeros([1, 512, 512, self.pre_frame + self.post_frame])
-        output_full = np.zeros([1, 512, 512, 1])
+        if self.cache_data:
+            movie_obj = self.raw_data
+        else:
+            movie_obj_point = h5py.File(self.raw_data_file, "r")
+            movie_obj = movie_obj_point["data"]
 
         input_index = np.arange(
             index_frame - self.pre_frame - self.pre_post_omission,
@@ -950,33 +987,29 @@ class OphysGenerator(SequentialGenerator):
         input_index = input_index[input_index != index_frame]
 
         for index_padding in np.arange(self.pre_post_omission + 1):
-            input_index = input_index[input_index !=
-                                      index_frame - index_padding]
-            input_index = input_index[input_index !=
-                                      index_frame + index_padding]
+            input_index = input_index[input_index != index_frame - index_padding]
+            input_index = input_index[input_index != index_frame + index_padding]
 
-        data_img_input = movie_obj["data"][input_index, :, :]
-        data_img_output = movie_obj["data"][index_frame, :, :]
+        # If data was cached we do not need to normalize. this was done
+        # at once to minimize compute
+        if self.cache_data:
+            data_img_input = movie_obj[input_index, :, :]
+            data_img_output = movie_obj[index_frame, :, :]
+        else:
+            data_img_input = (
+                movie_obj[input_index, :, :].astype("float") - self.local_mean
+            ) / self.local_std
+            data_img_output = (
+                movie_obj[index_frame, :, :].astype("float") - self.local_mean
+            ) / self.local_std
 
         data_img_input = np.swapaxes(data_img_input, 1, 2)
         data_img_input = np.swapaxes(data_img_input, 0, 2)
 
-        img_in_shape = data_img_input.shape
-        img_out_shape = data_img_output.shape
+        if not self.cache_data:
+            movie_obj_point.close()
 
-        data_img_input = (
-            data_img_input.astype("float") - self.local_mean
-        ) / self.local_std
-        data_img_output = (
-            data_img_output.astype("float") - self.local_mean
-        ) / self.local_std
-
-        input_full[0, : img_in_shape[0], : img_in_shape[1], :] = data_img_input
-        output_full[0, : img_out_shape[0],
-                    : img_out_shape[1], 0] = data_img_output
-        movie_obj.close()
-
-        return input_full, output_full
+        return data_img_input, data_img_output
 
 
 class MovieJSONGenerator(DeepGenerator):
