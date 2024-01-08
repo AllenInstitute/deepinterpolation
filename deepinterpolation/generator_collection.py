@@ -515,11 +515,13 @@ class SequentialGenerator(DeepGenerator):
             index = index + self.steps_per_epoch * self.epoch_index
 
         # Generate indexes of the batch
-        indexes = np.arange(index * self.batch_size,
-                            (index + 1) * self.batch_size)
-
-        shuffle_indexes = self.list_samples[indexes]
-
+        start_ind = index * self.batch_size
+        end_ind = (index + 1) * self.batch_size
+        if end_ind < self.list_samples.shape[0]:
+            indexes = np.arange(start_ind, end_ind)
+            shuffle_indexes = self.list_samples[indexes]
+        else:
+            shuffle_indexes = self.list_samples[start_ind:]
         return shuffle_indexes
 
 
