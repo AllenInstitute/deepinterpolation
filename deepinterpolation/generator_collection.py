@@ -565,14 +565,16 @@ class EphysGenerator(SequentialGenerator):
         # This is to ensure we are going through
         # the entire data when steps_per_epoch<self.__len__
         shuffle_indexes = self.generate_batch_indexes(index)
+        shuffle_indexes = self.generate_batch_indexes(index)
+        local_batch_size = shuffle_indexes.shape[0]
 
         input_full = np.zeros(
-            [self.batch_size, int(self.nb_probes), 2,
+            [local_batch_size, int(self.nb_probes), 2,
              self.pre_frame + self.post_frame],
             dtype="float32",
         )
         output_full = np.zeros(
-            [self.batch_size, int(self.nb_probes), 2, 1], dtype="float32"
+            [local_batch_size, int(self.nb_probes), 2, 1], dtype="float32"
         )
 
         for batch_index, frame_index in enumerate(shuffle_indexes):
