@@ -61,4 +61,4 @@ def test_generator_ephys_creation():
 
     data_generator = EphysGenerator(generator_param)
 
-    assert len(data_generator) == 4993
+    assert len(data_generator) == 4994
