@@ -162,15 +162,16 @@ class core_inference:
                 "annealed_loss": lc.loss_selector("annealed_loss")},
         )
 
-    def run(self):
+    def run(self):            
+        nb_frames_inference = self.generator_obj.list_samples.shape[0]
+        
         if self.output_padding:
-            final_shape = [self.generator_obj.end_frame -
-                           self.generator_obj.start_frame]
             first_sample = self.generator_obj.start_sample - \
                 self.generator_obj.start_frame
         else:
-            final_shape = [self.nb_datasets * self.batch_size]
             first_sample = 0
+
+        final_shape = [nb_frames_inference + first_sample]
 
         final_shape.extend(self.indiv_shape[:-1])
 
