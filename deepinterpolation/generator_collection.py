@@ -6,6 +6,7 @@ import tensorflow.keras as keras
 import tifffile
 import nibabel as nib
 import glob
+import math
 
 
 class MaxRetryException(Exception):
@@ -505,7 +506,7 @@ class SequentialGenerator(DeepGenerator):
 
     def __len__(self):
         "Denotes the total number of batches"
-        return int(len(self.list_samples) / self.batch_size)
+        return math.ceil(len(self.list_samples) / self.batch_size)
 
     def generate_batch_indexes(self, index):
         # This is to ensure we are going through
