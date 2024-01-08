@@ -926,7 +926,7 @@ class OphysGenerator(SequentialGenerator):
             print("Caching hdf5 file... \n")
             if self.end_frame > 0:
                 self.raw_data = raw_data[
-                    0 : np.min(
+                    0:np.min(
                         [
                             self.total_frame_per_movie,
                             self.end_frame
@@ -949,7 +949,7 @@ class OphysGenerator(SequentialGenerator):
 
         self.local_mean = np.mean(local_data)
         self.local_std = np.std(local_data)
-        
+
         if self.cache_data:
             self.raw_data = (
                 self.raw_data.astype("float") - self.local_mean
@@ -971,7 +971,11 @@ class OphysGenerator(SequentialGenerator):
         )
 
         output_full = np.zeros(
-            [local_batch_size, self.movie_dim[0], self.movie_dim[1], 1], dtype="float32"
+            [
+                local_batch_size, self.movie_dim[0],
+                self.movie_dim[1],
+                1
+            ], dtype="float32"
         )
 
         for batch_index, frame_index in enumerate(shuffle_indexes):
@@ -1000,8 +1004,12 @@ class OphysGenerator(SequentialGenerator):
         input_index = input_index[input_index != index_frame]
 
         for index_padding in np.arange(self.pre_post_omission + 1):
-            input_index = input_index[input_index != index_frame - index_padding]
-            input_index = input_index[input_index != index_frame + index_padding]
+            input_index = input_index[
+                input_index != index_frame - index_padding
+                ]
+            input_index = input_index[
+                input_index != index_frame + index_padding
+                ]
 
         # If data was cached we do not need to normalize. this was done
         # at once to minimize compute

@@ -4,6 +4,7 @@ from tensorflow.keras.models import load_model
 import deepinterpolation.loss_collection as lc
 from tqdm.auto import tqdm
 
+
 class fmri_inference:
     # This inference is specific to fMRI which is raster scanning for
     # denoising
@@ -162,9 +163,9 @@ class core_inference:
                 "annealed_loss": lc.loss_selector("annealed_loss")},
         )
 
-    def run(self):            
+    def run(self):
         nb_frames_inference = self.generator_obj.list_samples.shape[0]
-        
+
         if self.output_padding:
             first_sample = self.generator_obj.start_sample - \
                 self.generator_obj.start_frame
@@ -193,7 +194,9 @@ class core_inference:
                     chunks=tuple(chunk_size),
                     dtype=self.output_datatype,
                 )
-            for epoch_index, index_dataset in enumerate(tqdm(np.arange(self.nb_datasets))):
+            for epoch_index, index_dataset in enumerate(
+                    tqdm(np.arange(self.nb_datasets))
+                    ):
                 local_data = self.generator_obj[index_dataset]
 
                 # We overwrite epoch_index to allow the last unfilled epoch
