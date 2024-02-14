@@ -21,7 +21,11 @@ jobs:
       - run:
           command: |
             pip install flake8
-            flake8 --exclude=build/,examples/ --extend-ignore=E203 --max-line-length=89
+            # `|| true` to force exit code 0 even if no files found
+            CHANGED_PYFILES=$(git diff --diff-filter AMR --name-only origin/master | grep '\.py' || true)
+            echo "List of changed files:"
+            echo ${CHANGED_PYFILES}
+            echo ${CHANGED_PYFILES} | xargs -r flake8 --count
           name: Lint
 
   raw_packrequirement_test:
@@ -49,6 +53,7 @@ jobs:
           command: |
             pip install .
             pip install -r test_requirements.txt
+            pip install tensorflow --upgrade
           name: Install
 
       - run:

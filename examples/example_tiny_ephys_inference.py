@@ -1,15 +1,14 @@
 import os
-from deepinterpolation.generic import JsonSaver, ClassLoader
+from deepinterpolation.inference_collection import core_inference
+from deepinterpolation.generator_collection import EphysGenerator
 import pathlib
 
 if __name__ == '__main__':
     generator_param = {}
-    inferrence_param = {}
+    inference_param = {}
 
     # We are reusing the data generator for training here. Some parameters
     # like steps_per_epoch are irrelevant but currently needs to be provided
-    generator_param["type"] = "generator"
-    generator_param["name"] = "EphysGenerator"
     generator_param["pre_post_frame"] = 30
     generator_param["pre_post_omission"] = 1
     generator_param[
@@ -34,44 +33,28 @@ if __name__ == '__main__':
     # This is important to keep the order and avoid the
     # randomization used during training
 
-    inferrence_param["type"] = "inferrence"
-    inferrence_param["name"] = "core_inferrence"
-
     # Replace this path to where you stored your model
-    inferrence_param[
+    inference_param[
         "model_path"
-    ] = "/Users/jeromel/Documents/Work documents/Allen Institute/Projects\
-        /Deep2P/repos/public/deepinterpolation_models/deep_interpolation_\
-        neuropixel_v1/2020_02_29_15_28_unet_single_ephys_1024_mean_squared\
-        _error-1050.h5"
+    ] = r"./sample_data/2020_02_29_15_28_unet_single_ephys_1024_mean_" \
+        + r"squared_error-1050.h5"
 
     # Replace this path to where you want to store your output file
-    inferrence_param[
+    inference_param[
         "output_file"
-    ] = "/Users/jeromel/test/ephys_tiny_continuous_deep_interpolation.h5"
+    ] = "./ephys_tiny_continuous_deep_interpolation.h5"
 
-    jobdir = "/Users/jeromel/test/"
+    jobdir = "./"
 
     try:
         os.mkdir(jobdir)
     except Exception:
         print("folder already exists")
 
-    path_generator = os.path.join(jobdir, "generator.json")
-    json_obj = JsonSaver(generator_param)
-    json_obj.save_json(path_generator)
+    generator_obj = EphysGenerator(generator_param)
 
-    path_infer = os.path.join(jobdir, "inferrence.json")
-    json_obj = JsonSaver(inferrence_param)
-    json_obj.save_json(path_infer)
-
-    generator_obj = ClassLoader(path_generator)
-    data_generator = generator_obj.find_and_build()(path_generator)
-
-    inferrence_obj = ClassLoader(path_infer)
-    inferrence_class = inferrence_obj.find_and_build()(path_infer,
-                                                       data_generator)
+    inference_class = core_inference(inference_param, generator_obj)
 
     # Except this to be slow on a laptop without GPU. Inference needs
     # parallelization to be effective.
-    inferrence_class.run()
+    inference_class.run()
