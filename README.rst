@@ -5,7 +5,7 @@
 # **Deep Interpolation**
 
 
-*deepinterpolation* is a Python library to denoise data by removing independent noise. Importantly training does **NOT** require ground truth. This repository is currently meant to support the bioRxiv publication results : https://www.biorxiv.org/content/10.1101/2020.10.15.341602v1
+*deepinterpolation* is a Python library to denoise data by removing independent noise. Importantly training does **NOT** require ground truth. This repository is currently meant to support the publication : https://www.nature.com/articles/s41592-021-01285-2
 
 
 # **Principle of Deep Interpolation**
@@ -17,7 +17,7 @@
 	
 **Figure 1** - Schematic introducing the principles of deep interpolation.  **A**. An interpolation model is trained to predict a noisy block from other blocks with independent noise. The loss is the difference between the predicted data and a new noisy block. **B**. The interpolation model is used to create a noiseless version of the input data. 
 
-For more information, consult the associated bioRxiv publication : https://www.biorxiv.org/content/10.1101/2020.10.15.341602v1
+For more information, consult the associated publication : https://www.nature.com/articles/s41592-021-01285-2
 
 
 # **Support**
