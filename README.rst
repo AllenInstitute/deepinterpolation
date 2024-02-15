@@ -74,32 +74,6 @@ Our integration tests on the CI server are currently running with python 3.7. Wh
 
 	python setup.py install
 
-# **Descrition and use of the Command Line Interface (CLI).** 
-
-DeepInterpolation 0.1.3 introduced a refactored interface to use the package. The purpose of this mode is to faciliate deployment of deepinterpolation and provide a consistent API for use. Example use of the CLI are provided in the *examples/* folder under cli_*.
-
-There are two modes that you can use:
-
-* Scripting mode: 
-
-In this mode you construct a set of dictionaries of parameters and feed them to the training, inference or finetuning objects within a python script. This mode is useful to iterate and improve your jobs. Example of this mode are provided in the *examples/* folder as cli_*.py files. 
-
-* Command-line mode: 
-
-In this mode, you save the dictionary into a json file and provide the path to this file as a parameter through the command line. This mode is useful for deploying your jobs at a larger scale. Typically your json file is mostly the same from job to job. Example of this mode are provided in the *examples/* folder as cli_*.sh and cli_*.json files. 
-
-All parameters of the CLI are documented within the schema. To access the documentation, type down : 
-
-	python -m deepinterpolation.cli.training --help 
-
-or
-
-	python -m deepinterpolation.cli.inference --help 
-
-or 
-
-	python -m deepinterpolation.cli.fine_tuning --help 
-
 # **General package description**
 
 The files in the deepinterpolation folder contain the core classes for training, inference, loss calculation and network generations. Those are called 'Collection'. Each collection is essentially a local list of functions that are used to create different type of objects and can be extended on one another. 
@@ -111,7 +85,7 @@ See here : https://github.com/AllenInstitute/deepinterpolation/tree/master/faq
 
 # **Example training**
 
-To try out training your own DeepInterpolation network, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/cli_example_tiny_ephys_training.py
+To try out training your own DeepInterpolation network, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_training.py
 
 In this file, you will need to edit the paths to a local folder appropriate to save your models. 
 
@@ -121,7 +95,7 @@ Then, activate your conda env called 'local_env'
 	
 then run
 
-	python cli_example_tiny_ephys_training.py
+	python example_tiny_ephys_training.py
 
 If everything runs correctly, you should see the following in just a few minutes :
 
@@ -145,7 +119,7 @@ If everything runs correctly, you should see the following in just a few minutes
 
 This is a toy example but you can increase the number of training frames to increase the quality of the model. 
 All parameters are commented in the file. To adjust to a larger dataset, change the path parameters, the start_frame and end_frame parameters.
-Please consult the CLI documentation mentioned above for more details of each parameter.
+Please consult the annotated example for more details of each parameter.
 
 # **Example inference**
 
@@ -203,7 +177,7 @@ Key recording parameters:
 - Docker hub id : 245412653747/deep_interpolation:allen_3_3_3_tr_3000_fmri
 - Dropxbox link : https://www.dropbox.com/sh/ngx5plndmd4jsca/AAAkR-_4_E7VyL8WzEC7twuza?dl=0
 
-To start inference, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/cli_example_tiny_ephys_inference.py
+To start inference, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_inference.py
 
 In this file, you will need to edit the paths strings to fit your local paths. 
 
@@ -213,7 +187,7 @@ Then, activate your conda env called 'local_env'
 	
 then run:
 
-	python cli_example_tiny_ephys_inference.py
+	python example_tiny_ephys_inference.py
 
 If everything runs correctly, you should see the following in just a few minutes:
 
@@ -233,7 +207,6 @@ To adapt DeepInterpolation to a new dataset, you will need to use or recreate a 
 
 The *CollectorGenerator* class allows to group generators if your dataset is distributed across many files/folder/sources. 
 This system was designed to allow to train very large DeepInterpolation models from TB of data distributed on a network infrastructure. 
-The *CollectorGenerator* is not currently supported throught the CLI and will be replaced with a simpler API in a future release. 
 
 # **License**
 
