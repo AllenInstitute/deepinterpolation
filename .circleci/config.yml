@@ -62,29 +62,6 @@ jobs:
             bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
           name: Test
 
-  docker:
-    machine: true
-    steps:
-      - checkout
-      - run: echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
-      - run: 
-          name: Build and Push docker image
-          command: |
-            if [ "$CIRCLE_BRANCH" = "master" ]
-            then
-                MYTAG=main
-            else
-                MYTAG=develop
-            fi
-            # source/target tagging to alleviate concerns about unintended caching
-            image_source=alleninstitutepika/deepinterpolation:${CIRCLE_SHA1}
-            image_target=alleninstitutepika/deepinterpolation:${MYTAG}
-            docker build \
-                --build-arg REPO_TAG=${CIRCLE_BRANCH} \
-                --build-arg COMMIT=${CIRCLE_SHA1} \
-                -t ${image_source} docker/
-            docker tag ${image_source} ${image_target}
-            docker push ${image_target}
 
 workflows:
   main:
