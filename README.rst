@@ -137,7 +137,7 @@ Key recording parameters:
 - Gcamp6f calcium indicator.
 - Ai93 reporter line expressed in excitatory neurons.
 - Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai93
-- Dropbox link : https://www.dropbox.com/sh/vwxf1uq2j60uj9o/AAC9BQI1bdfmAL3OFO0lmVb1a?dl=0
+- Dropbox link : https://alleninstitute.sharepoint.com/:u:/s/ExternalSharing/EdFnzUm4lV5LkG28Hp27cdwB4CFrCh37hEC-TxvsSURwwA?e=6BcyQl
 - Training data : https://github.com/AllenInstitute/deepinterpolation/blob/cfb42bc2c5bd8cc08ee870a163230e8c89c676ba/examples/paper_generation_code/json_data/2019-09-05-train-very-large-single-plane-Ai93-norm.json
 *Two-photon Ai148 excitatory line DeepInterpolation network:*
 
@@ -150,7 +150,7 @@ Key recording parameters:
 - Ai148 reporter line expressed in excitatory neurons.
 - Pre-processing: Individual movies were motion corrected. Each movie recording was mean-centered and normalized with a single pair of value for all pixels 
 - Docker hub id : 245412653747/deep_interpolation:allen_400um_512pix_30hz_ai148
-- Dropxbox link : https://www.dropbox.com/sh/u9h9mhppkmku5bs/AAD9UoomhB3D4JfLV7zT9Y_Ca?dl=0
+- Dropxbox link : https://alleninstitute.sharepoint.com/:u:/s/ExternalSharing/EdhA7EyIr5hFjf2QyvTZIuMB-0dmbzCFTtKrnHPh9wgADQ?e=nrIMKW
 - Training data : https://github.com/AllenInstitute/deepinterpolation/blob/cfb42bc2c5bd8cc08ee870a163230e8c89c676ba/examples/paper_generation_code/json_data/2019-09-05-train-very-large-single-plane-Ai148-norm.json
 
 *Neuropixel DeepInterpolation network:*
@@ -165,7 +165,7 @@ Key recording parameters:
 - 500 Hz high pass filter in hardware, 150 Hz high-pass filter applied offline. 
 - Pre-processing: Median subtraction was applied to individual probes to remove signals that were common across all recording sites. Each probe recording was mean-centered and normalized with a single pair of value for all nodes on the probe. 
 - Docker hub id : 245412653747/deep_interpolation:allen_neuropixel
-- Dropxbox link : https://www.dropbox.com/sh/tm3epzil44ybalq/AACyKxfvvA2T_Lq_rnpHnhFma?dl=0
+- Dropxbox link : https://alleninstitute.sharepoint.com/:u:/s/ExternalSharing/EQgayR4bgk5Oj5j2RdWZywMBHdMhueENyqXyce0F_jM6og?e=wBr71e
 
 *fMRI DeepInterpolation network:*
 
@@ -174,7 +174,7 @@ Key recording parameters:
 - TR, 3000 ms; TE, 30 ms; flip angle, 80°; voxel size, 3 × 3 × 3 mm; FOV, 192 × 192 mm; number of slices, 50, slice gap, 0 mm
 - Pre-processing: N/A
 - Docker hub id : 245412653747/deep_interpolation:allen_3_3_3_tr_3000_fmri
-- Dropxbox link : https://www.dropbox.com/sh/ngx5plndmd4jsca/AAAkR-_4_E7VyL8WzEC7twuza?dl=0
+- Dropxbox link : https://alleninstitute.sharepoint.com/:u:/s/ExternalSharing/EZLfzUtd3WRMjbhk0g_rIr8BGPV-kHsOQ4j8Fmhc0guikw?e=Iua1TO
 
 To start inference, we recommend to start with this file: https://github.com/AllenInstitute/deepinterpolation/blob/master/examples/example_tiny_ephys_inference.py
 
